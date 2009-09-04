@@ -1,0 +1,12 @@
+<package>
+  <description brief="Xacro (XML Macros)">
+    Xacro is an XML macro language. With xacro, you can construct shorter and more readable XML files by using macros that expand to larger XML expressions. 
+  </description>
+  <author>Stuart Glaser</author>
+  <license>BSD</license>
+  <url>http://ros.org/wiki/xacro</url>  
+  <review status="unreviewed" notes=""/>
+  <depend package="roslaunch" />
+  <depend package="rostest" />
+</package>
+
