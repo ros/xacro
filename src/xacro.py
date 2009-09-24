@@ -336,9 +336,11 @@ def eval_text(text, symbols):
         return eval_extension("$(%s)" % s)
 
     results = []
-    lex = QuickLexer(EXPR = r"\$\{[^\}]*\}",
+    lex = QuickLexer(DOLLAR_DOLLAR_BRACE = r"\$\$+\{",
+                     EXPR = r"\$\{[^\}]*\}",
                      EXTENSION = r"\$\([^\)]*\)",
-                     TEXT = r"[^\$]+")
+                     TEXT = r"([^\$]|\$[^{]|\$$)+")
+                     #TEXT = r"[^\$]+")
     lex.lex(text)
     while lex.peek():
         if lex.peek()[0] == lex.EXPR:
@@ -347,10 +349,17 @@ def eval_text(text, symbols):
             results.append(handle_extension(lex.next()[1][2:-1]))
         elif lex.peek()[0] == lex.TEXT:
             results.append(lex.next()[1])
+        elif lex.peek()[0] == lex.DOLLAR_DOLLAR_BRACE:
+            results.append(lex.next()[1][1:])
     return ''.join(map(str, results))
 
 # Expands macros, replaces properties, and evaluates expressions
 def eval_all(root, macros, symbols):
+    # Evaluates the attributes for the root node
+    for at in root.attributes.items():
+        result = eval_text(at[1], symbols)
+        root.setAttribute(at[0], result)
+
     previous = root
     node = next_node(previous)
     while node:

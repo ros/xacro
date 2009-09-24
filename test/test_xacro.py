@@ -103,6 +103,18 @@ class TestXacro(unittest.TestCase):
                 quick_xacro('''<a><f v="${0.9 / 2 - 0.2}" /></a>'''),
                 '''<a><f v="0.25" /></a>'''))
 
+    def test_escaping_dollar_braces(self):
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''<a b="$${foo}" c="$$${foo}" />'''),
+                '''<a b="${foo}" c="$${foo}" />'''))
+
+    def test_just_a_dollar_sign(self):
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''<a b="$" />'''),
+                '''<a b="$" />'''))
+
 
 if __name__ == '__main__':
     import rostest
