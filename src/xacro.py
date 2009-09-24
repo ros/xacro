@@ -34,6 +34,7 @@ import subprocess
 from xml.dom.minidom import parse, parseString
 import xml.dom
 import re
+import string
 
 TAG_PREFIX = ''  # 'xacro:'
 
@@ -219,7 +220,18 @@ def grab_properties(doc):
                 name = '*' + name
                 value = elt
 
-            table[name] = value
+            bad = string.whitespace + "${}"
+            has_bad = False
+            for b in bad:
+                if b in name:
+                    has_bad = True
+                    break
+
+            if has_bad:
+                sys.stderr.write('Property names may not have whitespace, ' +
+                                 '"{", "}", or "$" : "' + name + '"')
+            else:
+                table[name] = value
 
             elt.parentNode.removeChild(elt)
             elt = None
