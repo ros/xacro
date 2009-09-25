@@ -83,7 +83,7 @@ def quick_xacro(xml):
 
 class TestXacro(unittest.TestCase):
 
-    def test_should_replace_before_macroexpand(self):
+    def test_DEPRECATED_should_replace_before_macroexpand(self):
         self.assertTrue(
             xml_matches(
                 quick_xacro('''<a>
@@ -96,6 +96,31 @@ class TestXacro(unittest.TestCase):
 <outer><woot /></outer></a>'''),
                 '''<a>
 <in_the_outer><in_the_inner><woot /></in_the_inner></in_the_outer></a>'''))
+
+    def test_should_replace_before_macroexpand(self):
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+<xacro:macro name="inner" params="*the_block">
+  <in_the_inner><xacro:insert_block name="the_block" /></in_the_inner>
+</xacro:macro>
+<xacro:macro name="outer" params="*the_block">
+  <in_the_outer><xacro:inner><insert_block name="the_block" /></xacro:inner></in_the_outer>
+</xacro:macro>
+<xacro:outer><woot /></xacro:outer></a>'''),
+                '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+<in_the_outer><in_the_inner><woot /></in_the_inner></in_the_outer></a>'''))
+
+    def test_property_replacement(self):
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="foo" value="42" />
+  <the_foo result="${foo}" />
+</a>'''),
+                '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <the_foo result="42" />
+</a>'''))
 
     def test_math_ignores_spaces(self):
         self.assertTrue(

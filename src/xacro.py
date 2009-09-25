@@ -36,8 +36,6 @@ import xml.dom
 import re
 import string
 
-TAG_PREFIX = ''  # 'xacro:'
-
 class XacroException(Exception): pass
 
 def isnumber(x):
@@ -190,10 +188,11 @@ def grab_macros(doc):
     previous = doc.documentElement
     elt = next_element(previous)
     while elt:
-        if elt.tagName == TAG_PREFIX + 'macro':
+        if elt.tagName == 'macro' or elt.tagName == 'xacro:macro':
             name = elt.getAttribute('name')
 
             macros[name] = elt
+            macros['xacro:' + name] = elt
 
             elt.parentNode.removeChild(elt)
             elt = None
@@ -210,7 +209,7 @@ def grab_properties(doc):
     previous = doc.documentElement
     elt = next_element(previous)
     while elt:
-        if elt.tagName == TAG_PREFIX + 'property':
+        if elt.tagName == 'property' or elt.tagName == 'xacro:property':
             name = elt.getAttribute('name')
             value = None
 
@@ -351,8 +350,7 @@ def eval_text(text, symbols):
     lex = QuickLexer(DOLLAR_DOLLAR_BRACE = r"\$\$+\{",
                      EXPR = r"\$\{[^\}]*\}",
                      EXTENSION = r"\$\([^\)]*\)",
-                     TEXT = r"([^\$]|\$[^{]|\$$)+")
-                     #TEXT = r"[^\$]+")
+                     TEXT = r"([^\$]|\$[^{(]|\$$)+")
     lex.lex(text)
     while lex.peek():
         if lex.peek()[0] == lex.EXPR:
@@ -404,7 +402,7 @@ def eval_all(root, macros, symbols):
                 node.parentNode.removeChild(node)
 
                 node = None
-            elif node.tagName == TAG_PREFIX + 'insert_block':
+            elif node.tagName == 'insert_block' or node.tagName == 'xacro:insert_block':
                 name = node.getAttribute('name')
                 block = symbols['*' + name]
 
@@ -464,8 +462,18 @@ def main():
         print_usage(2)
 
     f = open(args[0])
-    doc = parse(f)
-    f.close()
+    doc = None
+    try:
+        doc = parse(f)
+    except xml.parsers.expat.ExpatError:
+        sys.stderr.write("Expat parsing error.  Check that:\n")
+        sys.stderr.write(" - Your XML is correctly formed\n")
+        sys.stderr.write(" - You have the xacro xmlns declaration: " +
+                         "xmlns:xacro=\"http://www.ros.org/wiki/xacro\"\n")
+        sys.stderr.write("\n")
+        raise
+    finally:
+        f.close()
 
 
     process_includes(doc, os.path.dirname(sys.argv[1]))
