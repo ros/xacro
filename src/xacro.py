@@ -148,6 +148,7 @@ def child_elements(elt):
 all_includes = []
 ## @throws XacroException if a parsing error occurs with an included document
 def process_includes(doc, base_dir):
+    namespaces = {}
     previous = doc.documentElement
     elt = next_element(previous)
     while elt:
@@ -176,10 +177,19 @@ def process_includes(doc, base_dir):
                 elt.parentNode.insertBefore(c.cloneNode(1), elt)
             elt.parentNode.removeChild(elt)
             elt = None
+
+            # Grabs all the declared namespaces of the included document
+            for name, value in included.documentElement.attributes.items():
+                if name.startswith('xmlns:'):
+                    namespaces[name] = value
         else:
             previous = elt
 
         elt = next_element(previous)
+
+    # Makes sure the final document declares all the namespaces of the included documents.
+    for k,v in namespaces.items():
+        doc.documentElement.setAttribute(k, v)
 
 # Returns a dictionary: { macro_name => macro_xml_block }
 def grab_macros(doc):
