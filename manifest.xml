@@ -5,7 +5,7 @@
   <author>Stuart Glaser</author>
   <license>BSD</license>
   <url>http://ros.org/wiki/xacro</url>  
-  <review status="unreviewed" notes=""/>
+  <review status="api cleared" notes=""/>
   <depend package="roslaunch" />
   <depend package="rostest" />
 </package>
