@@ -253,8 +253,8 @@ def eval_lit(lex, symbols):
         try:
             value = symbols[lex.next()[1]]
         except KeyError, ex:
-            sys.stderr.write("Could not find symbol: %s\n" % str(ex))
-            return 0
+            #sys.stderr.write("Could not find symbol: %s\n" % str(ex))
+            raise XacroException("Property wasn't defined: %s" % str(ex))
         if not (isnumber(value) or isinstance(value,(str,unicode))):
             print [value], isinstance(value, str), type(value)
             raise "WTF2"
