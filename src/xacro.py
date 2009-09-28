@@ -152,7 +152,7 @@ def process_includes(doc, base_dir):
     previous = doc.documentElement
     elt = next_element(previous)
     while elt:
-        if elt.tagName == 'include':
+        if elt.tagName == 'include' or elt.tagName == 'xacro:include':
             filename = eval_text(elt.getAttribute('filename'), {})
             if not os.path.isabs(filename):
                 filename = os.path.join(base_dir, filename)
