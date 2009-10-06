@@ -8,5 +8,9 @@
   <review status="api cleared" notes=""/>
   <depend package="roslaunch" />
   <depend package="rostest" />
+  <depend package="rosbuild"/>
+  <export>
+    <rosbuild cmake="${prefix}/cmake/xacro.cmake"/>
+  </export>
 </package>
 

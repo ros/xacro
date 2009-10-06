@@ -489,7 +489,8 @@ def main():
     process_includes(doc, os.path.dirname(sys.argv[1]))
     if just_deps:
         for inc in all_includes:
-            print inc
+            sys.stdout.write(inc + " ")
+        sys.stdout.write("\n")
     else:
         eval_self_contained(doc)
         doc.writexml(output)
