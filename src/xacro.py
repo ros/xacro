@@ -396,11 +396,21 @@ def eval_all(root, macros, symbols):
                             (str(name), str(node.tagName))
                     params.remove(name)
                     scoped[name] = eval_text(value, symbols)
-                if len(params) == 1 and params[0][0] == '*':
-                    block = node.cloneNode(deep = True)
-                    eval_all(block, macros, symbols)
-                    scoped[params[0]] = block
-                    params = []
+
+                # Pulls out the block arguments, in order
+                cloned = node.cloneNode(deep = True)
+                eval_all(cloned, macros, symbols)
+                block = cloned.firstChild
+                for param in params[:]:
+                    if param[0] == '*':
+                        while block and block.nodeType != xml.dom.Node.ELEMENT_NODE:
+                            block = block.nextSibling
+                        if not block:
+                            raise "Not enough blocks while evaluating macro %s" % str(node.tagName)
+                        params.remove(param)
+                        scoped[param] = block
+                        block = block.nextSibling
+                    
                 if params:
                     raise "Some parameters were not set for macro %s" % \
                         str(node.tagName)
@@ -416,8 +426,7 @@ def eval_all(root, macros, symbols):
                 name = node.getAttribute('name')
                 block = symbols['*' + name]
 
-                for e in list(child_elements(block)):
-                    node.parentNode.insertBefore(e, node)
+                node.parentNode.insertBefore(block.cloneNode(deep=True), node)
                 node.parentNode.removeChild(node)
 
                 node = None
