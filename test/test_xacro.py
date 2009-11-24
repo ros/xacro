@@ -140,6 +140,45 @@ class TestXacro(unittest.TestCase):
                 quick_xacro('''<a b="$" />'''),
                 '''<a b="$" />'''))
 
+    def test_multiple_insert_blocks(self):
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+<xacro:macro name="foo" params="*block">
+  <xacro:insert_block name="block" />
+  <xacro:insert_block name="block" />
+</xacro:macro>
+<xacro:foo>
+  <a_block />
+</xacro:foo>
+</a>'''),
+                '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <a_block />
+  <a_block />
+</a>'''))
+
+    def test_multiple_blocks(self):
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+<xacro:macro name="foo" params="*block1 *block2">
+  <xacro:insert_block name="block2" />
+  <first>
+    <xacro:insert_block name="block1" />
+  </first>
+</xacro:macro>
+<xacro:foo>
+  <first_block />
+  <second_block />
+</xacro:foo>
+</a>'''),
+                '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <second_block />
+  <first>
+    <first_block />
+  </first>
+</a>'''))
+
 
 if __name__ == '__main__':
     import rostest
