@@ -453,19 +453,21 @@ def eval_self_contained(doc):
 
 def print_usage(exit_code = 0):
     print "Usage: %s [-o <output>] <input>" % 'xacro.py'
-    print "       %s --deps" % 'xacro.py'
+    print "       %s --deps       Prints dependencies" % 'xacro.py'
+    print "       %s --includes   Only evalutes includes" % 'xacro.py'
     sys.exit(exit_code)
 
 
 def main():
 
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "ho:", ['deps'])
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "ho:", ['deps', 'includes'])
     except getopt.GetoptError, err:
         print str(err)
         print_usage(2)
 
     just_deps = False
+    just_includes = False
 
     output = sys.stdout
     for o, a in opts:
@@ -475,6 +477,8 @@ def main():
             output = open(a, 'w')
         elif o == '--deps':
             just_deps = True
+        elif o == '--includes':
+            just_includes = True
 
     if len(args) < 1:
         print "No input given"
@@ -500,6 +504,9 @@ def main():
         for inc in all_includes:
             sys.stdout.write(inc + " ")
         sys.stdout.write("\n")
+    elif just_includes:
+        doc.writexml(output)
+        print
     else:
         eval_self_contained(doc)
         doc.writexml(output)
