@@ -268,9 +268,12 @@ def eval_lit(lex, symbols):
             print [value], isinstance(value, str), type(value)
             raise "WTF2"
         try:
-            return float(value)
+            return int(value)
         except:
-            return value
+            try:
+                return float(value)
+            except:
+                return value
     raise "Bad literal"
 
 def eval_factor(lex, symbols):

@@ -179,6 +179,19 @@ class TestXacro(unittest.TestCase):
   </first>
 </a>'''))
 
+    def test_integer_stays_integer(self):
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+<xacro:macro name="m" params="num">
+  <test number="${num}" />
+</xacro:macro>
+<xacro:m num="100" />
+</a>'''),
+                '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <test number="100" />
+</a>'''))
+
 
 if __name__ == '__main__':
     import rostest
