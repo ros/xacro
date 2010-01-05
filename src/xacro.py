@@ -42,13 +42,9 @@ def isnumber(x):
     return hasattr(x, '__int__')
 
 import roslib; roslib.load_manifest('xacro')
-# Suppresses the output from roslaunch by killing the logger
-import roslib.scriptutil
-def return_none(a=0,b=0): return None
-roslib.scriptutil.configure_logging = return_none
-import roslaunch
+import roslib.substitution_args
 def eval_extension(str):
-    return roslaunch.core.resolve_args(str)
+    return roslib.substitution_args.resolve_args(str, resolve_anon=False)
 
 class Table:
     def __init__(self, parent = None):

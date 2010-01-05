@@ -6,7 +6,6 @@
   <license>BSD</license>
   <url>http://ros.org/wiki/xacro</url>  
   <review status="doc reviewed" notes="http://www.ros.org/wiki/xacro"/>
-  <depend package="roslaunch" />
   <depend package="rostest" />
   <depend package="rosbuild"/>
   <export>
