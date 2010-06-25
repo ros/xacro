@@ -298,7 +298,7 @@ def eval_lit(lex, symbols):
             raise XacroException("Property wasn't defined: %s" % str(ex))
         if not (isnumber(value) or isinstance(value,(str,unicode))):
             print [value], isinstance(value, str), type(value)
-            raise "WTF2"
+            raise XacroException("WTF2")
         try:
             return int(value)
         except:
@@ -306,7 +306,7 @@ def eval_lit(lex, symbols):
                 return float(value)
             except:
                 return value
-    raise "Bad literal"
+    raise XacroException("Bad literal")
 
 def eval_factor(lex, symbols):
     eat_ignore(lex)
@@ -324,11 +324,11 @@ def eval_factor(lex, symbols):
         result = eval_expr(lex, symbols)
         eat_ignore(lex)
         if lex.next()[0] != lex.RPAREN:
-            raise "Unmatched left paren"
+            raise XacroException("Unmatched left paren")
         eat_ignore(lex)
         return neg * result
 
-    raise "Misplaced operator"
+    raise XacroException("Misplaced operator")
 
 def eval_term(lex, symbols):
     eat_ignore(lex)
@@ -348,7 +348,7 @@ def eval_term(lex, symbols):
         elif op == '/':
             result = float(result) / float(n)
         else:
-            raise "WTF"
+            raise XacroException("WTF")
         eat_ignore(lex)
     return result
 
@@ -359,7 +359,7 @@ def eval_expr(lex, symbols):
     if lex.peek()[0] == lex.OP:
         op = lex.next()[1]
         if not op in ['+', '-']:
-            raise "Invalid op"
+            raise XacroException("Invalid operation. Must be '+' or '-'")
 
     result = eval_term(lex, symbols)
     if op == '-':
@@ -427,8 +427,8 @@ def eval_all(root, macros, symbols):
                 scoped = Table(symbols)
                 for name,value in node.attributes.items():
                     if not name in params:
-                        raise "Invalid parameter \"%s\" while expanding macro \"%s\"" % \
-                            (str(name), str(node.tagName))
+                        raise XacroException("Invalid parameter \"%s\" while expanding macro \"%s\"" % \
+                            (str(name), str(node.tagName)))
                     params.remove(name)
                     scoped[name] = eval_text(value, symbols)
 
@@ -441,14 +441,14 @@ def eval_all(root, macros, symbols):
                         while block and block.nodeType != xml.dom.Node.ELEMENT_NODE:
                             block = block.nextSibling
                         if not block:
-                            raise "Not enough blocks while evaluating macro %s" % str(node.tagName)
+                            raise XacroException("Not enough blocks while evaluating macro %s" % str(node.tagName))
                         params.remove(param)
                         scoped[param] = block
                         block = block.nextSibling
                     
                 if params:
-                    raise "Some parameters were not set for macro %s" % \
-                        str(node.tagName)
+                    raise XacroException("Some parameters were not set for macro %s" % \
+                        str(node.tagName))
                 eval_all(body, macros, scoped)
 
                 # Replaces the macro node with the expansion
@@ -529,7 +529,7 @@ def main():
         sys.stderr.write(" - You have the xacro xmlns declaration: " +
                          "xmlns:xacro=\"http://www.ros.org/wiki/xacro\"\n")
         sys.stderr.write("\n")
-        raise
+        raise 
     finally:
         f.close()
 
