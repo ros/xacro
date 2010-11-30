@@ -258,8 +258,8 @@ def grab_properties(doc):
             if elt.hasAttribute('value'):
                 value = elt.getAttribute('value')
             else:
-                name = '*' + name
-                value = elt
+                name = '**' + name
+                value = elt #debug
 
             bad = string.whitespace + "${}"
             has_bad = False
@@ -459,10 +459,22 @@ def eval_all(root, macros, symbols):
                 node = None
             elif node.tagName == 'insert_block' or node.tagName == 'xacro:insert_block':
                 name = node.getAttribute('name')
-                block = symbols['*' + name]
 
-                node.parentNode.insertBefore(block.cloneNode(deep=True), node)
-                node.parentNode.removeChild(node)
+                if ("**" + name) in symbols:
+                    # Multi-block
+                    block = symbols['**' + name]
+
+                    for e in list(child_elements(block)):
+                        node.parentNode.insertBefore(e.cloneNode(deep=True), node)
+                    node.parentNode.removeChild(node)
+                elif ("*" + name) in symbols:
+                    # Single block
+                    block = symbols['*' + name]
+
+                    node.parentNode.insertBefore(block.cloneNode(deep=True), node)
+                    node.parentNode.removeChild(node)
+                else:
+                    raise XacroException("Block \"%s\" was never declared" % name)
 
                 node = None
             else:

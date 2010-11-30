@@ -193,6 +193,23 @@ class TestXacro(unittest.TestCase):
 </a>'''))
 
 
+    def test_insert_block_property(self):
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+<xacro:property name="some_block">
+  <some_block />
+</xacro:property>
+<foo>
+  <xacro:insert_block name="some_block" />
+</foo>
+</a>'''),
+                '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+<foo><some_block /></foo>
+</a>'''))
+
+
+
 if __name__ == '__main__':
     import rostest
     rostest.unitrun('xacro', 'test_xacro', TestXacro)
