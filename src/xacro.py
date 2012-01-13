@@ -42,10 +42,15 @@ def isnumber(x):
     return hasattr(x, '__int__')
 
 import roslib; roslib.load_manifest('xacro')
-import roslib.substitution_args
-def eval_extension(str):
-    return roslib.substitution_args.resolve_args(str, resolve_anon=False)
 
+# dual electric/fuerte compatibility
+try:
+    from roslaunch import substitution_args
+except ImportError:
+    from roslib import substitution_args
+    
+def eval_extension(str):
+    return substitution_args.resolve_args(str, resolve_anon=False)
 
 # Better pretty printing of xml
 # Taken from http://ronrothman.com/public/leftbraned/xml-dom-minidom-toprettyxml-and-silly-whitespace/
