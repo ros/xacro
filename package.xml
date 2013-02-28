@@ -19,7 +19,6 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <build_depend>roslaunch</build_depend>
   <run_depend>roslaunch</run_depend>
 
   <test_depend>rostest</test_depend>
