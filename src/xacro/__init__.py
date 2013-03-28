@@ -533,6 +533,9 @@ def print_usage(exit_code=0):
     print("       %s --includes   Only evalutes includes" % 'xacro.py')
     sys.exit(exit_code)
 
+def set_substitution_args_context(context = {}):
+    substitution_args_context['arg'] = context
+
 
 def main():
     try:
@@ -560,7 +563,7 @@ def main():
         print_usage(2)
 
     # Process substitution args
-    substitution_args_context['arg'] = load_mappings(sys.argv)
+    set_substitution_args_context(load_mappings(sys.argv))
 
     f = open(args[0])
     doc = None
