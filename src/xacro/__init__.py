@@ -41,7 +41,10 @@ import xml
 from xml.dom.minidom import parse
 
 from roslaunch import substitution_args
+from rosgraph.names import load_mappings
 
+# Dictionary of subtitution args
+substitution_args_context = {}
 
 class XacroException(Exception):
     pass
@@ -52,8 +55,7 @@ def isnumber(x):
 
 
 def eval_extension(str):
-    return substitution_args.resolve_args(str, resolve_anon=False)
-
+    return substitution_args.resolve_args(str, context=substitution_args_context, resolve_anon=False)
 
 # Better pretty printing of xml
 # Taken from http://ronrothman.com/public/leftbraned/xml-dom-minidom-toprettyxml-and-silly-whitespace/
@@ -556,6 +558,9 @@ def main():
     if len(args) < 1:
         print("No input given")
         print_usage(2)
+
+    # Process substitution args
+    substitution_args_context['arg'] = load_mappings(sys.argv)
 
     f = open(args[0])
     doc = None
