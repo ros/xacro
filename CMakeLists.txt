@@ -9,7 +9,12 @@ catkin_package(
   CFG_EXTRAS xacro-extras.cmake
 )
 
-install(PROGRAMS scripts/xacro.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+# this script is just for backwards compatibility. the roslaunch $(find ...) 
+# expects the script to be in the package directory, and in catkin
+# the package direcory is the share directory
+install(PROGRAMS xacro.py DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+
+install(PROGRAMS scripts/xacro DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 ## Add folders to be run by python nosetests
 catkin_add_nosetests(test)
