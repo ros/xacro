@@ -7,6 +7,9 @@ import unittest
 import xacro
 from xml.dom.minidom import parse, parseString
 import xml.dom
+import os.path
+from rosgraph.names import load_mappings
+from xacro import set_substitution_args_context
 
 def all_attributes_match(a, b):
     if len(a.attributes) != len(b.attributes):
@@ -127,6 +130,20 @@ class TestXacro(unittest.TestCase):
             xml_matches(
                 quick_xacro('''<a><f v="${0.9 / 2 - 0.2}" /></a>'''),
                 '''<a><f v="0.25" /></a>'''))
+
+    def test_substitution_args_find(self):
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''<a><f v="$(find xacro)/test/test_xacro.py" /></a>'''),
+                '''<a><f v="'''+os.path.abspath(__file__)+'''" /></a>'''))
+
+    def test_substitution_args_arg(self):
+        set_substitution_args_context(load_mappings(['sub_arg:=my_arg']))
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''<a><f v="$(arg sub_arg)" /></a>'''),
+                '''<a><f v="my_arg" /></a>'''))
+        set_substitution_args_context({})
 
     def test_escaping_dollar_braces(self):
         self.assertTrue(
