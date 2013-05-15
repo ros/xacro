@@ -599,7 +599,7 @@ def main():
     finally:
         f.close()
 
-    process_includes(doc, os.path.dirname(sys.argv[1]))
+    process_includes(doc, os.path.dirname(args[0]))
     if just_deps:
         for inc in all_includes:
             sys.stdout.write(inc + " ")
