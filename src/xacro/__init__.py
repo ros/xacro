@@ -504,6 +504,26 @@ def eval_all(root, macros, symbols):
                     raise XacroException("Block \"%s\" was never declared" % name)
 
                 node = None
+            elif node.tagName == 'if' or node.tagName == 'xacro:if':
+                value = eval_text(node.getAttribute('value'), symbols)
+                if value == 1 or value == 'true':
+                    for e in list(child_elements(node)):
+                        cloned = node.cloneNode(deep = True)
+                        eval_all(cloned, macros, symbols)
+                        node.parentNode.insertBefore(e, node)
+                elif value != 0 and value != 'false':
+                    raise XacroException("Xacro conditional evaluated to \"%s\". Acceptable evaluations are one of [\"1\",\"true\",\"0\",\"false\"]" % value)
+                node.parentNode.removeChild(node)
+            elif node.tagName == 'unless' or node.tagName == 'xacro:unless':
+                value = eval_text(node.getAttribute('value'), symbols)
+                if value == 0 or value == 'false':
+                    for e in list(child_elements(node)):
+                        cloned = node.cloneNode(deep = True)
+                        eval_all(cloned, macros, symbols)
+                        node.parentNode.insertBefore(e, node)
+                elif value != 1 and value != 'true':
+                    raise XacroException("Xacro conditional evaluated to \"%s\". Acceptable evaluations are one of [\"1\",\"true\",\"0\",\"false\"]" % value)
+                node.parentNode.removeChild(node)
             else:
                 # Evals the attributes
                 for at in node.attributes.items():
