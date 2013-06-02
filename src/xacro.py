@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Copyright (c) 2008, Willow Garage, Inc.
+# Copyright (c) 2013, Willow Garage, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,30 +27,35 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 # Author: Stuart Glaser
+# Maintainer: William Woodall <wwoodall@willowgarage.com>
 
+from __future__ import print_function
 
-import os.path, sys, os, getopt
-import subprocess
-from xml.dom.minidom import parse, parseString
-import xml.dom
+import getopt
+import os
 import re
 import string
+import sys
+import xml
 
-class XacroException(Exception): pass
+from xml.dom.minidom import parse
+
+from roslaunch import substitution_args
+from rosgraph.names import load_mappings
+
+# Dictionary of subtitution args
+substitution_args_context = {}
+
+class XacroException(Exception):
+    pass
+
 
 def isnumber(x):
     return hasattr(x, '__int__')
 
-import roslib; roslib.load_manifest('xacro')
 
-# dual electric/fuerte compatibility
-try:
-    from roslaunch import substitution_args
-except ImportError:
-    from roslib import substitution_args
-    
 def eval_extension(str):
-    return substitution_args.resolve_args(str, resolve_anon=False)
+    return substitution_args.resolve_args(str, context=substitution_args_context, resolve_anon=False)
 
 # Better pretty printing of xml
 # Taken from http://ronrothman.com/public/leftbraned/xml-dom-minidom-toprettyxml-and-silly-whitespace/
@@ -58,7 +63,7 @@ def fixed_writexml(self, writer, indent="", addindent="", newl=""):
     # indent = current indentation
     # addindent = indentation to add to higher levels
     # newl = newline string
-    writer.write(indent+"<" + self.tagName)
+    writer.write(indent + "<" + self.tagName)
 
     attrs = self._get_attributes()
     a_names = attrs.keys()
@@ -75,20 +80,20 @@ def fixed_writexml(self, writer, indent="", addindent="", newl=""):
             self.childNodes[0].writexml(writer, "", "", "")
             writer.write("</%s>%s" % (self.tagName, newl))
             return
-        writer.write(">%s"%(newl))
+        writer.write(">%s" % (newl))
         for node in self.childNodes:
-            if node.nodeType is not xml.dom.minidom.Node.TEXT_NODE: # 3:
-                node.writexml(writer,indent+addindent,addindent,newl) 
+            if node.nodeType is not xml.dom.minidom.Node.TEXT_NODE:  # 3:
+                node.writexml(writer, indent + addindent, addindent, newl)
                 #node.writexml(writer,indent+addindent,addindent,newl)
-        writer.write("%s</%s>%s" % (indent,self.tagName,newl))
+        writer.write("%s</%s>%s" % (indent, self.tagName, newl))
     else:
-        writer.write("/>%s"%(newl))
+        writer.write("/>%s" % (newl))
 # replace minidom's function with ours
 xml.dom.minidom.Element.writexml = fixed_writexml
 
 
 class Table:
-    def __init__(self, parent = None):
+    def __init__(self, parent=None):
         self.parent = parent
         self.table = {}
 
@@ -114,7 +119,7 @@ class QuickLexer(object):
         self.str = ""
         self.top = None
         self.res = []
-        for k,v in res.items():
+        for k, v in res.items():
             self.__setattr__(k, len(self.res))
             self.res.append(v)
 
@@ -146,6 +151,7 @@ def first_child_element(elt):
         c = c.nextSibling
     return None
 
+
 def next_sibling_element(elt):
     c = elt.nextSibling
     while c:
@@ -154,16 +160,19 @@ def next_sibling_element(elt):
         c = c.nextSibling
     return None
 
+
 # Pre-order traversal of the elements
 def next_element(elt):
     child = first_child_element(elt)
-    if child: return child
+    if child:
+        return child
     while elt and elt.nodeType == xml.dom.Node.ELEMENT_NODE:
         next = next_sibling_element(elt)
         if next:
             return next
         elt = elt.parentNode
     return None
+
 
 # Pre-order traversal of all the nodes
 def next_node(node):
@@ -175,6 +184,7 @@ def next_node(node):
         node = node.parentNode
     return None
 
+
 def child_elements(elt):
     c = elt.firstChild
     while c:
@@ -183,6 +193,8 @@ def child_elements(elt):
         c = c.nextSibling
 
 all_includes = []
+
+
 ## @throws XacroException if a parsing error occurs with an included document
 def process_includes(doc, base_dir):
     namespaces = {}
@@ -198,16 +210,17 @@ def process_includes(doc, base_dir):
                 try:
                     f = open(filename)
                 except IOError, e:
-                    print elt
+                    print(elt)
                     raise XacroException("included file \"%s\" could not be opened: %s" % (filename, str(e)))
                 try:
                     global all_includes
                     all_includes.append(filename)
                     included = parse(f)
                 except Exception, e:
-                    raise XacroException("included file [%s] generated an error during XML parsing: %s"%(filename, str(e)))
+                    raise XacroException("included file [%s] generated an error during XML parsing: %s" % (filename, str(e)))
             finally:
-                if f: f.close()
+                if f:
+                    f.close()
 
             # Replaces the include tag with the elements of the included file
             for c in child_elements(included.documentElement):
@@ -225,8 +238,9 @@ def process_includes(doc, base_dir):
         elt = next_element(previous)
 
     # Makes sure the final document declares all the namespaces of the included documents.
-    for k,v in namespaces.items():
+    for k, v in namespaces.items():
         doc.documentElement.setAttribute(k, v)
+
 
 # Returns a dictionary: { macro_name => macro_xml_block }
 def grab_macros(doc):
@@ -249,6 +263,7 @@ def grab_macros(doc):
         elt = next_element(previous)
     return macros
 
+
 # Returns a Table of the properties
 def grab_properties(doc):
     table = Table()
@@ -264,7 +279,7 @@ def grab_properties(doc):
                 value = elt.getAttribute('value')
             else:
                 name = '**' + name
-                value = elt #debug
+                value = elt  # debug
 
             bad = string.whitespace + "${}"
             has_bad = False
@@ -287,9 +302,11 @@ def grab_properties(doc):
         elt = next_element(previous)
     return table
 
+
 def eat_ignore(lex):
     while lex.peek() and lex.peek()[0] == lex.IGNORE:
         lex.next()
+
 
 def eval_lit(lex, symbols):
     eat_ignore(lex)
@@ -301,7 +318,7 @@ def eval_lit(lex, symbols):
         except KeyError, ex:
             #sys.stderr.write("Could not find symbol: %s\n" % str(ex))
             raise XacroException("Property wasn't defined: %s" % str(ex))
-        if not (isnumber(value) or isinstance(value,(str,unicode))):
+        if not (isnumber(value) or isinstance(value, (str, unicode))):
             print [value], isinstance(value, str), type(value)
             raise XacroException("WTF2")
         try:
@@ -313,10 +330,11 @@ def eval_lit(lex, symbols):
                 return value
     raise XacroException("Bad literal")
 
+
 def eval_factor(lex, symbols):
     eat_ignore(lex)
 
-    neg = 1;
+    neg = 1
     if lex.peek()[1] == '-':
         lex.next()
         neg = -1
@@ -334,6 +352,7 @@ def eval_factor(lex, symbols):
         return neg * result
 
     raise XacroException("Misplaced operator")
+
 
 def eval_term(lex, symbols):
     eat_ignore(lex)
@@ -356,6 +375,7 @@ def eval_term(lex, symbols):
             raise XacroException("WTF")
         eat_ignore(lex)
     return result
+
 
 def eval_expr(lex, symbols):
     eat_ignore(lex)
@@ -385,22 +405,23 @@ def eval_expr(lex, symbols):
 
 def eval_text(text, symbols):
     def handle_expr(s):
-        lex = QuickLexer(IGNORE = r"\s+",
-                         NUMBER = r"(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?",
-                         SYMBOL = r"[a-zA-Z_]\w*",
-                         OP = r"[\+\-\*/^]",
-                         LPAREN = r"\(",
-                         RPAREN = r"\)")
+        lex = QuickLexer(IGNORE=r"\s+",
+                         NUMBER=r"(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?",
+                         SYMBOL=r"[a-zA-Z_]\w*",
+                         OP=r"[\+\-\*/^]",
+                         LPAREN=r"\(",
+                         RPAREN=r"\)")
         lex.lex(s)
         return eval_expr(lex, symbols)
+
     def handle_extension(s):
         return eval_extension("$(%s)" % s)
 
     results = []
-    lex = QuickLexer(DOLLAR_DOLLAR_BRACE = r"\$\$+\{",
-                     EXPR = r"\$\{[^\}]*\}",
-                     EXTENSION = r"\$\([^\)]*\)",
-                     TEXT = r"([^\$]|\$[^{(]|\$$)+")
+    lex = QuickLexer(DOLLAR_DOLLAR_BRACE=r"\$\$+\{",
+                     EXPR=r"\$\{[^\}]*\}",
+                     EXTENSION=r"\$\([^\)]*\)",
+                     TEXT=r"([^\$]|\$[^{(]|\$$)+")
     lex.lex(text)
     while lex.peek():
         if lex.peek()[0] == lex.EXPR:
@@ -412,6 +433,7 @@ def eval_text(text, symbols):
         elif lex.peek()[0] == lex.DOLLAR_DOLLAR_BRACE:
             results.append(lex.next()[1][1:])
     return ''.join(map(str, results))
+
 
 # Expands macros, replaces properties, and evaluates expressions
 def eval_all(root, macros, symbols):
@@ -425,12 +447,12 @@ def eval_all(root, macros, symbols):
     while node:
         if node.nodeType == xml.dom.Node.ELEMENT_NODE:
             if node.tagName in macros:
-                body = macros[node.tagName].cloneNode(deep = True)
+                body = macros[node.tagName].cloneNode(deep=True)
                 params = body.getAttribute('params').split()
 
                 # Expands the macro
                 scoped = Table(symbols)
-                for name,value in node.attributes.items():
+                for name, value in node.attributes.items():
                     if not name in params:
                         raise XacroException("Invalid parameter \"%s\" while expanding macro \"%s\"" % \
                             (str(name), str(node.tagName)))
@@ -438,7 +460,7 @@ def eval_all(root, macros, symbols):
                     scoped[name] = eval_text(value, symbols)
 
                 # Pulls out the block arguments, in order
-                cloned = node.cloneNode(deep = True)
+                cloned = node.cloneNode(deep=True)
                 eval_all(cloned, macros, symbols)
                 block = cloned.firstChild
                 for param in params[:]:
@@ -450,7 +472,7 @@ def eval_all(root, macros, symbols):
                         params.remove(param)
                         scoped[param] = block
                         block = block.nextSibling
-                    
+
                 if params:
                     raise XacroException("Some parameters were not set for macro %s" % \
                         str(node.tagName))
@@ -497,25 +519,29 @@ def eval_all(root, macros, symbols):
         node = next_node(previous)
     return macros
 
+
 # Expands everything except includes
 def eval_self_contained(doc):
     macros = grab_macros(doc)
     symbols = grab_properties(doc)
     eval_all(doc.documentElement, macros, symbols)
 
-def print_usage(exit_code = 0):
-    print "Usage: %s [-o <output>] <input>" % 'xacro.py'
-    print "       %s --deps       Prints dependencies" % 'xacro.py'
-    print "       %s --includes   Only evalutes includes" % 'xacro.py'
+
+def print_usage(exit_code=0):
+    print("Usage: %s [-o <output>] <input>" % 'xacro.py')
+    print("       %s --deps       Prints dependencies" % 'xacro.py')
+    print("       %s --includes   Only evalutes includes" % 'xacro.py')
     sys.exit(exit_code)
+
+def set_substitution_args_context(context = {}):
+    substitution_args_context['arg'] = context
 
 
 def main():
-
     try:
         opts, args = getopt.gnu_getopt(sys.argv[1:], "ho:", ['deps', 'includes'])
     except getopt.GetoptError, err:
-        print str(err)
+        print(str(err))
         print_usage(2)
 
     just_deps = False
@@ -533,8 +559,11 @@ def main():
             just_includes = True
 
     if len(args) < 1:
-        print "No input given"
+        print("No input given")
         print_usage(2)
+
+    # Process substitution args
+    set_substitution_args_context(load_mappings(sys.argv))
 
     f = open(args[0])
     doc = None
@@ -546,10 +575,9 @@ def main():
         sys.stderr.write(" - You have the xacro xmlns declaration: " +
                          "xmlns:xacro=\"http://www.ros.org/wiki/xacro\"\n")
         sys.stderr.write("\n")
-        raise 
+        raise
     finally:
         f.close()
-
 
     process_includes(doc, os.path.dirname(sys.argv[1]))
     if just_deps:
@@ -562,16 +590,14 @@ def main():
     else:
         eval_self_contained(doc)
         banner = [xml.dom.minidom.Comment(c) for c in
-                  [" %s " % ('='*83),
+                  [" %s " % ('=' * 83),
                    " |    This document was autogenerated by xacro from %-30s | " % args[0],
                    " |    EDITING THIS FILE BY HAND IS NOT RECOMMENDED  %-30s | " % "",
-                   " %s " % ('='*83)]]
+                   " %s " % ('=' * 83)]]
         first = doc.firstChild
         for comment in banner:
             doc.insertBefore(comment, first)
 
-        output.write(doc.toprettyxml(indent = '  '))
+        output.write(doc.toprettyxml(indent='  '))
         #doc.writexml(output, newl = "\n")
         print
-
-
