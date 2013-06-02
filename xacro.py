@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Copyright (c) 2013, Willow Garage, Inc.
+# Copyright (c) 2008, Willow Garage, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,34 +27,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 # Author: Stuart Glaser
-# Maintainer: William Woodall <wwoodall@willowgarage.com>
 
-#### READ THIS! THIS FILE ONLY FOR BACKWARDS COMPATIBILITY!!!!!!
-#
-# this script is just for backwards compatibility. the roslaunch $(find ...)
-# expects the script to be in the package directory, and in catkin
-# the package direcory is the share directory. going forward, we should
-# transition to scripts/xacro
-
-from __future__ import print_function
-
-# Guard against self import
-import os
-import sys
-backup_path = list(sys.path)
-this_dir = os.path.dirname(__file__)
-# Use os.getcwd() to avoid weird symbolic link problems
-cur_dir = os.getcwd()
-os.chdir(this_dir)
-this_dir_cwd = os.getcwd()
-os.chdir(cur_dir)
-# Remove this dir from path
-sys.path = filter(lambda a: a not in [this_dir, this_dir_cwd], sys.path)
-
+import roslib; roslib.load_manifest('xacro')
 import xacro
-
-# Restore the path
-sys.path = backup_path
 
 if __name__ == '__main__':
     xacro.main()

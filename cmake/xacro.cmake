@@ -1,12 +1,5 @@
-@[if DEVELSPACE]@
-set(_xacro_py
-  @(CMAKE_CURRENT_SOURCE_DIR)/scripts/xacro.py
-)
-@[else]@
-set(_xacro_py
-  @(CMAKE_INSTALL_PREFIX)/@(CATKIN_PACKAGE_BIN_DESTINATION)/scripts/xacro.py
-)
-@[end if]@
+rosbuild_find_ros_package(xacro)
+set(_xacro_py ${xacro_PACKAGE_PATH}/xacro.py)
 
 macro(xacro_add_xacro_file input output)
   # Call out to xacro to get dependencies
