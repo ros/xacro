@@ -202,7 +202,7 @@ def process_includes(doc, base_dir):
     elt = next_element(previous)
     while elt:
         # Xacro should not use plain 'include' tags but only namespaced ones. Causes conflicts with
-        # other XML elements includeing Gazebo's SDF format
+        # other XML elements including Gazebo's <gazebo> extensions
         if elt.tagName == 'xacro:include': 
             filename = eval_text(elt.getAttribute('filename'), {})
             if not os.path.isabs(filename):
