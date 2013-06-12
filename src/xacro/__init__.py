@@ -195,7 +195,7 @@ def child_elements(elt):
 all_includes = []
 
 # Deprecated message for <include> tags that don't have <xacro:include> prepended:
-deprecated_include_msg = """DEPRECATED IN GROOVY/HYDRO:
+deprecated_include_msg = """DEPRECATED IN HYDRO:
   The <include> tag should be prepended with 'xacro' if that is the intended use 
   of it, such as <xacro:include ...>. Use the following script to fix incorrect
   xacro includes:
@@ -213,7 +213,7 @@ def process_includes(doc, base_dir):
         if elt.tagName == 'xacro:include' or elt.tagName == 'include': 
 
             is_include = True
-            # Temporary fix for ROS Groovy and Hydro and the xacro include scope problem
+            # Temporary fix for ROS Hydro and the xacro include scope problem
             if elt.tagName == 'include':
                 check_next = next_element(elt)
                 # check if there is a <uri> element within the <include> tag
