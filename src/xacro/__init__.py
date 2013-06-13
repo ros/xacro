@@ -215,10 +215,11 @@ def process_includes(doc, base_dir):
             is_include = True
             # Temporary fix for ROS Hydro and the xacro include scope problem
             if elt.tagName == 'include':
-                check_next = next_element(elt)
-                # check if there is a <uri> element within the <include> tag
-                if check_next.tagName == 'uri':
-                    # this is a correct gazebo element, so we can ignore it
+
+                # check if there is any element within the <include> tag. mostly we are concerned 
+                # with Gazebo's <uri> element, but it could be anything
+                if elt.childNodes:
+                    # this is not intended to be a xacro element, so we can ignore it
                     is_include = False
                 else:
                     # throw a deprecated warning
