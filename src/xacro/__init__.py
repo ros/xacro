@@ -217,8 +217,11 @@ def process_includes(doc, base_dir):
             if elt.tagName == 'include':
 
                 # check if there is any element within the <include> tag. mostly we are concerned 
-                # with Gazebo's <uri> element, but it could be anything
-                if elt.childNodes:
+                # with Gazebo's <uri> element, but it could be anything. also, make sure the child
+                # nodes aren't just a single Text node, which is still considered a deprecated 
+                # instance
+                if elt.childNodes and not (len(elt.childNodes) == 1 and 
+                                           elt.childNodes[0].nodeType == elt.TEXT_NODE):
                     # this is not intended to be a xacro element, so we can ignore it
                     is_include = False
                 else:
