@@ -242,24 +242,30 @@ def process_includes(doc, base_dir):
                     raise XacroException("included file \"%s\" could not be opened: %s" % (filename, str(e)))
                 try:
                     global all_includes
-                    all_includes.append(filename)
                     included = parse(f)
+
+                    # Check for inclusion guard
+                    if not (filename in all_includes and eval_text(included.documentElement.getAttribute('include-once'),{}).lower() == 'true'):
+                        all_includes.append(filename)
+
+                        # Replaces the include tag with the elements of the included file
+                        for c in child_elements(included.documentElement):
+                            elt.parentNode.insertBefore(c.cloneNode(1), elt)
+
+                        # Grabs all the declared namespaces of the included document
+                        for name, value in included.documentElement.attributes.items():
+                            if name.startswith('xmlns:'):
+                                namespaces[name] = value
+
                 except Exception, e:
                     raise XacroException("included file [%s] generated an error during XML parsing: %s" % (filename, str(e)))
             finally:
                 if f:
                     f.close()
 
-            # Replaces the include tag with the elements of the included file
-            for c in child_elements(included.documentElement):
-                elt.parentNode.insertBefore(c.cloneNode(1), elt)
+            # Remove this element
             elt.parentNode.removeChild(elt)
             elt = None
-
-            # Grabs all the declared namespaces of the included document
-            for name, value in included.documentElement.attributes.items():
-                if name.startswith('xmlns:'):
-                    namespaces[name] = value
         else:
             previous = elt
 
