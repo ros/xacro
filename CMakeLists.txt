@@ -16,5 +16,7 @@ install(PROGRAMS xacro.py DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
 install(PROGRAMS scripts/xacro DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
-## Add folders to be run by python nosetests
-catkin_add_nosetests(test)
+if(CATKIN_ENABLE_TESTING)
+  ## Add folders to be run by python nosetests
+  catkin_add_nosetests(test)
+endif()
