@@ -33,6 +33,7 @@
 from __future__ import print_function
 
 import getopt
+import glob
 import os
 import re
 import string
@@ -209,6 +210,7 @@ deprecated_include_msg = """DEPRECATED IN HYDRO:
   xacro includes:
      sed -i 's/<include/<xacro:include/g' `find . -iname *.xacro`"""
 
+include_no_matches_msg = """Include tag filename spec \"{}\" matched no files."""
 
 ## @throws XacroException if a parsing error occurs with an included document
 def process_includes(doc, base_dir):
@@ -239,37 +241,44 @@ def process_includes(doc, base_dir):
 
         # Process current element depending on previous conditions
         if is_include:
-            filename = eval_text(elt.getAttribute('filename'), {})
-            if not os.path.isabs(filename):
-                filename = os.path.join(base_dir, filename)
-            f = None
-            try:
+            filename_spec = eval_text(elt.getAttribute('filename'), {})
+            if not os.path.isabs(filename_spec):
+                filename_spec = os.path.join(base_dir, filename_spec)
+
+            if re.search('[*[?]+', filename_spec):
+                # Globbing behaviour
+                filenames = sorted(glob.glob(filename_spec))
+                if len(filenames) == 0:
+                    print(include_no_matches_msg.format(filename_spec), file=sys.stderr)
+            else:
+                # Default behaviour
+                filenames = [filename_spec]
+            
+            for filename in filenames:
+                global all_includes
+                all_includes.append(filename)
                 try:
-                    f = open(filename)
+                    with open(filename) as f:
+                        try:
+                            included = parse(f)
+                        except Exception as e:
+                            raise XacroException(
+                                "included file \"%s\" generated an error during XML parsing: %s"
+                                % (filename, str(e)))
                 except IOError as e:
                     raise XacroException("included file \"%s\" could not be opened: %s" % (filename, str(e)))
-                try:
-                    global all_includes
-                    all_includes.append(filename)
-                    included = parse(f)
-                except Exception as e:
-                    raise XacroException(
-                        "included file [%s] generated an error during XML parsing: %s" %
-                        (filename, str(e)))
-            finally:
-                if f:
-                    f.close()
 
-            # Replaces the include tag with the elements of the included file
-            for c in child_elements(included.documentElement):
-                elt.parentNode.insertBefore(c.cloneNode(1), elt)
+                # Replaces the include tag with the elements of the included file
+                for c in child_elements(included.documentElement):
+                    elt.parentNode.insertBefore(c.cloneNode(1), elt)
+
+                # Grabs all the declared namespaces of the included document
+                for name, value in included.documentElement.attributes.items():
+                    if name.startswith('xmlns:'):
+                        namespaces[name] = value
+
             elt.parentNode.removeChild(elt)
             elt = None
-
-            # Grabs all the declared namespaces of the included document
-            for name, value in included.documentElement.attributes.items():
-                if name.startswith('xmlns:'):
-                    namespaces[name] = value
         else:
             previous = elt
 
