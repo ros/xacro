@@ -1,19 +1,20 @@
 #! /usr/bin/env python
-import roslib
-roslib.load_manifest('xacro')
+
+from __future__ import print_function
 
 import sys
 import unittest
 import xacro
-from xml.dom.minidom import parse, parseString
+from xml.dom.minidom import parseString
 import xml.dom
 import os.path
 from rosgraph.names import load_mappings
 from xacro import set_substitution_args_context
 
+
 def all_attributes_match(a, b):
     if len(a.attributes) != len(b.attributes):
-        print "Different number of attributes"
+        print("Different number of attributes")
         return False
     a_atts = [(a.attributes.item(i).name, a.attributes.item(i).value) for i in range(len(a.attributes))]
     b_atts = [(b.attributes.item(i).name, b.attributes.item(i).value) for i in range(len(b.attributes))]
@@ -22,18 +23,19 @@ def all_attributes_match(a, b):
 
     for i in range(len(a_atts)):
         if a_atts[i][0] != b_atts[i][0]:
-            print "Different attribute names: %s and %s" % (a_atts[i][0], b_atts[i][0])
+            print("Different attribute names: %s and %s" % (a_atts[i][0], b_atts[i][0]))
             return False
         try:
             if abs(float(a_atts[i][1]) - float(b_atts[i][1])) > 1.0e-9:
-                print "Different attribute values: %s and %s" % (a_atts[i][1], b_atts[i][1])
+                print("Different attribute values: %s and %s" % (a_atts[i][1], b_atts[i][1]))
                 return False
-        except ValueError: # Attribute values aren't numeric
+        except ValueError:  # Attribute values aren't numeric
             if a_atts[i][1] != b_atts[i][1]:
-                print "Different attribute values: %s and %s" % (a_atts[i][1], b_atts[i][1])
+                print("Different attribute values: %s and %s" % (a_atts[i][1], b_atts[i][1]))
                 return False
 
     return True
+
 
 def elements_match(a, b):
     if not a and not b:
@@ -42,10 +44,10 @@ def elements_match(a, b):
         return False
 
     if a.nodeType != b.nodeType:
-        print "Different node types: %d and %d" % (a.nodeType, b.nodeType)
+        print("Different node types: %d and %d" % (a.nodeType, b.nodeType))
         return False
     if a.nodeName != b.nodeName:
-        print "Different element names: %s and %s" % (a.nodeName, b.nodeName)
+        print("Different element names: %s and %s" % (a.nodeName, b.nodeName))
         return False
 
     if not all_attributes_match(a, b):
@@ -56,6 +58,7 @@ def elements_match(a, b):
     if not elements_match(xacro.next_sibling_element(a), xacro.next_sibling_element(b)):
         return False
     return True
+
 
 def xml_matches(a, b):
     if isinstance(a, str):
@@ -68,13 +71,14 @@ def xml_matches(a, b):
         return xml_matches(a, b.documentElement)
 
     if not elements_match(a, b):
-        print "Match failed:"
+        print("Match failed:")
         a.writexml(sys.stdout)
         print
-        print '='*78
+        print('=' * 78)
         b.writexml(sys.stdout)
         return False
     return True
+
 
 def quick_xacro(xml):
     if isinstance(xml, str):
@@ -135,7 +139,7 @@ class TestXacro(unittest.TestCase):
         self.assertTrue(
             xml_matches(
                 quick_xacro('''<a><f v="$(find xacro)/test/test_xacro.py" /></a>'''),
-                '''<a><f v="'''+os.path.abspath(__file__)+'''" /></a>'''))
+                '''<a><f v="''' + os.path.abspath(__file__) + '''" /></a>'''))
 
     def test_substitution_args_arg(self):
         set_substitution_args_context(load_mappings(['sub_arg:=my_arg']))
@@ -209,7 +213,6 @@ class TestXacro(unittest.TestCase):
   <test number="100" />
 </a>'''))
 
-
     def test_insert_block_property(self):
         self.assertTrue(
             xml_matches(
@@ -224,7 +227,6 @@ class TestXacro(unittest.TestCase):
                 '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
 <foo><some_block /></foo>
 </a>'''))
-
 
 
 if __name__ == '__main__':
