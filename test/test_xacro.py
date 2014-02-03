@@ -228,6 +228,25 @@ class TestXacro(unittest.TestCase):
 <foo><some_block /></foo>
 </a>'''))
 
+    def test_include(self):
+        doc = parseString('''<a xmlns:xacro="http://www.ros.org/xacro">
+                             <xacro:include filename="include1.xml" /></a>''')
+        xacro.process_includes(doc, os.path.dirname(os.path.realpath(__file__)))
+        self.assertTrue(
+            xml_matches(doc, '''<a xmlns:xacro="http://www.ros.org/xacro"><foo /><bar /></a>'''))
+
+    def test_include_glob(self):
+        doc = parseString('''<a xmlns:xacro="http://www.ros.org/xacro">
+                             <xacro:include filename="include*.xml" /></a>''')
+        xacro.process_includes(doc, os.path.dirname(os.path.realpath(__file__)))
+        self.assertTrue(
+            xml_matches(doc, '<a xmlns:xacro="http://www.ros.org/xacro"><foo /><bar /><baz /></a>'))
+
+    def test_include_nonexistent(self):
+        doc = parseString('''<a xmlns:xacro="http://www.ros.org/xacro">
+                             <xacro:include filename="include-nada.xml" /></a>''')
+        self.assertRaises(xacro.XacroException,
+            xacro.process_includes, doc, os.path.dirname(os.path.realpath(__file__)))
 
 if __name__ == '__main__':
     import rostest
