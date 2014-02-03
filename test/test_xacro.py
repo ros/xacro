@@ -246,7 +246,34 @@ class TestXacro(unittest.TestCase):
         doc = parseString('''<a xmlns:xacro="http://www.ros.org/xacro">
                              <xacro:include filename="include-nada.xml" /></a>''')
         self.assertRaises(xacro.XacroException,
-            xacro.process_includes, doc, os.path.dirname(os.path.realpath(__file__)))
+                          xacro.process_includes, doc, os.path.dirname(os.path.realpath(__file__)))
+
+    def test_numeric_if_statement(self):
+        doc = parseString('''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:if value="${3*0}"/>
+  <xacro:if value="0"/>
+  <xacro:if value="1"/>
+</robot>''')
+        quick_xacro(doc)
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:if value="${3*0}">
+    <a />
+  </xacro:if>
+  <xacro:if value="0">
+    <b />
+  </xacro:if>
+  <xacro:if value="1">
+    <c />
+  </xacro:if>
+</robot>'''),
+                '''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <c />
+</robot>'''))
 
 if __name__ == '__main__':
     import rostest

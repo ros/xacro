@@ -551,6 +551,10 @@ def eval_all(root, macros, symbols):
                 node = None
             elif node.tagName == 'if' or node.tagName == 'xacro:if':
                 value = eval_text(node.getAttribute('value'), symbols)
+                try:
+                    value = int(float(value))
+                except ValueError:
+                    pass
                 if value == 1 or value == 'true':
                     for e in list(child_elements(node)):
                         cloned = node.cloneNode(deep=True)
