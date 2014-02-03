@@ -1,10 +1,10 @@
 @[if DEVELSPACE]@
 set(_xacro_py
-  @(CMAKE_CURRENT_SOURCE_DIR)/scripts/xacro.py
+  @(CMAKE_CURRENT_SOURCE_DIR)/scripts/xacro
 )
 @[else]@
 set(_xacro_py
-  @(CMAKE_INSTALL_PREFIX)/@(CATKIN_PACKAGE_BIN_DESTINATION)/scripts/xacro.py
+  @(CMAKE_INSTALL_PREFIX)/@(CATKIN_PACKAGE_BIN_DESTINATION)/xacro
 )
 @[end if]@
 
