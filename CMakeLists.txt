@@ -21,6 +21,4 @@ if(CATKIN_ENABLE_TESTING)
   catkin_add_nosetests(test)
 endif()
 
-file(GLOB ${PROJECT_NAME}_LINT_SRCS 
-  src/xacro/* scripts/* test/*.py)
-roslint_python(${${PROJECT_NAME}_LINT_SRCS})
+roslint_python()
