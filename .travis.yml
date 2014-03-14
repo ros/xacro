@@ -1,0 +1,25 @@
+language: python
+python:
+  - "2.7"
+  - "3.3"
+# command to install dependencies
+install:
+  - export CI_ROS_DISTRO=groovy
+  - pip install nose coverage pep8
+  - pip install rosdep rospkg catkin_pkg
+  - sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu precise main" > /etc/apt/sources.list.d/ros-latest.list'
+  - wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
+  - sudo apt-get update
+  - sudo `which rosdep` init
+  - rosdep update
+  - sudo apt-get install ros-$CI_ROS_DISTRO-rostest ros-$CI_ROS_DISTRO-rosbuild ros-$CI_ROS_DISTRO-roslaunch ros-$CI_ROS_DISTRO-roslang
+  - source /opt/ros/$CI_ROS_DISTRO/setup.bash
+  - export ROS_PACKAGE_PATH=`pwd`:$ROS_PACKAGE_PATH
+# command to run tests
+script:
+  - nosetests -s test/test_xacro.py
+notifications:
+  email: false
+matrix:
+  allow_failures:
+    - python: "3.3"
