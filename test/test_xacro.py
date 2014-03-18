@@ -226,6 +226,46 @@ class TestXacro(unittest.TestCase):
 </a>'''))
 
 
+    def test_numeric_if_statement(self):
+        doc = parseString('''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:if value="${3*0}"/>
+  <xacro:if value="0"/>
+  <xacro:if value="1"/>
+  <xacro:unless  value="${3*0}"/>
+  <xacro:unless value="0"/>
+  <xacro:unless value="1"/>
+</robot>''')
+        quick_xacro(doc)
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:if value="${3*0}">
+    <a />
+  </xacro:if>
+  <xacro:if value="0">
+    <b />
+  </xacro:if>
+  <xacro:if value="1">
+    <c />
+  </xacro:if>
+ <xacro:unless value="${3*0}">
+    <d />
+  </xacro:unless>
+  <xacro:unless value="0">
+    <e />
+  </xacro:unless>
+  <xacro:unless value="1">
+    <f />
+  </xacro:unless>
+</robot>'''),
+                '''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <c />
+    <d />
+    <e />
+</robot>'''))
 
 if __name__ == '__main__':
     import rostest
