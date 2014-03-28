@@ -7,7 +7,7 @@
     Xacro is an XML macro language. With xacro, you can construct shorter and more readable XML files by using macros that expand to larger XML expressions.
   </description>
 
-  <maintainer email="wwoodall@willowgarage.com">William Woodall</maintainer>
+  <maintainer email="morgan@osrfoundation.org">Morgan "codebot" Quigley</maintainer>
 
   <license>BSD</license>
 
@@ -16,6 +16,7 @@
   <url type="bugtracker">https://github.com/ros/xacro/issues</url>
 
   <author>Stuart Glaser</author>
+  <author>William Woodall</author>
 
   <buildtool_depend version_gte="0.5.68">catkin</buildtool_depend>
 
