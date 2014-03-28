@@ -212,6 +212,7 @@ deprecated_include_msg = """DEPRECATED IN HYDRO:
 
 include_no_matches_msg = """Include tag filename spec \"{}\" matched no files."""
 
+
 ## @throws XacroException if a parsing error occurs with an included document
 def process_includes(doc, base_dir):
     namespaces = {}
@@ -253,7 +254,7 @@ def process_includes(doc, base_dir):
             else:
                 # Default behaviour
                 filenames = [filename_spec]
-            
+
             for filename in filenames:
                 global all_includes
                 all_includes.append(filename)

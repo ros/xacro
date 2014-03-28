@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(xacro)
 
-find_package(catkin REQUIRED)
+find_package(catkin REQUIRED roslint)
 
 catkin_python_setup()
 
@@ -20,3 +20,5 @@ if(CATKIN_ENABLE_TESTING)
   ## Add folders to be run by python nosetests
   catkin_add_nosetests(test)
 endif()
+
+roslint_python()
