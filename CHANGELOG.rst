@@ -2,8 +2,8 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.9.0 (2014-03-28)
+------------------
 * Remove the roslint_python glob, use the default one.
 * Add roslint target to xacro; two whitespace fixes so that it passes.
 * fix evaluation of integers in if statements
