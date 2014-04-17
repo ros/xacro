@@ -4,7 +4,7 @@ set(_xacro_py
 )
 @[else]@
 set(_xacro_py
-  @(CMAKE_INSTALL_PREFIX)/@(CATKIN_PACKAGE_BIN_DESTINATION)/xacro
+  ${xacro_DIR}/../../../@(CATKIN_PACKAGE_BIN_DESTINATION)/xacro
 )
 @[end if]@
 
