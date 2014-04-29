@@ -2,8 +2,8 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.9.1 (2014-04-29)
+------------------
 * Installed xacro relocatable fix.
 
 1.9.0 (2014-03-28)
