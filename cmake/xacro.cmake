@@ -10,6 +10,9 @@ macro(xacro_add_xacro_file input output)
 
   separate_arguments(_xacro_deps_result)
 
+  add_custom_target(xacro ALL
+    DEPENDS ${output})
+
   add_custom_command(OUTPUT ${output}
     COMMAND ${_xacro_py}
     ARGS ${input} > ${output}
