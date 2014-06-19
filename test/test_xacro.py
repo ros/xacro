@@ -274,7 +274,3 @@ class TestXacro(unittest.TestCase):
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
     <c />
 </robot>'''))
-
-if __name__ == '__main__':
-    import rostest
-    rostest.unitrun('xacro', 'test_xacro', TestXacro)
