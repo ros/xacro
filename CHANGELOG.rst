@@ -2,8 +2,8 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.8.6 (2014-06-21)
+------------------
 * fix tests file so they run properly
 * Contributors: Michael Ferguson
 
