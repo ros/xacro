@@ -2,6 +2,11 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* fix tests file so they run properly
+* Contributors: Michael Ferguson
+
 1.8.5 (2014-04-29)
 ------------------
 * Installed xacro relocatable fix.
