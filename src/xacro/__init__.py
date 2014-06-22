@@ -520,8 +520,8 @@ def eval_all(root, macros, symbols):
                         block = block.nextSibling
 
                 if params:
-                    raise XacroException("Some parameters were not set for macro %s" %
-                                         str(node.tagName))
+                    raise XacroException("Parameters [%s] were not set for macro %s" %
+                                         (",".join(params), str(node.tagName)))
                 eval_all(body, macros, scoped)
 
                 # Replaces the macro node with the expansion
