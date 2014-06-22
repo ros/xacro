@@ -2,6 +2,13 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* fixup tests so they run
+* export architecture_independent flag in package.xml
+* installed relocatable fix
+* Contributors: Michael Ferguson, Mike Purvis, Scott K Logan
+
 1.9.0 (2014-03-28)
 ------------------
 * Remove the roslint_python glob, use the default one.
