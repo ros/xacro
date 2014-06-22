@@ -2,8 +2,8 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.9.1 (2014-06-21)
+------------------
 * fixup tests so they run
 * export architecture_independent flag in package.xml
 * installed relocatable fix
