@@ -362,10 +362,13 @@ def eval_lit(lex, symbols):
         return float(lex.next()[1])
     if lex.peek()[0] == lex.SYMBOL:
         try:
-            value = symbols[lex.next()[1]]
+            key = lex.next()[1]
+            value = symbols[key]
         except KeyError as ex:
             raise XacroException("Property wasn't defined: %s" % str(ex))
         if not (isnumber(value) or isinstance(value, _basestr)):
+            if value is None:
+                raise XacroException("Property %s recursively used" % key)
             raise XacroException("WTF2")
         try:
             return int(value)
@@ -373,7 +376,12 @@ def eval_lit(lex, symbols):
             try:
                 return float(value)
             except:
-                return value
+                # prevent infinite recursion
+                symbols[key] = None
+                result = eval_text(value, symbols)
+                # restore old entry
+                symbols[key] = value
+                return result
     raise XacroException("Bad literal")
 
 
