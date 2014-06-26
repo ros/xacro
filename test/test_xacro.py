@@ -288,3 +288,12 @@ class TestXacro(unittest.TestCase):
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
   <a doubled="84"/>
 </robot>'''))
+
+    def test_recursive_definition(self):
+        self.assertRaises(xacro.XacroException,
+                          quick_xacro, '''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="a" value="${a2}"/>
+  <xacro:property name="a2" value="${2*a}"/>
+  <a doubled="${a2}"/>
+</robot>''')
