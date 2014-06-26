@@ -248,7 +248,47 @@ class TestXacro(unittest.TestCase):
         self.assertRaises(xacro.XacroException,
                           xacro.process_includes, doc, os.path.dirname(os.path.realpath(__file__)))
 
-    def test_numeric_if_statement(self):
+    def test_boolean_if_statement(self):
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:if value="false">
+    <a />
+  </xacro:if>
+  <xacro:if value="true">
+    <b />
+  </xacro:if>
+</robot>'''),
+                '''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <b />
+</robot>'''))      
+
+    def test_integer_if_statement(self):
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:if value="${0*42}">
+    <a />
+  </xacro:if>
+  <xacro:if value="0">
+    <b />
+  </xacro:if>
+  <xacro:if value="${0}">
+    <c />
+  </xacro:if>
+  <xacro:if value="${1*2+3}">
+    <d />
+  </xacro:if>
+</robot>'''),
+                '''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <d />
+</robot>'''))      
+
+    def test_float_if_statement(self):
         self.assertTrue(
             xml_matches(
                 quick_xacro('''\
@@ -256,14 +296,11 @@ class TestXacro(unittest.TestCase):
   <xacro:if value="${3*0.0}">
     <a />
   </xacro:if>
-  <xacro:if value="false">
-    <b />
-  </xacro:if>
   <xacro:if value="${3*0.1}">
-    <c />
+    <b />
   </xacro:if>
 </robot>'''),
                 '''\
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-    <c />
+    <b />
 </robot>'''))
