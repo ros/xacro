@@ -274,3 +274,17 @@ class TestXacro(unittest.TestCase):
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
     <c />
 </robot>'''))
+
+    def test_recursive_evaluation(self):
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="a" value="42"/>
+  <xacro:property name="a2" value="${2*a}"/>
+  <a doubled="${a2}"/>
+</robot>'''),
+                '''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <a doubled="84"/>
+</robot>'''))
