@@ -2,8 +2,8 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.9.2 (2014-07-11)
+------------------
 * add a few more tests to exercise the symbol table a bit more
 * allow for recursive evaluation of properties in expressions
 * add useful debugging information when parameters are not set
