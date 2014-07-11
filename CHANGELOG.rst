@@ -2,6 +2,17 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* add a few more tests to exercise the symbol table a bit more
+* allow for recursive evaluation of properties in expressions
+* add useful debugging information when parameters are not set
+* stop test from failing the second time it is run
+* unified if/unless handling, correctly handle floating point expressions
+* floating point expressions not equal zero are now evaluated as True
+* changed quotes to omit cmake warning
+* Contributors: Robert Haschke, Mike Ferguson
+
 1.9.1 (2014-06-21)
 ------------------
 * fixup tests so they run
