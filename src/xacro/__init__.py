@@ -538,6 +538,17 @@ def eval_all(root, macros, symbols):
                 node.parentNode.removeChild(node)
 
                 node = None
+            elif node.tagName == 'arg' or node.tagName == 'xacro:arg':
+                name = node.getAttribute('name')
+                if not name:
+                    raise XacroException("Argument name missing")
+                default = node.getAttribute('default')
+                if default and name not in substitution_args_context['arg']:
+                    substitution_args_context['arg'][name] = default
+                
+                node.parentNode.removeChild(node)
+                node = None
+
             elif node.tagName == 'insert_block' or node.tagName == 'xacro:insert_block':
                 name = node.getAttribute('name')
 
