@@ -11,7 +11,6 @@ import os.path
 from rosgraph.names import load_mappings
 from xacro import set_substitution_args_context
 
-
 def all_attributes_match(a, b):
     if len(a.attributes) != len(b.attributes):
         print("Different number of attributes")
@@ -403,3 +402,52 @@ class TestXacro(unittest.TestCase):
   <tag badness="${1/x}"/>
 </robot>''')
 
+    def test_default_arg(self):
+        set_substitution_args_context({})
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="foo" default="2"/>
+  <link name="my_link">
+    <origin xyz="0 0 $(arg foo)"/>
+  </link>
+</robot>
+'''),'''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <link name="my_link">
+    <origin xyz="0 0 2"/>
+  </link>
+</robot>'''))
+        set_substitution_args_context({})
+
+    def test_default_arg_override(self):
+        set_substitution_args_context(load_mappings(['foo:=4']))
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="foo" default="2"/>
+  <link name="my_link">
+    <origin xyz="0 0 $(arg foo)"/>
+  </link>
+</robot>
+'''),'''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <link name="my_link">
+    <origin xyz="0 0 4"/>
+  </link>
+</robot>'''))
+        set_substitution_args_context({})
+
+    def test_default_arg_missing(self):
+        set_substitution_args_context({})
+        self.assertRaises(Exception,
+            quick_xacro, '''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <link name="my_link">
+    <origin xyz="0 0 $(arg foo)"/>
+  </link>
+</robot>
+''')
+        set_substitution_args_context({})
