@@ -11,6 +11,7 @@ import os.path
 from rosgraph.names import load_mappings
 from xacro import set_substitution_args_context
 
+
 def all_attributes_match(a, b):
     if len(a.attributes) != len(b.attributes):
         print("Different number of attributes")
