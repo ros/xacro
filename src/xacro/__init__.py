@@ -504,6 +504,19 @@ def eval_all(root, macros, symbols):
                 body = macros[node.tagName].cloneNode(deep=True)
                 params = body.getAttribute('params').split()
 
+                # Parse default values for any parameters
+                defaultmap = {}
+                for param in params[:]:
+                    splitParam = param.split(':=')
+
+                    if len(splitParam) == 2:
+                        defaultmap[splitParam[0]] = splitParam[1]
+                        params.remove(param)
+                        params.append(splitParam[0])
+                        
+                    elif len(splitParam) != 1:
+                        raise XacroException("Invalid parameter definition")
+
                 # Expands the macro
                 scoped = Table(symbols)
                 for name, value in node.attributes.items():
@@ -526,6 +539,12 @@ def eval_all(root, macros, symbols):
                         params.remove(param)
                         scoped[param] = block
                         block = block.nextSibling
+
+                # Try to load defaults for any remaining non-block parameters
+                for param in params[:]:
+                    if param[0] != '*' and param in defaultmap:
+                        scoped[param] = defaultmap[param]
+                        params.remove(param)
 
                 if params:
                     raise XacroException("Parameters [%s] were not set for macro %s" %

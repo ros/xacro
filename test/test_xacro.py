@@ -412,3 +412,73 @@ class TestXacro(unittest.TestCase):
                 xml.dom.minidom.parse("robots/pr2/pr2_1.11.4.xml"),
                 xml.dom.minidom.parse("/tmp/xacro_test_pr2_1.11.4.xml")))
 
+    def test_default_param(self):
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="fixed_link" params="parent_link:=base_link child_link *joint_pose">
+    <link name="${child_link}"/>
+    <joint name="${child_link}_joint" type="fixed">
+      <xacro:insert_block name="joint_pose" />
+      <parent link="${parent_link}"/>
+      <child link="${child_link}" />
+    </joint>
+  </xacro:macro>
+  <xacro:fixed_link child_link="foo">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </xacro:fixed_link >
+</robot>'''), 
+                '''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <link name="foo"/>
+  <joint name="foo_joint" type="fixed">
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="foo"/>
+  </joint>
+</robot>'''))
+
+    def test_default_param_override(self):
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="fixed_link" params="parent_link:=base_link child_link *joint_pose">
+    <link name="${child_link}"/>
+    <joint name="${child_link}_joint" type="fixed">
+      <xacro:insert_block name="joint_pose" />
+      <parent link="${parent_link}"/>
+      <child link="${child_link}" />
+    </joint>
+  </xacro:macro>
+  <xacro:fixed_link child_link="foo" parent_link="bar">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </xacro:fixed_link >
+</robot>'''), 
+                '''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <link name="foo"/>
+  <joint name="foo_joint" type="fixed">
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <parent link="bar"/>
+    <child link="foo"/>
+  </joint>
+</robot>'''))
+
+    def test_param_missing(self):
+        self.assertRaises(xacro.XacroException,
+                          quick_xacro, '''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="fixed_link" params="parent_link child_link *joint_pose">
+    <link name="${child_link}"/>
+    <joint name="${child_link}_joint" type="fixed">
+      <xacro:insert_block name="joint_pose" />
+      <parent link="${parent_link}"/>
+      <child link="${child_link}" />
+    </joint>
+  </xacro:macro>
+  <xacro:fixed_link child_link="foo">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </xacro:fixed_link >
+</robot>''')
