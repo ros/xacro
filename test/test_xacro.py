@@ -482,3 +482,53 @@ class TestXacro(unittest.TestCase):
     <origin xyz="0 0 0" rpy="0 0 0" />
   </xacro:fixed_link >
 </robot>''')
+
+    def test_default_arg(self):
+        set_substitution_args_context({})
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="foo" default="2"/>
+  <link name="my_link">
+    <origin xyz="0 0 $(arg foo)"/>
+  </link>
+</robot>
+'''),'''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <link name="my_link">
+    <origin xyz="0 0 2"/>
+  </link>
+</robot>'''))
+        set_substitution_args_context({})
+
+    def test_default_arg_override(self):
+        set_substitution_args_context(load_mappings(['foo:=4']))
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="foo" default="2"/>
+  <link name="my_link">
+    <origin xyz="0 0 $(arg foo)"/>
+  </link>
+</robot>
+'''),'''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <link name="my_link">
+    <origin xyz="0 0 4"/>
+  </link>
+</robot>'''))
+        set_substitution_args_context({})
+
+    def test_default_arg_missing(self):
+        set_substitution_args_context({})
+        self.assertRaises(Exception,
+            quick_xacro, '''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <link name="my_link">
+    <origin xyz="0 0 $(arg foo)"/>
+  </link>
+</robot>
+''')
+        set_substitution_args_context({})
