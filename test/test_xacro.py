@@ -8,6 +8,8 @@ import xacro
 from xml.dom.minidom import parseString
 import xml.dom
 import os.path
+import tempfile
+import subprocess
 from rosgraph.names import load_mappings
 from xacro import set_substitution_args_context
 
@@ -405,12 +407,15 @@ class TestXacro(unittest.TestCase):
 
     def test_pr2(self):
         # run xacro on the pr2 tree snapshot
-        if os.system("python ../xacro.py robots/pr2/pr2.urdf.xacro > /tmp/xacro_test_pr2_1.11.4.xml"):
+        proc = subprocess.Popen(['python','../xacro.py','robots/pr2/pr2.urdf.xacro'],
+                                stdout=subprocess.PIPE)
+        output, errcode = proc.communicate()
+        if errcode:
             raise Exception("xacro couldn't process the pr2 snapshot test case")
         self.assertTrue(
             xml_matches(
                 xml.dom.minidom.parse("robots/pr2/pr2_1.11.4.xml"),
-                xml.dom.minidom.parse("/tmp/xacro_test_pr2_1.11.4.xml")))
+                quick_xacro(output)))
 
     def test_default_param(self):
         self.assertTrue(
