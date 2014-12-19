@@ -403,3 +403,12 @@ class TestXacro(unittest.TestCase):
   <tag badness="${1/x}"/>
 </robot>''')
 
+    def test_pr2(self):
+        # run xacro on the pr2 tree snapshot
+        if os.system("python ../xacro.py robots/pr2/pr2.urdf.xacro > /tmp/xacro_test_pr2_1.11.4.xml"):
+            raise Exception("xacro couldn't process the pr2 snapshot test case")
+        self.assertTrue(
+            xml_matches(
+                xml.dom.minidom.parse("robots/pr2/pr2_1.11.4.xml"),
+                xml.dom.minidom.parse("/tmp/xacro_test_pr2_1.11.4.xml")))
+
