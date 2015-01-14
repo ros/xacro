@@ -2,8 +2,8 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.9.3 (2015-01-14)
+------------------
 * merge test cases
 * add a snapshot of the pr2 model to the test directory. add a test case which verifies that the pr2 model is parsed equal to a 'golden' parse of it.
 * add more tests
