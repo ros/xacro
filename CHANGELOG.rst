@@ -2,6 +2,17 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* merge test cases
+* add a snapshot of the pr2 model to the test directory. add a test case which verifies that the pr2 model is parsed equal to a 'golden' parse of it.
+* add more tests
+* add default arg tests
+* Allow default values for substitution args
+* Fix up comments
+* Allow xacro macros to have default parameters
+* Contributors: Paul Bovbel, Morgan Quigley
+
 1.9.2 (2014-07-11)
 ------------------
 * add a few more tests to exercise the symbol table a bit more
