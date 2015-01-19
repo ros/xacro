@@ -637,6 +637,11 @@ def print_usage(exit_code=0):
 def set_substitution_args_context(context={}):
     substitution_args_context['arg'] = context
 
+def open_output(output_filename):
+    if output_filename is None:
+        return sys.stdout
+    else:
+        return open(output_filename, 'w') 
 
 def main():
     try:
@@ -648,12 +653,12 @@ def main():
     just_deps = False
     just_includes = False
 
-    output = sys.stdout
+    output_filename = None
     for o, a in opts:
         if o == '-h':
             print_usage(0)
         elif o == '-o':
-            output = open(a, 'w')
+            output_filename = a 
         elif o == '--deps':
             just_deps = True
         elif o == '--includes':
@@ -686,7 +691,7 @@ def main():
             sys.stdout.write(inc + " ")
         sys.stdout.write("\n")
     elif just_includes:
-        doc.writexml(output)
+        doc.writexml(open_output(output_filename))
         print()
     else:
         eval_self_contained(doc)
@@ -699,5 +704,5 @@ def main():
         for comment in banner:
             doc.insertBefore(comment, first)
 
-        output.write(doc.toprettyxml(indent='  '))
+        open_output(output_filename).write(doc.toprettyxml(indent='  '))
         print()
