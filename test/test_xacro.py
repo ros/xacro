@@ -9,6 +9,7 @@ from xml.dom.minidom import parseString
 import xml.dom
 import os.path
 import tempfile
+import shutil
 import subprocess
 from rosgraph.names import load_mappings
 from xacro import set_substitution_args_context
@@ -537,3 +538,14 @@ class TestXacro(unittest.TestCase):
 </robot>
 ''')
         set_substitution_args_context({})
+
+    def test_broken_input_doesnt_create_empty_output_file(self):
+        # run xacro on broken input file to make sure we don't create an
+        # empty output file
+        tmp_dir_name = tempfile.mkdtemp() # create directory we can trash
+        output_path = os.path.join(tmp_dir_name, "should_not_exist")
+        errcode = subprocess.call(['python','../xacro.py','broken.xacro',
+                                   '-o', output_path])
+        output_file_created = os.path.isfile(output_path)
+        shutil.rmtree(tmp_dir_name) # clean up after ourselves
+        self.assertFalse(output_file_created)
