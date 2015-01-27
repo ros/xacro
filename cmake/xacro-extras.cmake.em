@@ -18,7 +18,7 @@ macro(xacro_add_xacro_file input output)
   separate_arguments(_xacro_deps_result)
 
   add_custom_command(OUTPUT ${output}
-    COMMAND ${_xacro_py}
+    COMMAND ${CATKIN_ENV} ${_xacro_py}
     ARGS ${input} -o ${output}
     DEPENDS ${input} ${_xacro_deps_result})
 endmacro(xacro_add_xacro_file)

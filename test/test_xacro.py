@@ -408,14 +408,20 @@ class TestXacro(unittest.TestCase):
 
     def test_pr2(self):
         # run xacro on the pr2 tree snapshot
-        proc = subprocess.Popen(['python','../xacro.py','robots/pr2/pr2.urdf.xacro'],
+        test_dir= os.path.abspath(os.path.dirname(__file__))
+        xacro_path = os.path.join(test_dir, '..', 'xacro.py')
+        pr2_xacro_path = os.path.join(test_dir, 'robots', 'pr2', 
+                                      'pr2.urdf.xacro')
+        proc = subprocess.Popen([xacro_path, pr2_xacro_path],
                                 stdout=subprocess.PIPE)
         output, errcode = proc.communicate()
         if errcode:
             raise Exception("xacro couldn't process the pr2 snapshot test case")
+        pr2_golden_parse_path = os.path.join(test_dir, 'robots', 'pr2', 
+                                             'pr2_1.11.4.xml')
         self.assertTrue(
             xml_matches(
-                xml.dom.minidom.parse("robots/pr2/pr2_1.11.4.xml"),
+                xml.dom.minidom.parse(pr2_golden_parse_path),
                 quick_xacro(output)))
 
     def test_default_param(self):
@@ -543,8 +549,11 @@ class TestXacro(unittest.TestCase):
         # run xacro on broken input file to make sure we don't create an
         # empty output file
         tmp_dir_name = tempfile.mkdtemp() # create directory we can trash
+        test_dir = os.path.abspath(os.path.dirname(__file__))
         output_path = os.path.join(tmp_dir_name, "should_not_exist")
-        errcode = subprocess.call(['python','../xacro.py','broken.xacro',
+        xacro_path = os.path.join(test_dir, '..', 'xacro.py')
+        broken_file_path = os.path.join(test_dir, 'broken.xacro')
+        errcode = subprocess.call([xacro_path, broken_file_path,
                                    '-o', output_path])
         output_file_created = os.path.isfile(output_path)
         shutil.rmtree(tmp_dir_name) # clean up after ourselves
