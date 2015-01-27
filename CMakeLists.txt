@@ -9,7 +9,7 @@ catkin_package(
   CFG_EXTRAS xacro-extras.cmake
 )
 
-# this script is just for backwards compatibility. the roslaunch $(find ...) 
+# this script is just for backwards compatibility. the roslaunch $(find ...)
 # expects the script to be in the package directory, and in catkin
 # the package direcory is the share directory
 install(PROGRAMS xacro.py DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
