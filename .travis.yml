@@ -1,7 +1,6 @@
 language: python
 python:
-  - "2.7"
-  - "3.3"
+  - "2.7_with_system_site_packages"
 # command to install dependencies
 install:
   - pip install nose coverage pep8
@@ -9,14 +8,17 @@ install:
   - sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu precise main" > /etc/apt/sources.list.d/ros-latest.list'
   - wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
   - sudo apt-get update
-  - sudo apt-get install ros-hydro-roslaunch ros-hydro-rostest
+  - sudo apt-get install ros-hydro-catkin ros-hydro-roslaunch ros-hydro-rostest ros-hydro-roslint
   - source /opt/ros/hydro/setup.bash
   - export ROS_PACKAGE_PATH=`pwd`:$ROS_PACKAGE_PATH
 # command to run tests
 script:
-  - nosetests -s test/test_xacro.py
+  - mkdir build
+  - cd build
+  - cmake ..
+  - make
+  - make run_tests
+  - catkin_test_results --all ./
+  - sudo make install
 notifications:
   email: false
-matrix:
-  allow_failures:
-    - python: "3.3"
