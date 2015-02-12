@@ -489,6 +489,24 @@ def eval_text(text, symbols):
             results.append(lex.next()[1][1:])
     return ''.join(map(str, results))
 
+# Assuming a node xacro:call, this function resolves the final macro name and
+# adapts the node's tagName accordingly to pretend a call for this macro
+def handle_dynamic_macro_name(node, macros, symbols):
+    if node.tagName in macros:
+        print ("DEPRECATED use of macro name 'call'. xacro:call became a new keyword.", file=sys.stderr)
+        return
+
+    name = node.getAttribute('macro')
+    if name == None:
+        raise XacroException("xacro:call is missing the 'macro' attribute")
+
+    name = eval_text(name, symbols)
+    if name not in macros:
+        raise XacroException("unknown macro name '%s' in xacro:call" % name)
+
+    # finally remove 'macro' attribute and replace tagName for the resolved macro name
+    node.removeAttribute('macro')
+    node.tagName = name
 
 # Expands macros, replaces properties, and evaluates expressions
 def eval_all(root, macros, symbols):
@@ -501,6 +519,9 @@ def eval_all(root, macros, symbols):
     node = next_node(previous)
     while node:
         if node.nodeType == xml.dom.Node.ELEMENT_NODE:
+            if node.tagName in ['xacro:call']:
+                handle_dynamic_macro_name(node, macros, symbols)
+
             if node.tagName in macros:
                 body = macros[node.tagName].cloneNode(deep=True)
                 params = body.getAttribute('params').split()

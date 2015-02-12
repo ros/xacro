@@ -145,6 +145,28 @@ class TestMatchXML(unittest.TestCase):
 
 class TestXacro(unittest.TestCase):
 
+    def test_dynamic_macro_names(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="foo"><a>foo</a></xacro:macro>
+  <xacro:macro name="bar"><b>bar</b></xacro:macro>
+  <xacro:property name="var" value="%s"/>
+  <xacro:call macro="${var}"/></a>'''
+        res = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">%s</a>'''
+        self.assertTrue(xml_matches(quick_xacro(src % "foo"), res % "<a>foo</a>"))
+        self.assertTrue(xml_matches(quick_xacro(src % "bar"), res % "<b>bar</b>"))
+
+    def test_dynamic_macro_name_clash(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="foo"><a name="foo"/></xacro:macro>
+  <xacro:macro name="call"><a name="bar"/></xacro:macro>
+  <xacro:call/></a>'''
+        # for now we only issue a deprecated warning and expect the old behaviour
+        # resolving macro "call"
+        res = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro"><a name="bar"/></a>'''
+        # new behaviour would be to resolve to foo of course
+        # res = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro"><a name="foo"/></a>'''
+        self.assertTrue(xml_matches(quick_xacro(src), res))
+
     def test_DEPRECATED_should_replace_before_macroexpand(self):
         self.assertTrue(
             xml_matches(
