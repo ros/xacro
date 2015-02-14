@@ -50,7 +50,7 @@ def text_matches(a, b):
     return False
 
 def nodes_match(a, b):
-    ignore = [xml.dom.Node.COMMENT_NODE]
+    ignore = [] # list of node type to ignore
     if not a and not b:
         return True
     if not a or not b:
