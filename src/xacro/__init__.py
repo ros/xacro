@@ -196,11 +196,10 @@ def next_node(node):
     return None
 
 
-def child_elements(elt):
+def child_nodes(elt):
     c = elt.firstChild
     while c:
-        if c.nodeType == xml.dom.Node.ELEMENT_NODE:
-            yield c
+        yield c
         c = c.nextSibling
 
 all_includes = []
@@ -272,8 +271,8 @@ def process_includes(doc, base_dir):
                     raise XacroException("included file \"%s\" could not be opened: %s" % (filename, str(e)))
 
                 # Replaces the include tag with the elements of the included file
-                for c in child_elements(included.documentElement):
-                    elt.parentNode.insertBefore(c.cloneNode(1), elt)
+                for c in child_nodes(included.documentElement):
+                    elt.parentNode.insertBefore(c.cloneNode(deep=True), elt)
 
                 # Grabs all the declared namespaces of the included document
                 for name, value in included.documentElement.attributes.items():
@@ -554,7 +553,7 @@ def eval_all(root, macros, symbols):
                 eval_all(body, macros, scoped)
 
                 # Replaces the macro node with the expansion
-                for e in list(child_elements(body)):  # Ew
+                for e in list(child_nodes(body)):  # Ew
                     node.parentNode.insertBefore(e, node)
                 node.parentNode.removeChild(node)
 
@@ -577,7 +576,7 @@ def eval_all(root, macros, symbols):
                     # Multi-block
                     block = symbols['**' + name]
 
-                    for e in list(child_elements(block)):
+                    for e in list(child_nodes(block)):
                         node.parentNode.insertBefore(e.cloneNode(deep=True), node)
                     node.parentNode.removeChild(node)
                 elif ("*" + name) in symbols:
@@ -600,10 +599,8 @@ def eval_all(root, macros, symbols):
                     raise XacroException("Xacro conditional evaluated to \"%s\". Acceptable evaluations are one of [\"1\",\"true\",\"0\",\"false\"]" % value)
                 if node.tagName in ['unless', 'xacro:unless']: keep = not keep
                 if keep:
-                    for e in list(child_elements(node)):
-                        cloned = node.cloneNode(deep=True)
-                        eval_all(cloned, macros, symbols)
-                        node.parentNode.insertBefore(e, node)
+                    for e in list(child_nodes(node)):
+                        node.parentNode.insertBefore(e.cloneNode(deep=True), node)
 
                 node.parentNode.removeChild(node)
             else:

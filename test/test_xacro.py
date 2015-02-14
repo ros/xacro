@@ -384,6 +384,8 @@ class TestXacro(unittest.TestCase):
   <xacro:insert_block name="block" />
 </xacro:macro>
 <xacro:foo>
+  <!-- ignored comment -->
+  ignored text
   <a_block />
 </xacro:foo>
 </a>'''),
