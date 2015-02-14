@@ -50,6 +50,7 @@ def text_matches(a, b):
     return False
 
 def nodes_match(a, b):
+    ignore = [xml.dom.Node.COMMENT_NODE]
     if not a and not b:
         return True
     if not a or not b:
@@ -82,11 +83,13 @@ def nodes_match(a, b):
     while a or b:
         # ignore whitespace-only text nodes
         # we could have several text nodes in a row, due to replacements
-        while (a and a.nodeType == xml.dom.Node.TEXT_NODE and
-               whitespace.sub('', a.data) == ""):
+        while (a and 
+               ((a.nodeType in ignore) or 
+                (a.nodeType == xml.dom.Node.TEXT_NODE and whitespace.sub('', a.data) == ""))):
             a = a.nextSibling
-        while (b and b.nodeType == xml.dom.Node.TEXT_NODE and
-            whitespace.sub('', b.data) == ""):
+        while (b and 
+               ((b.nodeType in ignore) or 
+                (b.nodeType == xml.dom.Node.TEXT_NODE and whitespace.sub('', b.data) == ""))):
             b = b.nextSibling
 
         if not nodes_match(a, b):
