@@ -122,11 +122,11 @@ def xml_matches(a, b):
     return True
 
 
-def quick_xacro(xml):
+def quick_xacro(xml, inorder=False):
     if isinstance(xml, str):
         doc = parseString(xml)
-        return quick_xacro(doc)
-    xacro.eval_self_contained(xml)
+        return quick_xacro(doc, inorder)
+    xacro.eval_self_contained(xml, inorder)
     return xml
 
 
@@ -166,6 +166,41 @@ class TestXacro(unittest.TestCase):
         # new behaviour would be to resolve to foo of course
         # res = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro"><a name="foo"/></a>'''
         self.assertTrue(xml_matches(quick_xacro(src), res))
+
+    def test_inorder_processing(self):
+        src = '''<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <property name="foo" value="1.0"/>
+  <property name="mount" value="base1"/>
+  <xacro:macro name="ee" params="side *origin">
+    <link name="${side}_base1"> <insert_block name="origin"/> </link>
+  </xacro:macro>
+  <xacro:ee side="left"> <origin>1 ${foo}</origin> </xacro:ee>
+  <joint name="mount" type="fixed"> <child link="${mount}"/> </joint>
+
+  <property name="foo" value="3.0"/>
+  <property name="mount" value="base2"/>
+  <xacro:macro name="ee" params="side *origin">
+    <link name="${side}_base2"> <insert_block name="origin"/> </link>
+  </xacro:macro>
+  <xacro:ee side="right"> <origin>2 ${foo}</origin> </xacro:ee>
+  <joint name="mount" type="fixed"> <child link="${mount}"/> </joint>
+</robot>'''
+        old = '''<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <link name="left_base2"> <origin>1 3.0</origin> </link>
+  <joint name="mount" type="fixed"> <child link="base2"/> </joint>
+
+  <link name="right_base2"> <origin>2 3.0</origin> </link>
+  <joint name="mount" type="fixed"> <child link="base2"/> </joint>
+</robot>'''
+        inOrder = '''<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <link name="left_base1"> <origin>1 1.0</origin> </link>
+  <joint name="mount" type="fixed"> <child link="base1"/> </joint>
+
+  <link name="right_base2"> <origin>2 3.0</origin> </link>
+  <joint name="mount" type="fixed"> <child link="base2"/> </joint>
+</robot>'''
+        self.assertTrue(xml_matches(quick_xacro(src, False), old))
+        self.assertTrue(xml_matches(quick_xacro(src, True), inOrder))
 
     def test_DEPRECATED_should_replace_before_macroexpand(self):
         self.assertTrue(

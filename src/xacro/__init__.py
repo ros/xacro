@@ -203,6 +203,7 @@ def child_nodes(elt):
         c = c.nextSibling
 
 all_includes = []
+basedir="."
 
 # Deprecated message for <include> tags that don't have <xacro:include> prepended:
 deprecated_include_msg = """DEPRECATED IN HYDRO:
@@ -214,82 +215,93 @@ deprecated_include_msg = """DEPRECATED IN HYDRO:
 include_no_matches_msg = """Include tag filename spec \"{}\" matched no files."""
 
 
-## @throws XacroException if a parsing error occurs with an included document
-def process_includes(doc, base_dir):
+def is_include(elt):
+    # Xacro should not use plain 'include' tags but only namespaced ones. Causes conflicts with
+    # other XML elements including Gazebo's <gazebo> extensions
+    if elt.tagName not in ['xacro:include', 'include']: return False
+
+    # Temporary fix for ROS Hydro and the xacro include scope problem
+    if elt.tagName == 'include':
+        # check if there is any element within the <include> tag. mostly we are concerned
+        # with Gazebo's <uri> element, but it could be anything. also, make sure the child
+        # nodes aren't just a single Text node, which is still considered a deprecated
+        # instance
+        if elt.childNodes and not (len(elt.childNodes) == 1 and
+                                   elt.childNodes[0].nodeType == elt.TEXT_NODE):
+            # this is not intended to be a xacro element, so we can ignore it
+            return False
+        else:
+            # throw a deprecated warning
+            print(deprecated_include_msg, file=sys.stderr)
+    return True
+
+def process_include(elt):
     namespaces = {}
+    filename_spec = eval_text(elt.getAttribute('filename'), {})
+    if not os.path.isabs(filename_spec):
+        filename_spec = os.path.join(basedir, filename_spec)
+
+    if re.search('[*[?]+', filename_spec):
+        # Globbing behaviour
+        filenames = sorted(glob.glob(filename_spec))
+        if len(filenames) == 0:
+            print(include_no_matches_msg.format(filename_spec), file=sys.stderr)
+    else:
+        # Default behaviour
+        filenames = [filename_spec]
+
+    for filename in filenames:
+        global all_includes
+        all_includes.append(filename)
+        try:
+            with open(filename) as f:
+                try:
+                    included = parse(f)
+                except Exception as e:
+                    raise XacroException(
+                        "included file \"%s\" generated an error during XML parsing: %s"
+                        % (filename, str(e)))
+        except IOError as e:
+            raise XacroException("included file \"%s\" could not be opened: %s" % (filename, str(e)))
+
+        # Replaces the include tag with the nodes of the included file
+        for c in child_nodes(included.documentElement):
+            elt.parentNode.insertBefore(c.cloneNode(deep=True), elt)
+
+        # Grabs all the declared namespaces of the included document
+        for name, value in included.documentElement.attributes.items():
+            if name.startswith('xmlns:'):
+                namespaces[name] = value
+
+    # Makes sure the final document declares all the namespaces of the included documents.
+    for k, v in namespaces.items():
+        elt.parentNode.setAttribute(k, v)
+
+    elt.parentNode.removeChild(elt)
+
+## @throws XacroException if a parsing error occurs with an included document
+def process_includes(doc, dir=None):
+    global basedir
+    if dir: basedir = dir
+
     previous = doc.documentElement
     elt = next_element(previous)
     while elt:
-        # Xacro should not use plain 'include' tags but only namespaced ones. Causes conflicts with
-        # other XML elements including Gazebo's <gazebo> extensions
-        is_include = False
-        if elt.tagName == 'xacro:include' or elt.tagName == 'include':
-
-            is_include = True
-            # Temporary fix for ROS Hydro and the xacro include scope problem
-            if elt.tagName == 'include':
-
-                # check if there is any element within the <include> tag. mostly we are concerned
-                # with Gazebo's <uri> element, but it could be anything. also, make sure the child
-                # nodes aren't just a single Text node, which is still considered a deprecated
-                # instance
-                if elt.childNodes and not (len(elt.childNodes) == 1 and
-                                           elt.childNodes[0].nodeType == elt.TEXT_NODE):
-                    # this is not intended to be a xacro element, so we can ignore it
-                    is_include = False
-                else:
-                    # throw a deprecated warning
-                    print(deprecated_include_msg, file=sys.stderr)
-
-        # Process current element depending on previous conditions
-        if is_include:
-            filename_spec = eval_text(elt.getAttribute('filename'), {})
-            if not os.path.isabs(filename_spec):
-                filename_spec = os.path.join(base_dir, filename_spec)
-
-            if re.search('[*[?]+', filename_spec):
-                # Globbing behaviour
-                filenames = sorted(glob.glob(filename_spec))
-                if len(filenames) == 0:
-                    print(include_no_matches_msg.format(filename_spec), file=sys.stderr)
-            else:
-                # Default behaviour
-                filenames = [filename_spec]
-
-            for filename in filenames:
-                global all_includes
-                all_includes.append(filename)
-                try:
-                    with open(filename) as f:
-                        try:
-                            included = parse(f)
-                        except Exception as e:
-                            raise XacroException(
-                                "included file \"%s\" generated an error during XML parsing: %s"
-                                % (filename, str(e)))
-                except IOError as e:
-                    raise XacroException("included file \"%s\" could not be opened: %s" % (filename, str(e)))
-
-                # Replaces the include tag with the elements of the included file
-                for c in child_nodes(included.documentElement):
-                    elt.parentNode.insertBefore(c.cloneNode(deep=True), elt)
-
-                # Grabs all the declared namespaces of the included document
-                for name, value in included.documentElement.attributes.items():
-                    if name.startswith('xmlns:'):
-                        namespaces[name] = value
-
-            elt.parentNode.removeChild(elt)
-            elt = None
+        if is_include(elt):
+            process_include(elt)
         else:
             previous = elt
 
         elt = next_element(previous)
 
-    # Makes sure the final document declares all the namespaces of the included documents.
-    for k, v in namespaces.items():
-        doc.documentElement.setAttribute(k, v)
+def grab_macro(elt, macros):
+    if elt.tagName not in ['macro', 'xacro:macro']: 
+        raise XacroException("expected macro element")
 
+    name = elt.getAttribute('name')
+    macros[name] = elt
+    macros['xacro:' + name] = elt
+    elt.parentNode.removeChild(elt)
 
 # Returns a dictionary: { macro_name => macro_xml_block }
 def grab_macros(doc):
@@ -299,19 +311,40 @@ def grab_macros(doc):
     elt = next_element(previous)
     while elt:
         if elt.tagName == 'macro' or elt.tagName == 'xacro:macro':
-            name = elt.getAttribute('name')
-
-            macros[name] = elt
-            macros['xacro:' + name] = elt
-
-            elt.parentNode.removeChild(elt)
-            elt = None
+            grab_macro(elt, macros)
         else:
             previous = elt
 
         elt = next_element(previous)
     return macros
 
+def grab_property(elt, table):
+    if elt.tagName not in ['property', 'xacro:property']: 
+        raise XacroException("expected property element")
+
+    name = elt.getAttribute('name')
+    value = None
+
+    if elt.hasAttribute('value'):
+        value = elt.getAttribute('value')
+    else:
+        name = '**' + name
+        value = elt  # debug
+
+    bad = string.whitespace + "${}"
+    has_bad = False
+    for b in bad:
+        if b in name:
+            has_bad = True
+            break
+
+    if has_bad:
+        sys.stderr.write('Property names may not have whitespace, ' +
+                         '"{", "}", or "$" : "' + name + '"')
+    else:
+        table[name] = value
+
+    elt.parentNode.removeChild(elt)
 
 # Returns a Table of the properties
 def grab_properties(doc):
@@ -321,30 +354,7 @@ def grab_properties(doc):
     elt = next_element(previous)
     while elt:
         if elt.tagName == 'property' or elt.tagName == 'xacro:property':
-            name = elt.getAttribute('name')
-            value = None
-
-            if elt.hasAttribute('value'):
-                value = elt.getAttribute('value')
-            else:
-                name = '**' + name
-                value = elt  # debug
-
-            bad = string.whitespace + "${}"
-            has_bad = False
-            for b in bad:
-                if b in name:
-                    has_bad = True
-                    break
-
-            if has_bad:
-                sys.stderr.write('Property names may not have whitespace, ' +
-                                 '"{", "}", or "$" : "' + name + '"')
-            else:
-                table[name] = value
-
-            elt.parentNode.removeChild(elt)
-            elt = None
+            grab_property(elt, table)
         else:
             previous = elt
 
@@ -509,7 +519,7 @@ def handle_dynamic_macro_name(node, macros, symbols):
     node.tagName = name
 
 # Expands macros, replaces properties, and evaluates expressions
-def eval_all(root, macros, symbols):
+def eval_all(root, macros={}, symbols=Table()):
     # Evaluates the attributes for the root node
     for at in root.attributes.items():
         result = eval_text(at[1], symbols)
@@ -519,6 +529,21 @@ def eval_all(root, macros, symbols):
     node = next_node(previous)
     while node:
         if node.nodeType == xml.dom.Node.ELEMENT_NODE:
+            if is_include(node):
+                process_include(node)
+                node = next_node(previous)
+                continue
+
+            if node.tagName in ['property', 'xacro:property']:
+                grab_property(node, symbols)
+                node = next_node(previous)
+                continue
+
+            if node.tagName in ['macro', 'xacro:macro']:
+                grab_macro(node, macros)
+                node = next_node(previous)
+                continue
+
             if node.tagName in ['xacro:call']:
                 handle_dynamic_macro_name(node, macros, symbols)
 
@@ -621,7 +646,7 @@ def eval_all(root, macros, symbols):
                 if node.tagName in ['unless', 'xacro:unless']: keep = not keep
                 if keep:
                     for e in list(child_nodes(node)):
-                        node.parentNode.insertBefore(e.cloneNode(deep=True), node)
+                        node.parentNode.insertBefore(e, node)
 
                 node.parentNode.removeChild(node)
             else:
@@ -640,10 +665,16 @@ def eval_all(root, macros, symbols):
     return macros
 
 
-# Expands everything except includes
-def eval_self_contained(doc):
-    macros = grab_macros(doc)
-    symbols = grab_properties(doc)
+def eval_self_contained(doc, in_order=False):
+    if not in_order:
+        # process includes, macros, and properties before evaluating stuff
+        process_includes(doc)
+        macros = grab_macros(doc)
+        symbols = grab_properties(doc)
+    else:
+        macros  = {}
+        symbols = {}
+
     eval_all(doc.documentElement, macros, symbols)
 
 
@@ -664,14 +695,18 @@ def open_output(output_filename):
         return open(output_filename, 'w') 
 
 def main():
+    global basedir
+
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "ho:", ['deps', 'includes'])
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "ho:", 
+                                       ['deps', 'includes', 'inorder'])
     except getopt.GetoptError as err:
         print(str(err))
         print_usage(2)
 
     just_deps = False
     just_includes = False
+    in_order = False
 
     output_filename = None
     for o, a in opts:
@@ -683,6 +718,8 @@ def main():
             just_deps = True
         elif o == '--includes':
             just_includes = True
+        elif o == '--inorder':
+            in_order = True
 
     if len(args) < 1:
         print("No input given")
@@ -705,24 +742,27 @@ def main():
     finally:
         f.close()
 
-    process_includes(doc, os.path.dirname(args[0]))
-    if just_deps:
-        for inc in all_includes:
-            sys.stdout.write(inc + " ")
-        sys.stdout.write("\n")
-    elif just_includes:
-        doc.writexml(open_output(output_filename))
-        print()
-    else:
-        eval_self_contained(doc)
-        banner = [xml.dom.minidom.Comment(c) for c in
-                  [" %s " % ('=' * 83),
-                   " |    This document was autogenerated by xacro from %-30s | " % args[0],
-                   " |    EDITING THIS FILE BY HAND IS NOT RECOMMENDED  %-30s | " % "",
-                   " %s " % ('=' * 83)]]
-        first = doc.firstChild
-        for comment in banner:
-            doc.insertBefore(comment, first)
+    basedir = os.path.dirname(args[0])
+    if just_deps or just_includes:
+        process_includes(doc)
+        if just_deps:
+            sys.stdout.write(" ".join(all_includes))
+            sys.stdout.write("\n")
+        if just_includes:
+            open_output(output_filename).write(doc.toprettyxml(indent='  '))
+            print()
+        return
 
-        open_output(output_filename).write(doc.toprettyxml(indent='  '))
-        print()
+    eval_self_contained(doc, in_order)
+
+    banner = [xml.dom.minidom.Comment(c) for c in
+              [" %s " % ('=' * 83),
+               " |    This document was autogenerated by xacro from %-30s | " % args[0],
+               " |    EDITING THIS FILE BY HAND IS NOT RECOMMENDED  %-30s | " % "",
+               " %s " % ('=' * 83)]]
+    first = doc.firstChild
+    for comment in banner:
+        doc.insertBefore(comment, first)
+
+    open_output(output_filename).write(doc.toprettyxml(indent='  '))
+    print()
