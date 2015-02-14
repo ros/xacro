@@ -91,9 +91,11 @@ def fixed_writexml(self, writer, indent="", addindent="", newl=""):
             return
         writer.write(">%s" % (newl))
         for node in self.childNodes:
-            if node.nodeType is not xml.dom.minidom.Node.TEXT_NODE:  # 3:
-                node.writexml(writer, indent + addindent, addindent, newl)
-                #node.writexml(writer,indent+addindent,addindent,newl)
+            # skip whitespace-only text nodes
+            if node.nodeType == xml.dom.minidom.Node.TEXT_NODE and \
+               not node.data.strip():
+                continue
+            node.writexml(writer, indent + addindent, addindent, newl)
         writer.write("%s</%s>%s" % (indent, self.tagName, newl))
     else:
         writer.write("/>%s" % (newl))
