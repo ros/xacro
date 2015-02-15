@@ -30,7 +30,7 @@
 # Author: Stuart Glaser
 # Maintainer: William Woodall <william@osrfoundation.org>
 
-from __future__ import print_function
+from __future__ import print_function, division
 
 import getopt
 import glob
@@ -56,10 +56,6 @@ substitution_args_context = {}
 
 class XacroException(Exception):
     pass
-
-
-def isnumber(x):
-    return hasattr(x, '__int__')
 
 
 def eval_extension(str):
@@ -107,9 +103,21 @@ class Table:
     def __init__(self, parent=None):
         self.parent = parent
         self.table = {}
+        self.unevaluated = [] # list of unevaluated variables
+        self.recursive = [] # list of currently resolved vars (to resolve recursive definitions)
 
     def __getitem__(self, key):
         if key in self.table:
+            # lazy evaluation
+            if key in self.unevaluated:
+                if key in self.recursive:
+                    raise XacroException("recursive variable definition: %s" %
+                                         " -> ".join(self.recursive + [key]))
+                self.recursive.append(key)
+                self.table[key] = eval_text(self.table[key], self)
+                self.unevaluated.remove(key)
+                self.recursive.remove(key)
+            # return evaluated result
             return self.table[key]
         elif self.parent:
             return self.parent[key]
@@ -117,12 +125,36 @@ class Table:
             raise KeyError(key)
 
     def __setitem__(self, key, value):
+        # TODO: does this still work in python3 ?
+        if isinstance(value, basestring):
+            try:
+                # try to evaluate as literal, e.g. number, boolean, etc.
+                value = eval(value)
+                # TODO: store integers as float to maintain backward compatibility?
+                # if isinstance(value, int): value=float(value)
+            except:
+                # otherwise simply store as original string for later (re)evaluation
+                pass
+
         self.table[key] = value
+        if isinstance(value, basestring):
+            # strings need to be evaluated again at first access
+            self.unevaluated.append(key)
+        elif key in self.unevaluated:
+            # all other types cannot be evaluated
+            self.unevaluated.remove(key)
 
     def __contains__(self, key):
         return \
             key in self.table or \
             (self.parent and key in self.parent)
+
+    def __str__(self):
+        s = str(self.table)
+        if isinstance (self.parent, Table):
+            s += "\n  parent: "
+            s += str(self.parent)
+        return s
 
 
 class QuickLexer(object):
@@ -331,25 +363,18 @@ def grab_property(elt, table):
         name = '**' + name
         value = elt  # debug
 
-    bad = string.whitespace + "${}"
-    has_bad = False
-    for b in bad:
-        if b in name:
-            has_bad = True
-            break
-
-    if has_bad:
-        sys.stderr.write('Property names may not have whitespace, ' +
-                         '"{", "}", or "$" : "' + name + '"')
-    else:
-        table[name] = value
-
     elt.parentNode.removeChild(elt)
 
-# Returns a Table of the properties
-def grab_properties(doc):
-    table = Table()
+    bad = string.whitespace + "${}"
+    if any(ch in name for ch in bad):
+        sys.stderr.write('Property names may not have whitespace, ' +
+                         '"{", "}", or "$" : "' + name + '"')
+        return
 
+    table[name] = value
+
+# Returns a Table of the properties
+def grab_properties(doc, table=Table()):
     previous = doc.documentElement
     elt = next_element(previous)
     while elt:
@@ -361,123 +386,15 @@ def grab_properties(doc):
         elt = next_element(previous)
     return table
 
-
-def eat_ignore(lex):
-    while lex.peek() and lex.peek()[0] == lex.IGNORE:
-        lex.next()
-
-
-def eval_lit(lex, symbols):
-    eat_ignore(lex)
-    if lex.peek()[0] == lex.NUMBER:
-        return float(lex.next()[1])
-    if lex.peek()[0] == lex.SYMBOL:
-        try:
-            key = lex.next()[1]
-            value = symbols[key]
-        except KeyError as ex:
-            raise XacroException("Property wasn't defined: %s" % str(ex))
-        if not (isnumber(value) or isinstance(value, _basestr)):
-            if value is None:
-                raise XacroException("Property %s recursively used" % key)
-            raise XacroException("WTF2")
-        try:
-            return int(value)
-        except:
-            try:
-                return float(value)
-            except:
-                # prevent infinite recursion
-                symbols[key] = None
-                result = eval_text(value, symbols)
-                # restore old entry
-                symbols[key] = value
-                return result
-    raise XacroException("Bad literal")
-
-
-def eval_factor(lex, symbols):
-    eat_ignore(lex)
-
-    neg = 1
-    if lex.peek()[1] == '-':
-        lex.next()
-        neg = -1
-
-    if lex.peek()[0] in [lex.NUMBER, lex.SYMBOL]:
-        return neg * eval_lit(lex, symbols)
-    if lex.peek()[0] == lex.LPAREN:
-        lex.next()
-        eat_ignore(lex)
-        result = eval_expr(lex, symbols)
-        eat_ignore(lex)
-        if lex.next()[0] != lex.RPAREN:
-            raise XacroException("Unmatched left paren")
-        eat_ignore(lex)
-        return neg * result
-
-    raise XacroException("Misplaced operator")
-
-
-def eval_term(lex, symbols):
-    eat_ignore(lex)
-
-    result = 0
-    if lex.peek()[0] in [lex.NUMBER, lex.SYMBOL, lex.LPAREN] \
-            or lex.peek()[1] == '-':
-        result = eval_factor(lex, symbols)
-
-    eat_ignore(lex)
-    while lex.peek() and lex.peek()[1] in ['*', '/']:
-        op = lex.next()[1]
-        n = eval_factor(lex, symbols)
-
-        if op == '*':
-            result = float(result) * float(n)
-        elif op == '/':
-            result = float(result) / float(n)
-        else:
-            raise XacroException("WTF")
-        eat_ignore(lex)
-    return result
-
-
-def eval_expr(lex, symbols):
-    eat_ignore(lex)
-
-    op = None
-    if lex.peek()[0] == lex.OP:
-        op = lex.next()[1]
-        if not op in ['+', '-']:
-            raise XacroException("Invalid operation. Must be '+' or '-'")
-
-    result = eval_term(lex, symbols)
-    if op == '-':
-        result = -float(result)
-
-    eat_ignore(lex)
-    while lex.peek() and lex.peek()[1] in ['+', '-']:
-        op = lex.next()[1]
-        n = eval_term(lex, symbols)
-
-        if op == '+':
-            result = float(result) + float(n)
-        if op == '-':
-            result = float(result) - float(n)
-        eat_ignore(lex)
-    return result
-
-
+# evaluate text and return typed value
 def eval_text(text, symbols):
     def handle_expr(s):
-        lex = QuickLexer(IGNORE=r"\s+",
-                         NUMBER=r"(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?",
-                         SYMBOL=r"[a-zA-Z_]\w*",
-                         OP=r"[\+\-\*/^]",
-                         LPAREN=r"\(",
-                         RPAREN=r"\)")
-        lex.lex(s)
-        return eval_expr(lex, symbols)
+        try:
+            return eval(s, {}, symbols)
+        except NameError as e:
+            raise XacroException("%s evaluating expression '%s'" % (str(e), s))
+        except Exception as e:
+            raise
 
     def handle_extension(s):
         return eval_extension("$(%s)" % s)
@@ -497,7 +414,10 @@ def eval_text(text, symbols):
             results.append(lex.next()[1])
         elif lex.peek()[0] == lex.DOLLAR_DOLLAR_BRACE:
             results.append(lex.next()[1][1:])
-    return ''.join(map(str, results))
+    # return single element as is, i.e. typed
+    if (len(results) == 1): return results[0]
+    # otherwise join elements to a string
+    else: return ''.join(map(str, results))
 
 # Assuming a node xacro:call, this function resolves the final macro name and
 # adapts the node's tagName accordingly to pretend a call for this macro
@@ -510,7 +430,7 @@ def handle_dynamic_macro_name(node, macros, symbols):
     if name == None:
         raise XacroException("xacro:call is missing the 'macro' attribute")
 
-    name = eval_text(name, symbols)
+    name = str(eval_text(name, symbols))
     if name not in macros:
         raise XacroException("unknown macro name '%s' in xacro:call" % name)
 
@@ -522,7 +442,7 @@ def handle_dynamic_macro_name(node, macros, symbols):
 def eval_all(root, macros={}, symbols=Table()):
     # Evaluates the attributes for the root node
     for at in root.attributes.items():
-        result = eval_text(at[1], symbols)
+        result = str(eval_text(at[1], symbols))
         root.setAttribute(at[0], result)
 
     previous = root
@@ -635,28 +555,33 @@ def eval_all(root, macros={}, symbols=Table()):
                     raise XacroException("Block \"%s\" was never declared" % name)
 
                 node = None
+
             elif node.tagName in ['if', 'xacro:if', 'unless', 'xacro:unless']:
-                value = eval_text(node.getAttribute('value'), symbols)
+                value = str(eval_text(node.getAttribute('value'), symbols))
                 try: 
-                    if value == 'true': keep = True
-                    elif value == 'false': keep = False
-                    else: keep = float(value)
-                except ValueError:
-                    raise XacroException("Xacro conditional evaluated to \"%s\". Acceptable evaluations are one of [\"1\",\"true\",\"0\",\"false\"]" % value)
+                    # try to interpret value as boolean
+                    # dict explicitly enables 'true' and 'false'
+                    keep = bool(eval(value, dict(true=True, false=False)))
+                except:
+                    print ("if failure", value, type(value))
+                    raise
+                    raise XacroException("Xacro conditional \"%s\" evaluated to \"%s\", which is not a boolean expression." % (node.getAttribute('value'), value))
                 if node.tagName in ['unless', 'xacro:unless']: keep = not keep
                 if keep:
                     for e in list(child_nodes(node)):
                         node.parentNode.insertBefore(e, node)
 
                 node.parentNode.removeChild(node)
+
             else:
                 # Evals the attributes
                 for at in node.attributes.items():
-                    result = eval_text(at[1], symbols)
+                    result = str(eval_text(at[1], symbols))
                     node.setAttribute(at[0], result)
                 previous = node
+
         elif node.nodeType == xml.dom.Node.TEXT_NODE:
-            node.data = eval_text(node.data, symbols)
+            node.data = str(eval_text(node.data, symbols))
             previous = node
         else:
             previous = node
@@ -666,17 +591,20 @@ def eval_all(root, macros={}, symbols=Table()):
 
 
 def eval_self_contained(doc, in_order=False):
+    import math;
+    symbols = {}
+    symbols.update(math.__dict__)
+
     if not in_order:
         # process includes, macros, and properties before evaluating stuff
         process_includes(doc)
         macros = grab_macros(doc)
-        symbols = grab_properties(doc)
+        symbols = grab_properties(doc, Table(symbols))
     else:
         macros  = {}
-        symbols = {}
+        symbols = Table(symbols)
 
     eval_all(doc.documentElement, macros, symbols)
-
 
 def print_usage(exit_code=0):
     print("Usage: %s [-o <output>] <input>" % 'xacro.py')

@@ -484,6 +484,20 @@ class TestXacro(unittest.TestCase):
   <a doubled="84"/>
 </robot>'''))
 
+    def test_recursive_evaluation_wrong_order(self):
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="a2" value="${2*a}"/>
+  <xacro:property name="a" value="42"/>
+  <a doubled="${a2}"/>
+</robot>'''),
+                '''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <a doubled="84"/>
+</robot>'''))
+
     def test_recursive_definition(self):
         self.assertRaises(xacro.XacroException,
                           quick_xacro, '''\
