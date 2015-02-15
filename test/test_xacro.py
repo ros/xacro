@@ -360,6 +360,21 @@ class TestXacro(unittest.TestCase):
         self.assertRaises(xacro.XacroException,
                           xacro.process_includes, doc, os.path.dirname(os.path.realpath(__file__)))
 
+    def test_include_from_variable(self):
+        doc = ('''<a xmlns:xacro="http://www.ros.org/xacro">
+        <xacro:property name="file" value="include1.xml"/>
+        <xacro:include filename="${file}" /></a>''')
+        self.assertTrue(
+            xml_matches(quick_xacro(doc, inorder=True),
+                        '''<a xmlns:xacro="http://www.ros.org/xacro"><foo /><bar /></a>'''))
+
+    def test_include_lazy(self):
+        doc = ('''<a xmlns:xacro="http://www.ros.org/xacro">
+        <xacro:if value="false"><xacro:include filename="non-existent"/></xacro:if></a>''')
+        self.assertTrue(
+            xml_matches(quick_xacro(doc, inorder=True),
+                        '''<a xmlns:xacro="http://www.ros.org/xacro"/>'''))
+
     def test_boolean_if_statement(self):
         self.assertTrue(
             xml_matches(

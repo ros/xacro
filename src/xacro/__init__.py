@@ -235,9 +235,9 @@ def is_include(elt):
             print(deprecated_include_msg, file=sys.stderr)
     return True
 
-def process_include(elt):
+def process_include(elt, symbols):
     namespaces = {}
-    filename_spec = eval_text(elt.getAttribute('filename'), {})
+    filename_spec = eval_text(elt.getAttribute('filename'), symbols)
     if not os.path.isabs(filename_spec):
         filename_spec = os.path.join(basedir, filename_spec)
 
@@ -288,7 +288,7 @@ def process_includes(doc, dir=None):
     elt = next_element(previous)
     while elt:
         if is_include(elt):
-            process_include(elt)
+            process_include(elt, {})
         else:
             previous = elt
 
@@ -530,7 +530,7 @@ def eval_all(root, macros={}, symbols=Table()):
     while node:
         if node.nodeType == xml.dom.Node.ELEMENT_NODE:
             if is_include(node):
-                process_include(node)
+                process_include(node, symbols)
                 node = next_node(previous)
                 continue
 
