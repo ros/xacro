@@ -440,6 +440,29 @@ class TestXacro(unittest.TestCase):
 </a>'''),
 '''<a xmlns:xacro="http://www.ros.org/wiki/xacro"/>'''))
 
+    def test_equality_expression_in_if_statement(self):
+        self.assertTrue(
+            xml_matches(quick_xacro('''
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="var" value="useit"/>
+  <xacro:if value="${var == 'useit'}"><foo>bar</foo></xacro:if>
+  <xacro:if value="${'use' in var}"><bar>foo</bar></xacro:if>
+</a>'''),
+'''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+<foo>bar</foo>
+<bar>foo</bar>
+</a>'''))
+
+    def test_math_expressions(self):
+        self.assertTrue(
+            xml_matches(quick_xacro('''
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <foo function="${1. + sin(pi)}"/>
+</a>'''),
+'''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <foo function="1.0"/>
+</a>'''))
+
     def test_consider_non_elements_if(self):
         self.assertTrue(
             xml_matches(quick_xacro('''
