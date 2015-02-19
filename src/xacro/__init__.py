@@ -39,6 +39,7 @@ import re
 import string
 import sys
 import xml
+import ast
 
 from xml.dom.minidom import parse
 
@@ -129,9 +130,7 @@ class Table:
         if isinstance(value, basestring):
             try:
                 # try to evaluate as literal, e.g. number, boolean, etc.
-                value = eval(value)
-                # TODO: store integers as float to maintain backward compatibility?
-                # if isinstance(value, int): value=float(value)
+                value = ast.literal_eval(value)
             except:
                 # otherwise simply store as original string for later (re)evaluation
                 pass
@@ -557,11 +556,14 @@ def eval_all(root, macros={}, symbols=Table()):
                 node = None
 
             elif node.tagName in ['if', 'xacro:if', 'unless', 'xacro:unless']:
-                value = str(eval_text(node.getAttribute('value'), symbols))
+                value = eval_text(node.getAttribute('value'), symbols)
                 try: 
                     # try to interpret value as boolean
-                    # dict explicitly enables 'true' and 'false'
-                    keep = bool(eval(value, dict(true=True, false=False)))
+                    if isinstance(value, basestring): 
+                        if   value == "true": keep = True
+                        elif value == "false": keep = False
+                        else: keep = ast.literal_eval(value)
+                    else: keep = bool(value)
                 except:
                     print ("if failure", value, type(value))
                     raise

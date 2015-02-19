@@ -453,6 +453,17 @@ class TestXacro(unittest.TestCase):
 <bar>foo</bar>
 </a>'''))
 
+    def test_no_evaluation(self):
+        self.assertTrue(
+            xml_matches(quick_xacro('''
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <property name="xyz" value="5 -2"/>
+  <foo>${xyz}</foo>
+</a>'''),
+'''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <foo>5 -2</foo>
+</a>'''))
+
     def test_math_expressions(self):
         self.assertTrue(
             xml_matches(quick_xacro('''
