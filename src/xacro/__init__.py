@@ -389,7 +389,9 @@ def grab_properties(doc, table=Table()):
 def eval_text(text, symbols):
     def handle_expr(s):
         try:
-            return eval(s, {}, symbols)
+            # taking simple security measures to forbid access to __builtins__
+            # for discussion, see: http://nedbatchelder.com/blog/201206/eval_really_is_dangerous.html
+            return eval(s, {'__builtins__':{}}, symbols)
         except NameError as e:
             raise XacroException("%s evaluating expression '%s'" % (str(e), s))
         except Exception as e:
