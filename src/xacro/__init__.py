@@ -30,7 +30,7 @@
 # Author: Stuart Glaser
 # Maintainer: William Woodall <william@osrfoundation.org>
 
-from __future__ import print_function
+from __future__ import print_function, division
 
 import getopt
 import glob
@@ -39,6 +39,7 @@ import re
 import string
 import sys
 import xml
+import ast
 
 from xml.dom.minidom import parse
 
@@ -56,10 +57,6 @@ substitution_args_context = {}
 
 class XacroException(Exception):
     pass
-
-
-def isnumber(x):
-    return hasattr(x, '__int__')
 
 
 def eval_extension(str):
@@ -107,9 +104,21 @@ class Table:
     def __init__(self, parent=None):
         self.parent = parent
         self.table = {}
+        self.unevaluated = [] # list of unevaluated variables
+        self.recursive = [] # list of currently resolved vars (to resolve recursive definitions)
 
     def __getitem__(self, key):
         if key in self.table:
+            # lazy evaluation
+            if key in self.unevaluated:
+                if key in self.recursive:
+                    raise XacroException("recursive variable definition: %s" %
+                                         " -> ".join(self.recursive + [key]))
+                self.recursive.append(key)
+                self.table[key] = eval_text(self.table[key], self)
+                self.unevaluated.remove(key)
+                self.recursive.remove(key)
+            # return evaluated result
             return self.table[key]
         elif self.parent:
             return self.parent[key]
@@ -117,12 +126,34 @@ class Table:
             raise KeyError(key)
 
     def __setitem__(self, key, value):
+        # TODO: does this still work in python3 ?
+        if isinstance(value, basestring):
+            try:
+                # try to evaluate as literal, e.g. number, boolean, etc.
+                value = ast.literal_eval(value)
+            except:
+                # otherwise simply store as original string for later (re)evaluation
+                pass
+
         self.table[key] = value
+        if isinstance(value, basestring):
+            # strings need to be evaluated again at first access
+            self.unevaluated.append(key)
+        elif key in self.unevaluated:
+            # all other types cannot be evaluated
+            self.unevaluated.remove(key)
 
     def __contains__(self, key):
         return \
             key in self.table or \
             (self.parent and key in self.parent)
+
+    def __str__(self):
+        s = str(self.table)
+        if isinstance (self.parent, Table):
+            s += "\n  parent: "
+            s += str(self.parent)
+        return s
 
 
 class QuickLexer(object):
@@ -203,6 +234,7 @@ def child_nodes(elt):
         c = c.nextSibling
 
 all_includes = []
+basedir="."
 
 # Deprecated message for <include> tags that don't have <xacro:include> prepended:
 deprecated_include_msg = """DEPRECATED IN HYDRO:
@@ -214,82 +246,93 @@ deprecated_include_msg = """DEPRECATED IN HYDRO:
 include_no_matches_msg = """Include tag filename spec \"{}\" matched no files."""
 
 
-## @throws XacroException if a parsing error occurs with an included document
-def process_includes(doc, base_dir):
+def is_include(elt):
+    # Xacro should not use plain 'include' tags but only namespaced ones. Causes conflicts with
+    # other XML elements including Gazebo's <gazebo> extensions
+    if elt.tagName not in ['xacro:include', 'include']: return False
+
+    # Temporary fix for ROS Hydro and the xacro include scope problem
+    if elt.tagName == 'include':
+        # check if there is any element within the <include> tag. mostly we are concerned
+        # with Gazebo's <uri> element, but it could be anything. also, make sure the child
+        # nodes aren't just a single Text node, which is still considered a deprecated
+        # instance
+        if elt.childNodes and not (len(elt.childNodes) == 1 and
+                                   elt.childNodes[0].nodeType == elt.TEXT_NODE):
+            # this is not intended to be a xacro element, so we can ignore it
+            return False
+        else:
+            # throw a deprecated warning
+            print(deprecated_include_msg, file=sys.stderr)
+    return True
+
+def process_include(elt, symbols):
     namespaces = {}
+    filename_spec = eval_text(elt.getAttribute('filename'), symbols)
+    if not os.path.isabs(filename_spec):
+        filename_spec = os.path.join(basedir, filename_spec)
+
+    if re.search('[*[?]+', filename_spec):
+        # Globbing behaviour
+        filenames = sorted(glob.glob(filename_spec))
+        if len(filenames) == 0:
+            print(include_no_matches_msg.format(filename_spec), file=sys.stderr)
+    else:
+        # Default behaviour
+        filenames = [filename_spec]
+
+    for filename in filenames:
+        global all_includes
+        all_includes.append(filename)
+        try:
+            with open(filename) as f:
+                try:
+                    included = parse(f)
+                except Exception as e:
+                    raise XacroException(
+                        "included file \"%s\" generated an error during XML parsing: %s"
+                        % (filename, str(e)))
+        except IOError as e:
+            raise XacroException("included file \"%s\" could not be opened: %s" % (filename, str(e)))
+
+        # Replaces the include tag with the nodes of the included file
+        for c in child_nodes(included.documentElement):
+            elt.parentNode.insertBefore(c.cloneNode(deep=True), elt)
+
+        # Grabs all the declared namespaces of the included document
+        for name, value in included.documentElement.attributes.items():
+            if name.startswith('xmlns:'):
+                namespaces[name] = value
+
+    # Makes sure the final document declares all the namespaces of the included documents.
+    for k, v in namespaces.items():
+        elt.parentNode.setAttribute(k, v)
+
+    elt.parentNode.removeChild(elt)
+
+## @throws XacroException if a parsing error occurs with an included document
+def process_includes(doc, dir=None):
+    global basedir
+    if dir: basedir = dir
+
     previous = doc.documentElement
     elt = next_element(previous)
     while elt:
-        # Xacro should not use plain 'include' tags but only namespaced ones. Causes conflicts with
-        # other XML elements including Gazebo's <gazebo> extensions
-        is_include = False
-        if elt.tagName == 'xacro:include' or elt.tagName == 'include':
-
-            is_include = True
-            # Temporary fix for ROS Hydro and the xacro include scope problem
-            if elt.tagName == 'include':
-
-                # check if there is any element within the <include> tag. mostly we are concerned
-                # with Gazebo's <uri> element, but it could be anything. also, make sure the child
-                # nodes aren't just a single Text node, which is still considered a deprecated
-                # instance
-                if elt.childNodes and not (len(elt.childNodes) == 1 and
-                                           elt.childNodes[0].nodeType == elt.TEXT_NODE):
-                    # this is not intended to be a xacro element, so we can ignore it
-                    is_include = False
-                else:
-                    # throw a deprecated warning
-                    print(deprecated_include_msg, file=sys.stderr)
-
-        # Process current element depending on previous conditions
-        if is_include:
-            filename_spec = eval_text(elt.getAttribute('filename'), {})
-            if not os.path.isabs(filename_spec):
-                filename_spec = os.path.join(base_dir, filename_spec)
-
-            if re.search('[*[?]+', filename_spec):
-                # Globbing behaviour
-                filenames = sorted(glob.glob(filename_spec))
-                if len(filenames) == 0:
-                    print(include_no_matches_msg.format(filename_spec), file=sys.stderr)
-            else:
-                # Default behaviour
-                filenames = [filename_spec]
-
-            for filename in filenames:
-                global all_includes
-                all_includes.append(filename)
-                try:
-                    with open(filename) as f:
-                        try:
-                            included = parse(f)
-                        except Exception as e:
-                            raise XacroException(
-                                "included file \"%s\" generated an error during XML parsing: %s"
-                                % (filename, str(e)))
-                except IOError as e:
-                    raise XacroException("included file \"%s\" could not be opened: %s" % (filename, str(e)))
-
-                # Replaces the include tag with the elements of the included file
-                for c in child_nodes(included.documentElement):
-                    elt.parentNode.insertBefore(c.cloneNode(deep=True), elt)
-
-                # Grabs all the declared namespaces of the included document
-                for name, value in included.documentElement.attributes.items():
-                    if name.startswith('xmlns:'):
-                        namespaces[name] = value
-
-            elt.parentNode.removeChild(elt)
-            elt = None
+        if is_include(elt):
+            process_include(elt, {})
         else:
             previous = elt
 
         elt = next_element(previous)
 
-    # Makes sure the final document declares all the namespaces of the included documents.
-    for k, v in namespaces.items():
-        doc.documentElement.setAttribute(k, v)
+def grab_macro(elt, macros):
+    if elt.tagName not in ['macro', 'xacro:macro']: 
+        raise XacroException("expected macro element")
 
+    name = elt.getAttribute('name')
+    macros[name] = elt
+    macros['xacro:' + name] = elt
+    elt.parentNode.removeChild(elt)
 
 # Returns a dictionary: { macro_name => macro_xml_block }
 def grab_macros(doc):
@@ -299,175 +342,60 @@ def grab_macros(doc):
     elt = next_element(previous)
     while elt:
         if elt.tagName == 'macro' or elt.tagName == 'xacro:macro':
-            name = elt.getAttribute('name')
-
-            macros[name] = elt
-            macros['xacro:' + name] = elt
-
-            elt.parentNode.removeChild(elt)
-            elt = None
+            grab_macro(elt, macros)
         else:
             previous = elt
 
         elt = next_element(previous)
     return macros
 
+def grab_property(elt, table):
+    if elt.tagName not in ['property', 'xacro:property']: 
+        raise XacroException("expected property element")
+
+    name = elt.getAttribute('name')
+    value = None
+
+    if elt.hasAttribute('value'):
+        value = elt.getAttribute('value')
+    else:
+        name = '**' + name
+        value = elt  # debug
+
+    elt.parentNode.removeChild(elt)
+
+    bad = string.whitespace + "${}"
+    if any(ch in name for ch in bad):
+        sys.stderr.write('Property names may not have whitespace, ' +
+                         '"{", "}", or "$" : "' + name + '"')
+        return
+
+    table[name] = value
 
 # Returns a Table of the properties
-def grab_properties(doc):
-    table = Table()
-
+def grab_properties(doc, table=Table()):
     previous = doc.documentElement
     elt = next_element(previous)
     while elt:
         if elt.tagName == 'property' or elt.tagName == 'xacro:property':
-            name = elt.getAttribute('name')
-            value = None
-
-            if elt.hasAttribute('value'):
-                value = elt.getAttribute('value')
-            else:
-                name = '**' + name
-                value = elt  # debug
-
-            bad = string.whitespace + "${}"
-            has_bad = False
-            for b in bad:
-                if b in name:
-                    has_bad = True
-                    break
-
-            if has_bad:
-                sys.stderr.write('Property names may not have whitespace, ' +
-                                 '"{", "}", or "$" : "' + name + '"')
-            else:
-                table[name] = value
-
-            elt.parentNode.removeChild(elt)
-            elt = None
+            grab_property(elt, table)
         else:
             previous = elt
 
         elt = next_element(previous)
     return table
 
-
-def eat_ignore(lex):
-    while lex.peek() and lex.peek()[0] == lex.IGNORE:
-        lex.next()
-
-
-def eval_lit(lex, symbols):
-    eat_ignore(lex)
-    if lex.peek()[0] == lex.NUMBER:
-        return float(lex.next()[1])
-    if lex.peek()[0] == lex.SYMBOL:
-        try:
-            key = lex.next()[1]
-            value = symbols[key]
-        except KeyError as ex:
-            raise XacroException("Property wasn't defined: %s" % str(ex))
-        if not (isnumber(value) or isinstance(value, _basestr)):
-            if value is None:
-                raise XacroException("Property %s recursively used" % key)
-            raise XacroException("WTF2")
-        try:
-            return int(value)
-        except:
-            try:
-                return float(value)
-            except:
-                # prevent infinite recursion
-                symbols[key] = None
-                result = eval_text(value, symbols)
-                # restore old entry
-                symbols[key] = value
-                return result
-    raise XacroException("Bad literal")
-
-
-def eval_factor(lex, symbols):
-    eat_ignore(lex)
-
-    neg = 1
-    if lex.peek()[1] == '-':
-        lex.next()
-        neg = -1
-
-    if lex.peek()[0] in [lex.NUMBER, lex.SYMBOL]:
-        return neg * eval_lit(lex, symbols)
-    if lex.peek()[0] == lex.LPAREN:
-        lex.next()
-        eat_ignore(lex)
-        result = eval_expr(lex, symbols)
-        eat_ignore(lex)
-        if lex.next()[0] != lex.RPAREN:
-            raise XacroException("Unmatched left paren")
-        eat_ignore(lex)
-        return neg * result
-
-    raise XacroException("Misplaced operator")
-
-
-def eval_term(lex, symbols):
-    eat_ignore(lex)
-
-    result = 0
-    if lex.peek()[0] in [lex.NUMBER, lex.SYMBOL, lex.LPAREN] \
-            or lex.peek()[1] == '-':
-        result = eval_factor(lex, symbols)
-
-    eat_ignore(lex)
-    while lex.peek() and lex.peek()[1] in ['*', '/']:
-        op = lex.next()[1]
-        n = eval_factor(lex, symbols)
-
-        if op == '*':
-            result = float(result) * float(n)
-        elif op == '/':
-            result = float(result) / float(n)
-        else:
-            raise XacroException("WTF")
-        eat_ignore(lex)
-    return result
-
-
-def eval_expr(lex, symbols):
-    eat_ignore(lex)
-
-    op = None
-    if lex.peek()[0] == lex.OP:
-        op = lex.next()[1]
-        if not op in ['+', '-']:
-            raise XacroException("Invalid operation. Must be '+' or '-'")
-
-    result = eval_term(lex, symbols)
-    if op == '-':
-        result = -float(result)
-
-    eat_ignore(lex)
-    while lex.peek() and lex.peek()[1] in ['+', '-']:
-        op = lex.next()[1]
-        n = eval_term(lex, symbols)
-
-        if op == '+':
-            result = float(result) + float(n)
-        if op == '-':
-            result = float(result) - float(n)
-        eat_ignore(lex)
-    return result
-
-
+# evaluate text and return typed value
 def eval_text(text, symbols):
     def handle_expr(s):
-        lex = QuickLexer(IGNORE=r"\s+",
-                         NUMBER=r"(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?",
-                         SYMBOL=r"[a-zA-Z_]\w*",
-                         OP=r"[\+\-\*/^]",
-                         LPAREN=r"\(",
-                         RPAREN=r"\)")
-        lex.lex(s)
-        return eval_expr(lex, symbols)
+        try:
+            # taking simple security measures to forbid access to __builtins__
+            # for discussion, see: http://nedbatchelder.com/blog/201206/eval_really_is_dangerous.html
+            return eval(s, {'__builtins__':{}}, symbols)
+        except NameError as e:
+            raise XacroException("%s evaluating expression '%s'" % (str(e), s))
+        except Exception as e:
+            raise
 
     def handle_extension(s):
         return eval_extension("$(%s)" % s)
@@ -487,20 +415,59 @@ def eval_text(text, symbols):
             results.append(lex.next()[1])
         elif lex.peek()[0] == lex.DOLLAR_DOLLAR_BRACE:
             results.append(lex.next()[1][1:])
-    return ''.join(map(str, results))
+    # return single element as is, i.e. typed
+    if (len(results) == 1): return results[0]
+    # otherwise join elements to a string
+    else: return ''.join(map(str, results))
 
+# Assuming a node xacro:call, this function resolves the final macro name and
+# adapts the node's tagName accordingly to pretend a call for this macro
+def handle_dynamic_macro_name(node, macros, symbols):
+    if node.tagName in macros:
+        print ("DEPRECATED use of macro name 'call'. xacro:call became a new keyword.", file=sys.stderr)
+        return
+
+    name = node.getAttribute('macro')
+    if name == None:
+        raise XacroException("xacro:call is missing the 'macro' attribute")
+
+    name = str(eval_text(name, symbols))
+    if name not in macros:
+        raise XacroException("unknown macro name '%s' in xacro:call" % name)
+
+    # finally remove 'macro' attribute and replace tagName for the resolved macro name
+    node.removeAttribute('macro')
+    node.tagName = name
 
 # Expands macros, replaces properties, and evaluates expressions
-def eval_all(root, macros, symbols):
+def eval_all(root, macros={}, symbols=Table()):
     # Evaluates the attributes for the root node
     for at in root.attributes.items():
-        result = eval_text(at[1], symbols)
+        result = str(eval_text(at[1], symbols))
         root.setAttribute(at[0], result)
 
     previous = root
     node = next_node(previous)
     while node:
         if node.nodeType == xml.dom.Node.ELEMENT_NODE:
+            if is_include(node):
+                process_include(node, symbols)
+                node = next_node(previous)
+                continue
+
+            if node.tagName in ['property', 'xacro:property']:
+                grab_property(node, symbols)
+                node = next_node(previous)
+                continue
+
+            if node.tagName in ['macro', 'xacro:macro']:
+                grab_macro(node, macros)
+                node = next_node(previous)
+                continue
+
+            if node.tagName in ['xacro:call']:
+                handle_dynamic_macro_name(node, macros, symbols)
+
             if node.tagName in macros:
                 body = macros[node.tagName].cloneNode(deep=True)
                 params = body.getAttribute('params').split()
@@ -589,28 +556,36 @@ def eval_all(root, macros, symbols):
                     raise XacroException("Block \"%s\" was never declared" % name)
 
                 node = None
+
             elif node.tagName in ['if', 'xacro:if', 'unless', 'xacro:unless']:
                 value = eval_text(node.getAttribute('value'), symbols)
                 try: 
-                    if value == 'true': keep = True
-                    elif value == 'false': keep = False
-                    else: keep = float(value)
-                except ValueError:
-                    raise XacroException("Xacro conditional evaluated to \"%s\". Acceptable evaluations are one of [\"1\",\"true\",\"0\",\"false\"]" % value)
+                    # try to interpret value as boolean
+                    if isinstance(value, basestring): 
+                        if   value == "true": keep = True
+                        elif value == "false": keep = False
+                        else: keep = ast.literal_eval(value)
+                    else: keep = bool(value)
+                except:
+                    print ("if failure", value, type(value))
+                    raise
+                    raise XacroException("Xacro conditional \"%s\" evaluated to \"%s\", which is not a boolean expression." % (node.getAttribute('value'), value))
                 if node.tagName in ['unless', 'xacro:unless']: keep = not keep
                 if keep:
                     for e in list(child_nodes(node)):
-                        node.parentNode.insertBefore(e.cloneNode(deep=True), node)
+                        node.parentNode.insertBefore(e, node)
 
                 node.parentNode.removeChild(node)
+
             else:
                 # Evals the attributes
                 for at in node.attributes.items():
-                    result = eval_text(at[1], symbols)
+                    result = str(eval_text(at[1], symbols))
                     node.setAttribute(at[0], result)
                 previous = node
+
         elif node.nodeType == xml.dom.Node.TEXT_NODE:
-            node.data = eval_text(node.data, symbols)
+            node.data = str(eval_text(node.data, symbols))
             previous = node
         else:
             previous = node
@@ -619,12 +594,21 @@ def eval_all(root, macros, symbols):
     return macros
 
 
-# Expands everything except includes
-def eval_self_contained(doc):
-    macros = grab_macros(doc)
-    symbols = grab_properties(doc)
-    eval_all(doc.documentElement, macros, symbols)
+def eval_self_contained(doc, in_order=False):
+    import math;
+    symbols = {}
+    symbols.update(math.__dict__)
 
+    if not in_order:
+        # process includes, macros, and properties before evaluating stuff
+        process_includes(doc)
+        macros = grab_macros(doc)
+        symbols = grab_properties(doc, Table(symbols))
+    else:
+        macros  = {}
+        symbols = Table(symbols)
+
+    eval_all(doc.documentElement, macros, symbols)
 
 def print_usage(exit_code=0):
     print("Usage: %s [-o <output>] <input>" % 'xacro.py')
@@ -643,14 +627,18 @@ def open_output(output_filename):
         return open(output_filename, 'w') 
 
 def main():
+    global basedir
+
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "ho:", ['deps', 'includes'])
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "ho:", 
+                                       ['deps', 'includes', 'inorder'])
     except getopt.GetoptError as err:
         print(str(err))
         print_usage(2)
 
     just_deps = False
     just_includes = False
+    in_order = False
 
     output_filename = None
     for o, a in opts:
@@ -662,6 +650,8 @@ def main():
             just_deps = True
         elif o == '--includes':
             just_includes = True
+        elif o == '--inorder':
+            in_order = True
 
     if len(args) < 1:
         print("No input given")
@@ -684,24 +674,27 @@ def main():
     finally:
         f.close()
 
-    process_includes(doc, os.path.dirname(args[0]))
-    if just_deps:
-        for inc in all_includes:
-            sys.stdout.write(inc + " ")
-        sys.stdout.write("\n")
-    elif just_includes:
-        doc.writexml(open_output(output_filename))
-        print()
-    else:
-        eval_self_contained(doc)
-        banner = [xml.dom.minidom.Comment(c) for c in
-                  [" %s " % ('=' * 83),
-                   " |    This document was autogenerated by xacro from %-30s | " % args[0],
-                   " |    EDITING THIS FILE BY HAND IS NOT RECOMMENDED  %-30s | " % "",
-                   " %s " % ('=' * 83)]]
-        first = doc.firstChild
-        for comment in banner:
-            doc.insertBefore(comment, first)
+    basedir = os.path.dirname(args[0])
+    if just_deps or just_includes:
+        process_includes(doc)
+        if just_deps:
+            sys.stdout.write(" ".join(all_includes))
+            sys.stdout.write("\n")
+        if just_includes:
+            open_output(output_filename).write(doc.toprettyxml(indent='  '))
+            print()
+        return
 
-        open_output(output_filename).write(doc.toprettyxml(indent='  '))
-        print()
+    eval_self_contained(doc, in_order)
+
+    banner = [xml.dom.minidom.Comment(c) for c in
+              [" %s " % ('=' * 83),
+               " |    This document was autogenerated by xacro from %-30s | " % args[0],
+               " |    EDITING THIS FILE BY HAND IS NOT RECOMMENDED  %-30s | " % "",
+               " %s " % ('=' * 83)]]
+    first = doc.firstChild
+    for comment in banner:
+        doc.insertBefore(comment, first)
+
+    open_output(output_filename).write(doc.toprettyxml(indent='  '))
+    print()
