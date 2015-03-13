@@ -2,6 +2,63 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* security measure: forbid access to __builtins__ in expressions
+* fixed evaluation issue #49:
+  - literal evaluation should only consider literals, but no expressions
+    use ast.literal_eval()
+  - removed eval() from xacro:if evaluation
+* back to string comparison to handle (lowercase) true and false
+* added test cases to check
+  - for equality expressions in <xacro:if>
+  - math function usage
+* python based evaluation of expressions
+  - replaced handle_expr with python-internal eval() call
+  - care has been taken to resolve variables recursively on demand 
+    (in Table.__getitem__)
+  - allows for evaluation of standard math functions
+  - other desired functions could be added in eval_self_contained
+  - Values in Table symbols are not stored as strings but as typed values.
+* If text is required, a conversion with str() is performed, to ensure 
+  proper evaluation of expressions. Otherwise 3*"1" would evaluate to "111".
+* use __future__.division we can handle integer division evaluating to 
+  floating-point devision, as before
+* allow variable names for filename attribute in <xacro:include>
+* allow for ordered XML processing to avoid issues with multiply defined
+  properties and macros in (typically 3rd party) include files
+  - enable the new behaviour by passing --inorder cmdline option
+  - to improve code readibility and reusability, introduced functions
+* process_include(node), grab_macro(elt, macros), grab_property(elt, symbols)
+  containing 1:1 corresponding handling from process_includes, grab_macros, 
+  and grab_properties
+  - added corresponding test case test_inorder_processing()
+* dynamic macro names using <xacro:call macro=""/>
+* fixup unittests and handling of non-element nodes in <include>, <if>, <macro>
+* updated pr2 gold standard to include all comments
+* allow to ignore comments in nodes_match()
+* New handling of non-element nodes invalidates pr2 gold standard (adding
+  a lot more comments). To allow validation, allow to ignore all
+  comments in comparison (as before).
+* fixed handling of non-element nodes in <include>, <if>, <macro>
+* fixed writexml: text nodes were not printed when other siblings exist
+  - print all text, but skip whitespace-only text nodes
+* improved xml matching
+  - so far only element nodes (with its attributes) were considered
+  - now also consider TEXT, CDATA, and COMMENT nodes
+  - added function text_matches (normalizing consecutive whitespace 
+    to a single space)
+  added some new unit tests
+  - test_consider_non_elements:
+  non-element nodes are not yet considered in <if> and <macro>
+* travis-ci: use catkin_make
+* travis-ci: fixup running of tests
+* fix pathnames used in test case
+* Include CATKIN_ENV params at build time.
+* use output filename flag instead of shell redirection
+* create output file after parsing is complete, not before
+* Contributors: Robert Haschke, Mike O'Driscoll, Morgan Quigley, William Woodall
+
 1.9.3 (2015-01-14)
 ------------------
 * merge test cases
