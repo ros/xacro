@@ -122,11 +122,11 @@ def xml_matches(a, b):
     return True
 
 
-def quick_xacro(xml):
+def quick_xacro(xml, inorder=False):
     if isinstance(xml, str):
         doc = parseString(xml)
-        return quick_xacro(doc)
-    xacro.eval_self_contained(xml)
+        return quick_xacro(doc, inorder)
+    xacro.eval_self_contained(xml, inorder)
     return xml
 
 
@@ -144,6 +144,63 @@ class TestMatchXML(unittest.TestCase):
         self.assertTrue(xml_matches('''<a><b/></a>''', '''<a>\n<b> </b> </a>'''))
 
 class TestXacro(unittest.TestCase):
+
+    def test_dynamic_macro_names(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="foo"><a>foo</a></xacro:macro>
+  <xacro:macro name="bar"><b>bar</b></xacro:macro>
+  <xacro:property name="var" value="%s"/>
+  <xacro:call macro="${var}"/></a>'''
+        res = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">%s</a>'''
+        self.assertTrue(xml_matches(quick_xacro(src % "foo"), res % "<a>foo</a>"))
+        self.assertTrue(xml_matches(quick_xacro(src % "bar"), res % "<b>bar</b>"))
+
+    def test_dynamic_macro_name_clash(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="foo"><a name="foo"/></xacro:macro>
+  <xacro:macro name="call"><a name="bar"/></xacro:macro>
+  <xacro:call/></a>'''
+        # for now we only issue a deprecated warning and expect the old behaviour
+        # resolving macro "call"
+        res = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro"><a name="bar"/></a>'''
+        # new behaviour would be to resolve to foo of course
+        # res = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro"><a name="foo"/></a>'''
+        self.assertTrue(xml_matches(quick_xacro(src), res))
+
+    def test_inorder_processing(self):
+        src = '''<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <property name="foo" value="1.0"/>
+  <property name="mount" value="base1"/>
+  <xacro:macro name="ee" params="side *origin">
+    <link name="${side}_base1"> <insert_block name="origin"/> </link>
+  </xacro:macro>
+  <xacro:ee side="left"> <origin>1 ${foo}</origin> </xacro:ee>
+  <joint name="mount" type="fixed"> <child link="${mount}"/> </joint>
+
+  <property name="foo" value="3.0"/>
+  <property name="mount" value="base2"/>
+  <xacro:macro name="ee" params="side *origin">
+    <link name="${side}_base2"> <insert_block name="origin"/> </link>
+  </xacro:macro>
+  <xacro:ee side="right"> <origin>2 ${foo}</origin> </xacro:ee>
+  <joint name="mount" type="fixed"> <child link="${mount}"/> </joint>
+</robot>'''
+        old = '''<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <link name="left_base2"> <origin>1 3.0</origin> </link>
+  <joint name="mount" type="fixed"> <child link="base2"/> </joint>
+
+  <link name="right_base2"> <origin>2 3.0</origin> </link>
+  <joint name="mount" type="fixed"> <child link="base2"/> </joint>
+</robot>'''
+        inOrder = '''<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <link name="left_base1"> <origin>1 1.0</origin> </link>
+  <joint name="mount" type="fixed"> <child link="base1"/> </joint>
+
+  <link name="right_base2"> <origin>2 3.0</origin> </link>
+  <joint name="mount" type="fixed"> <child link="base2"/> </joint>
+</robot>'''
+        self.assertTrue(xml_matches(quick_xacro(src, False), old))
+        self.assertTrue(xml_matches(quick_xacro(src, True), inOrder))
 
     def test_DEPRECATED_should_replace_before_macroexpand(self):
         self.assertTrue(
@@ -303,6 +360,21 @@ class TestXacro(unittest.TestCase):
         self.assertRaises(xacro.XacroException,
                           xacro.process_includes, doc, os.path.dirname(os.path.realpath(__file__)))
 
+    def test_include_from_variable(self):
+        doc = ('''<a xmlns:xacro="http://www.ros.org/xacro">
+        <xacro:property name="file" value="include1.xml"/>
+        <xacro:include filename="${file}" /></a>''')
+        self.assertTrue(
+            xml_matches(quick_xacro(doc, inorder=True),
+                        '''<a xmlns:xacro="http://www.ros.org/xacro"><foo /><bar /></a>'''))
+
+    def test_include_lazy(self):
+        doc = ('''<a xmlns:xacro="http://www.ros.org/xacro">
+        <xacro:if value="false"><xacro:include filename="non-existent"/></xacro:if></a>''')
+        self.assertTrue(
+            xml_matches(quick_xacro(doc, inorder=True),
+                        '''<a xmlns:xacro="http://www.ros.org/xacro"/>'''))
+
     def test_boolean_if_statement(self):
         self.assertTrue(
             xml_matches(
@@ -368,6 +440,40 @@ class TestXacro(unittest.TestCase):
 </a>'''),
 '''<a xmlns:xacro="http://www.ros.org/wiki/xacro"/>'''))
 
+    def test_equality_expression_in_if_statement(self):
+        self.assertTrue(
+            xml_matches(quick_xacro('''
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="var" value="useit"/>
+  <xacro:if value="${var == 'useit'}"><foo>bar</foo></xacro:if>
+  <xacro:if value="${'use' in var}"><bar>foo</bar></xacro:if>
+</a>'''),
+'''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+<foo>bar</foo>
+<bar>foo</bar>
+</a>'''))
+
+    def test_no_evaluation(self):
+        self.assertTrue(
+            xml_matches(quick_xacro('''
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <property name="xyz" value="5 -2"/>
+  <foo>${xyz}</foo>
+</a>'''),
+'''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <foo>5 -2</foo>
+</a>'''))
+
+    def test_math_expressions(self):
+        self.assertTrue(
+            xml_matches(quick_xacro('''
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <foo function="${1. + sin(pi)}"/>
+</a>'''),
+'''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <foo function="1.0"/>
+</a>'''))
+
     def test_consider_non_elements_if(self):
         self.assertTrue(
             xml_matches(quick_xacro('''
@@ -405,6 +511,20 @@ class TestXacro(unittest.TestCase):
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
   <xacro:property name="a" value="42"/>
   <xacro:property name="a2" value="${2*a}"/>
+  <a doubled="${a2}"/>
+</robot>'''),
+                '''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <a doubled="84"/>
+</robot>'''))
+
+    def test_recursive_evaluation_wrong_order(self):
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="a2" value="${2*a}"/>
+  <xacro:property name="a" value="42"/>
   <a doubled="${a2}"/>
 </robot>'''),
                 '''\
