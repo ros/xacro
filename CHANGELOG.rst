@@ -5,18 +5,14 @@ Changelog for package xacro
 1.10.0 (2015-03-13)
 -------------------
 * security measure: forbid access to __builtins__ in expressions
-* fixed evaluation issue #49:
-  - literal evaluation should only consider literals, but no expressions
-    use ast.literal_eval()
-  - removed eval() from xacro:if evaluation
+* literal evaluation should only consider literals, but no expressions use ast.literal_eval()
+* removed eval() from xacro:if evaluation
 * back to string comparison to handle (lowercase) true and false
-* added test cases to check
-  - for equality expressions in <xacro:if>
-  - math function usage
+* add test case for equality expressions in <xacro:if>
+* add test case for math function usage
 * python based evaluation of expressions
   - replaced handle_expr with python-internal eval() call
-  - care has been taken to resolve variables recursively on demand 
-    (in Table.__getitem__)
+  - care has been taken to resolve variables recursively on demand (in Table.__getitem__)
   - allows for evaluation of standard math functions
   - other desired functions could be added in eval_self_contained
   - Values in Table symbols are not stored as strings but as typed values.
@@ -46,9 +42,8 @@ Changelog for package xacro
 * improved xml matching
   - so far only element nodes (with its attributes) were considered
   - now also consider TEXT, CDATA, and COMMENT nodes
-  - added function text_matches (normalizing consecutive whitespace 
-    to a single space)
-  added some new unit tests
+  - added function text_matches (normalizing consecutive whitespace to a single space)
+  - added some new unit tests
   - test_consider_non_elements:
   non-element nodes are not yet considered in <if> and <macro>
 * travis-ci: use catkin_make
