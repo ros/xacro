@@ -2,8 +2,8 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.10.0 (2015-03-13)
+-------------------
 * security measure: forbid access to __builtins__ in expressions
 * fixed evaluation issue #49:
   - literal evaluation should only consider literals, but no expressions
