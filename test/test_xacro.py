@@ -557,6 +557,22 @@ class TestXacro(unittest.TestCase):
   <answer product="6"/>
 </robot>'''))
 
+    def test_multiple_definition_and_evaluation(self):
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="a" value="42"/>
+  <xacro:property name="b" value="${a}"/>
+  <xacro:property name="b" value="${-a}"/>
+  <xacro:property name="b" value="${a}"/>
+  <answer b="${b} ${b} ${b}"/>
+</robot>'''),
+                '''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <answer b="42 42 42"/>
+</robot>'''))
+
     def test_transitive_evaluation(self):
         self.assertTrue(
             xml_matches(
