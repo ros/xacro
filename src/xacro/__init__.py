@@ -160,13 +160,18 @@ class Table:
 
 
 class QuickLexer(object):
-    def __init__(self, **res):
+    def __init__(self, *args, **kwargs):
+        if args:
+            # copy attributes + variables from other instance
+            other = args[0]
+            self.__dict__.update(other.__dict__)
+        else:
+            self.res = []
+            for k, v in kwargs.items():
+                self.__setattr__(k, len(self.res))
+                self.res.append(re.compile(v))
         self.str = ""
         self.top = None
-        self.res = []
-        for k, v in res.items():
-            self.__setattr__(k, len(self.res))
-            self.res.append(v)
 
     def lex(self, str):
         self.str = str
@@ -180,7 +185,7 @@ class QuickLexer(object):
         result = self.top
         self.top = None
         for i in range(len(self.res)):
-            m = re.match(self.res[i], self.str)
+            m = self.res[i].match(self.str)
             if m:
                 self.top = (i, m.group(0))
                 self.str = self.str[m.end():]
@@ -388,6 +393,10 @@ def grab_properties(doc, table=Table()):
         elt = next_element(previous)
     return table
 
+LEXER = QuickLexer(DOLLAR_DOLLAR_BRACE=r"\$\$+\{",
+                   EXPR=r"\$\{[^\}]*\}",
+                   EXTENSION=r"\$\([^\)]*\)",
+                   TEXT=r"([^\$]|\$[^{(]|\$$)+")
 # evaluate text and return typed value
 def eval_text(text, symbols):
     def handle_expr(s):
@@ -404,10 +413,7 @@ def eval_text(text, symbols):
         return eval_extension("$(%s)" % s)
 
     results = []
-    lex = QuickLexer(DOLLAR_DOLLAR_BRACE=r"\$\$+\{",
-                     EXPR=r"\$\{[^\}]*\}",
-                     EXTENSION=r"\$\([^\)]*\)",
-                     TEXT=r"([^\$]|\$[^{(]|\$$)+")
+    lex = QuickLexer(LEXER);
     lex.lex(text)
     while lex.peek():
         if lex.peek()[0] == lex.EXPR:
