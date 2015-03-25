@@ -571,8 +571,6 @@ def eval_all(root, macros={}, symbols=Table()):
                         else: keep = ast.literal_eval(value)
                     else: keep = bool(value)
                 except:
-                    print ("if failure", value, type(value))
-                    raise
                     raise XacroException("Xacro conditional \"%s\" evaluated to \"%s\", which is not a boolean expression." % (node.getAttribute('value'), value))
                 if node.tagName in ['unless', 'xacro:unless']: keep = not keep
                 if keep:

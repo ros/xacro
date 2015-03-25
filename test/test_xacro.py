@@ -398,6 +398,12 @@ class TestXacro(unittest.TestCase):
     <b />
 </robot>'''))      
 
+    def test_invalid_if_statement(self):
+        self.assertRaises(xacro.XacroException,
+                          quick_xacro,
+                          '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+                          <xacro:if value="nonsense"><foo/></xacro:if></a>''')
+
     def test_integer_if_statement(self):
         self.assertTrue(
             xml_matches(
