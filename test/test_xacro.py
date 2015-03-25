@@ -167,6 +167,12 @@ class TestXacro(unittest.TestCase):
         # res = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro"><a name="foo"/></a>'''
         self.assertTrue(xml_matches(quick_xacro(src), res))
 
+    def test_macro_undefined(self):
+        self.assertRaises(xacro.XacroException,
+                          quick_xacro,
+                          '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+                          <xacro:undefined><foo/><bar/></xacro:undefined></a>''')
+
     def test_inorder_processing(self):
         src = '''<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
   <property name="foo" value="1.0"/>

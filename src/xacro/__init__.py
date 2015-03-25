@@ -528,6 +528,7 @@ def eval_all(root, macros={}, symbols=Table()):
                 node.parentNode.removeChild(node)
 
                 node = None
+
             elif node.tagName == 'arg' or node.tagName == 'xacro:arg':
                 name = node.getAttribute('name')
                 if not name:
@@ -581,6 +582,9 @@ def eval_all(root, macros={}, symbols=Table()):
                 node.parentNode.removeChild(node)
 
             else:
+                if node.tagName.startswith("xacro:"):
+                    raise XacroException("unknown macro name: %s" % node.tagName)
+
                 # Evals the attributes
                 for at in node.attributes.items():
                     result = str(eval_text(at[1], symbols))
