@@ -824,3 +824,32 @@ class TestXacro(unittest.TestCase):
 '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
   <a list="[0, 2, 2]" tuple="(0, 2, 2)" dict="{'a': 0, 'c': 2, 'b': 2}"/>
 </a>'''))
+
+    def test_ros_arg_param(self):
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="fixed_link" params="parent_link:=base_link child_link *joint_pose">
+    <link name="${child_link}"/>
+    <joint name="${child_link}_joint" type="fixed">
+      <xacro:insert_block name="joint_pose" />
+      <parent link="${parent_link}"/>
+      <child link="${child_link}" />
+      <arg name="${parent_link}" value="${child_link}"/>
+    </joint>
+  </xacro:macro>
+  <xacro:fixed_link child_link="foo">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </xacro:fixed_link >
+</robot>'''),
+'''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <link name="foo"/>
+  <joint name="foo_joint" type="fixed">
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="foo"/>
+    <arg name="base_link" value="foo"/>
+  </joint>
+</robot>'''))

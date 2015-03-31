@@ -500,7 +500,7 @@ def eval_all(root, macros={}, symbols=Table()):
                         defaultmap[splitParam[0]] = splitParam[1]
                         params.remove(param)
                         params.append(splitParam[0])
-                        
+
                     elif len(splitParam) != 1:
                         raise XacroException("Invalid parameter definition")
 
@@ -545,14 +545,14 @@ def eval_all(root, macros={}, symbols=Table()):
 
                 node = None
 
-            elif node.tagName == 'arg' or node.tagName == 'xacro:arg':
+            elif node.tagName == 'xacro:arg':
                 name = node.getAttribute('name')
                 if not name:
                     raise XacroException("Argument name missing")
                 default = node.getAttribute('default')
                 if default and name not in substitution_args_context['arg']:
                     substitution_args_context['arg'][name] = default
-                
+
                 node.parentNode.removeChild(node)
                 node = None
 
@@ -643,13 +643,13 @@ def open_output(output_filename):
     if output_filename is None:
         return sys.stdout
     else:
-        return open(output_filename, 'w') 
+        return open(output_filename, 'w')
 
 def main():
     global basedir
 
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "ho:", 
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "ho:",
                                        ['deps', 'includes', 'inorder'])
     except getopt.GetoptError as err:
         print(str(err))
@@ -664,7 +664,7 @@ def main():
         if o == '-h':
             print_usage(0)
         elif o == '-o':
-            output_filename = a 
+            output_filename = a
         elif o == '--deps':
             just_deps = True
         elif o == '--includes':
