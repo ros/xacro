@@ -83,12 +83,12 @@ def nodes_match(a, b):
     while a or b:
         # ignore whitespace-only text nodes
         # we could have several text nodes in a row, due to replacements
-        while (a and 
-               ((a.nodeType in ignore) or 
+        while (a and
+               ((a.nodeType in ignore) or
                 (a.nodeType == xml.dom.Node.TEXT_NODE and whitespace.sub('', a.data) == ""))):
             a = a.nextSibling
-        while (b and 
-               ((b.nodeType in ignore) or 
+        while (b and
+               ((b.nodeType in ignore) or
                 (b.nodeType == xml.dom.Node.TEXT_NODE and whitespace.sub('', b.data) == ""))):
             b = b.nextSibling
 
@@ -318,7 +318,7 @@ class TestXacro(unittest.TestCase):
                 '''\
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
     <b />
-</robot>'''))      
+</robot>'''))
 
     def test_integer_if_statement(self):
         self.assertTrue(
@@ -341,7 +341,7 @@ class TestXacro(unittest.TestCase):
                 '''\
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
     <d />
-</robot>'''))      
+</robot>'''))
 
     def test_float_if_statement(self):
         self.assertTrue(
@@ -464,7 +464,7 @@ class TestXacro(unittest.TestCase):
   <xacro:property name="d" value="${b}"/>
   <xacro:property name="e" value="${c*d}"/>
   <answer e="${e}"/>
-</robot>'''), 
+</robot>'''),
                 '''\
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
   <answer e="88.2"/>
@@ -480,7 +480,7 @@ class TestXacro(unittest.TestCase):
   <link name="my_link">
     <origin xyz="0 0 ${wheel_width/2}"/>
   </link>
-</robot>'''), 
+</robot>'''),
                 '''\
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
   <link name="my_link">
@@ -500,14 +500,14 @@ class TestXacro(unittest.TestCase):
         # run xacro on the pr2 tree snapshot
         test_dir= os.path.abspath(os.path.dirname(__file__))
         xacro_path = os.path.join(test_dir, '..', 'xacro.py')
-        pr2_xacro_path = os.path.join(test_dir, 'robots', 'pr2', 
+        pr2_xacro_path = os.path.join(test_dir, 'robots', 'pr2',
                                       'pr2.urdf.xacro')
         proc = subprocess.Popen([xacro_path, pr2_xacro_path],
                                 stdout=subprocess.PIPE)
         output, errcode = proc.communicate()
         if errcode:
             raise Exception("xacro couldn't process the pr2 snapshot test case")
-        pr2_golden_parse_path = os.path.join(test_dir, 'robots', 'pr2', 
+        pr2_golden_parse_path = os.path.join(test_dir, 'robots', 'pr2',
                                              'pr2_1.11.4.xml')
         self.assertTrue(
             xml_matches(
@@ -530,7 +530,7 @@ class TestXacro(unittest.TestCase):
   <xacro:fixed_link child_link="foo">
     <origin xyz="0 0 0" rpy="0 0 0" />
   </xacro:fixed_link >
-</robot>'''), 
+</robot>'''),
                 '''\
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
   <link name="foo"/>
@@ -538,6 +538,35 @@ class TestXacro(unittest.TestCase):
     <origin rpy="0 0 0" xyz="0 0 0"/>
     <parent link="base_link"/>
     <child link="foo"/>
+  </joint>
+</robot>'''))
+
+    def test_ros_arg_param(self):
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="fixed_link" params="parent_link:=base_link child_link *joint_pose">
+    <link name="${child_link}"/>
+    <joint name="${child_link}_joint" type="fixed">
+      <xacro:insert_block name="joint_pose" />
+      <parent link="${parent_link}"/>
+      <child link="${child_link}" />
+      <arg name="${parent_link}" value="${child_link}"/>
+    </joint>
+  </xacro:macro>
+  <xacro:fixed_link child_link="foo">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </xacro:fixed_link >
+</robot>'''),
+                '''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <link name="foo"/>
+  <joint name="foo_joint" type="fixed">
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="foo"/>
+    <arg name="base_link" value="foo"/>
   </joint>
 </robot>'''))
 
@@ -557,7 +586,7 @@ class TestXacro(unittest.TestCase):
   <xacro:fixed_link child_link="foo" parent_link="bar">
     <origin xyz="0 0 0" rpy="0 0 0" />
   </xacro:fixed_link >
-</robot>'''), 
+</robot>'''),
                 '''\
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
   <link name="foo"/>
