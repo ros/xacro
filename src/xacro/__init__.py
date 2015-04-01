@@ -528,6 +528,7 @@ def eval_all(root, macros={}, symbols=Table()):
                 node.parentNode.removeChild(node)
 
                 node = None
+
             elif node.tagName == 'arg' or node.tagName == 'xacro:arg':
                 name = node.getAttribute('name')
                 if not name:
@@ -570,8 +571,6 @@ def eval_all(root, macros={}, symbols=Table()):
                         else: keep = ast.literal_eval(value)
                     else: keep = bool(value)
                 except:
-                    print ("if failure", value, type(value))
-                    raise
                     raise XacroException("Xacro conditional \"%s\" evaluated to \"%s\", which is not a boolean expression." % (node.getAttribute('value'), value))
                 if node.tagName in ['unless', 'xacro:unless']: keep = not keep
                 if keep:
@@ -581,6 +580,9 @@ def eval_all(root, macros={}, symbols=Table()):
                 node.parentNode.removeChild(node)
 
             else:
+                if node.tagName.startswith("xacro:"):
+                    raise XacroException("unknown macro name: %s" % node.tagName)
+
                 # Evals the attributes
                 for at in node.attributes.items():
                     result = str(eval_text(at[1], symbols))
