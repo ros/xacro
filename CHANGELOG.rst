@@ -2,8 +2,8 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.10.1 (2015-04-01)
+-------------------
 * improved error handling and more descriptive error messages
 * correctly raise a XacroException on invalid, i.e. non-boolean, <xacro:if> expressions.
   (removed left-over debugging code, added test case)
