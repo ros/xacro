@@ -329,7 +329,7 @@ def process_includes(doc, dir=None):
         elt = next_element(previous)
 
 def grab_macro(elt, macros):
-    if elt.tagName not in ['macro', 'xacro:macro']: 
+    if elt.tagName not in ['macro', 'xacro:macro']:
         raise XacroException("expected macro element")
 
     name = elt.getAttribute('name')
@@ -353,7 +353,7 @@ def grab_macros(doc):
     return macros
 
 def grab_property(elt, table):
-    if elt.tagName not in ['property', 'xacro:property']: 
+    if elt.tagName not in ['property', 'xacro:property']:
         raise XacroException("expected property element")
 
     name = elt.getAttribute('name')
@@ -484,7 +484,7 @@ def eval_all(root, macros={}, symbols=Table()):
                         defaultmap[splitParam[0]] = splitParam[1]
                         params.remove(param)
                         params.append(splitParam[0])
-                        
+
                     elif len(splitParam) != 1:
                         raise XacroException("Invalid parameter definition")
 
@@ -529,14 +529,14 @@ def eval_all(root, macros={}, symbols=Table()):
 
                 node = None
 
-            elif node.tagName == 'arg' or node.tagName == 'xacro:arg':
+            elif node.tagName == 'xacro:arg':
                 name = node.getAttribute('name')
                 if not name:
                     raise XacroException("Argument name missing")
                 default = node.getAttribute('default')
                 if default and name not in substitution_args_context['arg']:
                     substitution_args_context['arg'][name] = default
-                
+
                 node.parentNode.removeChild(node)
                 node = None
 
@@ -563,9 +563,9 @@ def eval_all(root, macros={}, symbols=Table()):
 
             elif node.tagName in ['if', 'xacro:if', 'unless', 'xacro:unless']:
                 value = eval_text(node.getAttribute('value'), symbols)
-                try: 
+                try:
                     # try to interpret value as boolean
-                    if isinstance(value, basestring): 
+                    if isinstance(value, basestring):
                         if   value == "true": keep = True
                         elif value == "false": keep = False
                         else: keep = ast.literal_eval(value)
@@ -629,13 +629,13 @@ def open_output(output_filename):
     if output_filename is None:
         return sys.stdout
     else:
-        return open(output_filename, 'w') 
+        return open(output_filename, 'w')
 
 def main():
     global basedir
 
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "ho:", 
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "ho:",
                                        ['deps', 'includes', 'inorder'])
     except getopt.GetoptError as err:
         print(str(err))
@@ -650,7 +650,7 @@ def main():
         if o == '-h':
             print_usage(0)
         elif o == '-o':
-            output_filename = a 
+            output_filename = a
         elif o == '--deps':
             just_deps = True
         elif o == '--includes':
