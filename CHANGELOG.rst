@@ -2,8 +2,8 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.9.4 (2015-04-01)
+------------------
 * Using xacro for launch files with <arg> tags would cause the <args> tags to get
   eaten. Removed "arg" and only look for "xacro:arg".
 * Add test for eating launch parameter arguments
