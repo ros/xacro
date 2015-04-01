@@ -2,6 +2,19 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* improved error handling and more descriptive error messages
+* correctly raise a XacroException on invalid, i.e. non-boolean, <xacro:if> expressions.
+  (removed left-over debugging code, added test case)
+* raise an exception on undefined, but used macros
+  Using the syntax <xacro:macroname/> should raise an exception if
+  macroname is not defined. Added appropriate code and a test case.
+* fixed bookkeeping in lazy evaluation
+  switch Table.unevaluated from list to set to avoid multiple key entries
+* fix formatting of changelog
+* Contributors: Robert Haschke
+
 1.10.0 (2015-03-13)
 -------------------
 * security measure: forbid access to __builtins__ in expressions
