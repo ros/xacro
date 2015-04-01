@@ -514,7 +514,7 @@ def eval_all(root, macros, symbols):
                         defaultmap[splitParam[0]] = splitParam[1]
                         params.remove(param)
                         params.append(splitParam[0])
-                        
+
                     elif len(splitParam) != 1:
                         raise XacroException("Invalid parameter definition")
 
@@ -558,14 +558,14 @@ def eval_all(root, macros, symbols):
                 node.parentNode.removeChild(node)
 
                 node = None
-            elif node.tagName == 'arg' or node.tagName == 'xacro:arg':
+            elif node.tagName == 'xacro:arg':
                 name = node.getAttribute('name')
                 if not name:
                     raise XacroException("Argument name missing")
                 default = node.getAttribute('default')
                 if default and name not in substitution_args_context['arg']:
                     substitution_args_context['arg'][name] = default
-                
+
                 node.parentNode.removeChild(node)
                 node = None
 
@@ -591,7 +591,7 @@ def eval_all(root, macros, symbols):
                 node = None
             elif node.tagName in ['if', 'xacro:if', 'unless', 'xacro:unless']:
                 value = eval_text(node.getAttribute('value'), symbols)
-                try: 
+                try:
                     if value == 'true': keep = True
                     elif value == 'false': keep = False
                     else: keep = float(value)
@@ -640,7 +640,7 @@ def open_output(output_filename):
     if output_filename is None:
         return sys.stdout
     else:
-        return open(output_filename, 'w') 
+        return open(output_filename, 'w')
 
 def main():
     try:
@@ -657,7 +657,7 @@ def main():
         if o == '-h':
             print_usage(0)
         elif o == '-o':
-            output_filename = a 
+            output_filename = a
         elif o == '--deps':
             just_deps = True
         elif o == '--includes':
