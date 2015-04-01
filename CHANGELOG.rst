@@ -2,6 +2,23 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Using xacro for launch files with <arg> tags would cause the <args> tags to get
+  eaten. Removed "arg" and only look for "xacro:arg".
+* Add test for eating launch parameter arguments
+* updated pr2 gold standard to include all comments
+* allow to ignore comments in nodes_match()
+* fixed handling of non-element nodes in <include>, <if>, <macro>
+* fixed writexml: text nodes were not printed when other siblings exist
+* improved xml matching, add some new unit tests
+* travis-ci: fixup running of tests
+* fix pathnames used in test case
+* Include CATKIN_ENV params at build time.
+* use output filename flag instead of shell redirection
+* create output file only if parsing is successful
+* Contributors: Mike O'Driscoll, Morgan Quigley, Robert Haschke, William Woodall
+
 1.9.3 (2015-01-14)
 ------------------
 * merge test cases
