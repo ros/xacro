@@ -631,11 +631,7 @@ def eval_all(root, macros={}, symbols=Table()):
     return macros
 
 
-def set_substitution_args_context(context={}):
-    substitution_args_context['arg'] = context
-
-
-def process_cli_args(argv):
+def process_cli_args(argv, require_input=True):
     args = {}
     parser = OptionParser(usage="usage: %prog [options] <input>")
     parser.add_option("-o", dest="output", metavar="FILE",
@@ -654,7 +650,10 @@ def process_cli_args(argv):
     (options, pos_args) = parser.parse_args(rospy.myargv(argv))
 
     if len(pos_args) != 1:
-        parser.error("expected exactly one input file as argument")
+        if require_input:
+            parser.error("expected exactly one input file as argument")
+        else:
+            pos_args = [None]
 
     options.mappings = mappings
     return options, pos_args[0]
@@ -680,7 +679,7 @@ def process_doc(doc,
                 mappings=None, **kwargs):
     # set substitution args
     if mappings is not None:
-        set_substitution_args_context(mappings)
+        substitution_args_context['arg'] = mappings
 
     if just_deps or just_includes:
         process_includes(doc)
@@ -700,13 +699,9 @@ def process_doc(doc,
     eval_all(doc.documentElement, macros, symbols)
 
     # reset substitution args
-    set_substitution_args_context({})
+    substitution_args_context['arg'] = {}
 
 
-def eval_self_contained(doc, in_order=False):
-    process_doc(doc, in_order)
-
-    
 def main():
     opts, input_file = process_cli_args(sys.argv[1:])
     f = open(input_file)
