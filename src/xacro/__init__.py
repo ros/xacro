@@ -591,12 +591,7 @@ def eval_all(root, macros, symbols):
                 node = None
             elif node.tagName in ['if', 'xacro:if', 'unless', 'xacro:unless']:
                 value = eval_text(node.getAttribute('value'), symbols)
-                try:
-                    if value == 'true': keep = True
-                    elif value == 'false': keep = False
-                    else: keep = float(value)
-                except ValueError:
-                    raise XacroException("Xacro conditional evaluated to \"%s\". Acceptable evaluations are one of [\"1\",\"true\",\"0\",\"false\"]" % value)
+                keep = get_condition_logical_value(value)
                 if node.tagName in ['unless', 'xacro:unless']: keep = not keep
                 if keep:
                     for e in list(child_nodes(node)):
@@ -618,6 +613,24 @@ def eval_all(root, macros, symbols):
         node = next_node(previous)
     return macros
 
+def get_condition_logical_value(condition):
+    """
+    Return a boolean value that corresponds to the given Xacro condition value.
+    Values "true", "1" and "1.0" are supposed to be True.
+    Values "false", "0" and "0.0" are supposed to be False.
+    All other values raise an exception.
+
+    :param condition: The Xacro condition value to be evaluated. The value has to already be evaluated by Xacro.
+    :return: The corresponding boolean value, or a Python expression that, converted to boolean, corresponds to it.
+    :raises ValueError: If the condition value is incorrect.
+    """
+    try:
+        if condition == 'true': return True
+        elif condition == 'false': return False
+        else: return float(condition)
+    except ValueError:
+        raise XacroException("Xacro conditional evaluated to \"%s\". Acceptable evaluations are one of "
+                             "[\"1\",\"true\",\"0\",\"false\"]" % condition)
 
 # Expands everything except includes
 def eval_self_contained(doc):
