@@ -270,6 +270,9 @@ def process_includes(doc, base_dir):
                 except IOError as e:
                     raise XacroException("included file \"%s\" could not be opened: %s" % (filename, str(e)))
 
+                # Preprocess the loaded document
+                preprocess(included)
+
                 # Replaces the include tag with the elements of the included file
                 for c in child_nodes(included.documentElement):
                     elt.parentNode.insertBefore(c.cloneNode(deep=True), elt)
@@ -350,6 +353,35 @@ def grab_properties(doc):
 
         elt = next_element(previous)
     return table
+
+def grab_args(doc, delete_nodes=True):
+    """
+    Read all <arg name="..." default="..." /> tags and add their default values to substitution_args_context if
+    there is no value specified for the argument in the context.
+    
+    :param doc: The document to read args from.
+    :param delete_nodes: If True, delete the corresponding arg tags from doc.
+    """
+    previous = doc.documentElement
+    elt = next_element(previous)
+    while elt:
+        if elt.tagName == 'xacro:arg':
+            name = elt.getAttribute('name')
+            if not name:
+                raise XacroException("Argument name missing")
+            default = elt.getAttribute('default')
+            if default and name not in substitution_args_context['arg']:
+                substitution_args_context['arg'][name] = default
+
+            if delete_nodes:
+                elt.parentNode.removeChild(elt)
+                elt = None
+            else:
+                previous = elt
+        else:
+            previous = elt
+
+        elt = next_element(previous)
 
 
 def eat_ignore(lex):
@@ -558,16 +590,6 @@ def eval_all(root, macros, symbols):
                 node.parentNode.removeChild(node)
 
                 node = None
-            elif node.tagName == 'xacro:arg':
-                name = node.getAttribute('name')
-                if not name:
-                    raise XacroException("Argument name missing")
-                default = node.getAttribute('default')
-                if default and name not in substitution_args_context['arg']:
-                    substitution_args_context['arg'][name] = default
-
-                node.parentNode.removeChild(node)
-                node = None
 
             elif node.tagName == 'insert_block' or node.tagName == 'xacro:insert_block':
                 name = node.getAttribute('name')
@@ -590,6 +612,7 @@ def eval_all(root, macros, symbols):
 
                 node = None
             elif node.tagName in ['if', 'xacro:if', 'unless', 'xacro:unless']:
+                # all preprocess-time conditionals have already been resolved in method preprocess()
                 value = eval_text(node.getAttribute('value'), symbols)
                 keep = get_condition_logical_value(value)
                 if node.tagName in ['unless', 'xacro:unless']: keep = not keep
@@ -636,7 +659,51 @@ def get_condition_logical_value(condition):
 def eval_self_contained(doc):
     macros = grab_macros(doc)
     symbols = grab_properties(doc)
+    # Since we've already called grab_args(doc, False) in preprocess, all argument values should be loaded in the
+    # context. However, the <arg> tags are still present in the document, so we read them here again (which has no
+    # effect since all of them have values in the context already set), and we delete them here.
+    grab_args(doc)
+
     eval_all(doc.documentElement, macros, symbols)
+
+def process_preprocessing_conditionals(doc):
+    """
+    Process tags of type <xacro:if value="..." preprocess="preprocess" />
+    The value of the condition is evaluated as for normal xacro:if, however properties like ${my_property}
+    cannot be used. On the other hand, things like ${3.14*0} or $(arg foo) are okay.
+
+    :param doc: The document in which preprocess-time conditionals should be resolved.
+    """
+    previous = doc.documentElement
+    node = next_node(previous)
+    while node:
+        if node.nodeType == xml.dom.Node.ELEMENT_NODE:
+            if node.tagName in ['if', 'xacro:if', 'unless', 'xacro:unless']\
+                    and node.hasAttribute('preprocess'):
+                value = eval_text(node.getAttribute('value'), {})
+                keep = get_condition_logical_value(value)
+                if node.tagName in ['unless', 'xacro:unless']: keep = not keep
+                if keep:
+                    for e in list(child_nodes(node)):
+                        node.parentNode.insertBefore(e.cloneNode(deep=True), node)
+
+                node.parentNode.removeChild(node)
+            else:
+                previous = node
+        else:
+            previous = node
+
+        node = next_node(previous)
+
+def preprocess(doc):
+    """
+    Preprocess the XML document right before includes are resolved.
+    At this moment, this is just used to resolve preprocess-time conditionals.
+
+    :param doc: The XML document to preprocess (probably not yet self-contained (with resolved includes).
+    """
+    grab_args(doc, False)
+    process_preprocessing_conditionals(doc)
 
 
 def print_usage(exit_code=0):
@@ -698,6 +765,7 @@ def main_process(input_filename, output_filename=None, argv=[], just_deps=False,
         raise
     finally:
         f.close()
+    preprocess(doc)
     process_includes(doc, os.path.dirname(input_filename))
     if just_deps:
         for inc in all_includes:

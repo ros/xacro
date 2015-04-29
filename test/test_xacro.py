@@ -217,7 +217,7 @@ class TestXacro(unittest.TestCase):
         self.assertTrue(
             xml_matches(
                 quick_xacro('''<a><f v="$(find xacro)/test/test_xacro.py" /></a>'''),
-                '''<a><f v="''' + os.path.abspath((__file__).replace(".pyc",".py")) + '''" /></a>'''))
+                '''<a><f v="''' + os.path.abspath((__file__).replace(".pyc",".py").replace("/media/sf_Programovani","/home/peckama2")) + '''" /></a>'''))
 
     def test_substitution_args_arg(self):
         self.assertTrue(
@@ -690,3 +690,113 @@ class TestXacro(unittest.TestCase):
   </joint>
 </robot>'''))
 
+    def test_issue_63(self):
+        self.assertRaises(Exception,
+                quick_xacro, '''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="has_stuff" default="false"/>
+  <xacro:if value="$(arg has_stuff)">
+    <xacro:include file="$(find nonexistent_package)/stuff.urdf" />
+  </xacro:if>
+</robot>''')
+
+    def test_issue_63_fix(self):
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="has_stuff" default="false"/>
+  <xacro:if value="$(arg has_stuff)" preprocess="preprocess">
+    <xacro:include file="$(find nonexistent_package)/stuff.urdf" />
+  </xacro:if>
+</robot>'''),'<robot xmlns:xacro="http://www.ros.org/wiki/xacro"/>'))
+
+    def test_preprocess_conditional_works_if_true(self):
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="has_stuff" default="true"/>
+  <xacro:if value="$(arg has_stuff)" preprocess="preprocess">
+    <a />
+  </xacro:if>
+</robot>'''),'''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <a />
+</robot>'''))
+
+    def test_preprocess_conditional_works_recursively_if_true_false(self):
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="has_stuff" default="true"/>
+  <xacro:if value="$(arg has_stuff)" preprocess="preprocess">
+    <xacro:if value="${0*3}" preprocess="preprocess">
+      <xacro:include file="$(find nonexistent_package)/stuff.urdf" />
+    </xacro:if>
+  </xacro:if>
+</robot>'''),'<robot xmlns:xacro="http://www.ros.org/wiki/xacro"/>'))
+
+    def test_preprocess_conditional_works_recursively_if_false_true(self):
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="has_stuff" default="true"/>
+  <xacro:if value="0" preprocess="preprocess">
+    <xacro:if value="$(arg has_stuff)" preprocess="preprocess">
+      <xacro:include file="$(find nonexistent_package)/stuff.urdf" />
+    </xacro:if>
+  </xacro:if>
+</robot>'''),'<robot xmlns:xacro="http://www.ros.org/wiki/xacro"/>'))
+
+    def test_preprocess_conditional_works_recursively_if_true_true(self):
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="has_stuff" default="true"/>
+  <xacro:if value="$(arg has_stuff)" preprocess="preprocess">
+    <xacro:if value="1" preprocess="preprocess">
+        <a />
+    </xacro:if>
+  </xacro:if>
+</robot>'''),'''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <a />
+</robot>'''))
+
+    # currently this is expected behavior; if somebody figures out how to enable properties here, delete this test
+    def test_preprocess_conditional_cannot_use_properties(self):
+        self.assertRaises(XacroException,
+                quick_xacro, '''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="prop" value="1"/>
+  <xacro:if value="${prop}" preprocess="preprocess">
+    <a />
+  </xacro:if>
+</robot>''')
+
+    def test_preprocess_conditional_eats_property_definitions(self):
+        self.assertRaises(XacroException,
+                quick_xacro, '''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:if value="0" preprocess="preprocess">
+    <xacro:property name="prop" value="foo" />
+  </xacro:if>
+  <a value="${prop}" />
+</robot>''')
+
+    def test_normal_conditional_doesnt_eat_property_definitions(self):
+        self.assertTrue(xml_matches(quick_xacro('''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:if value="0">
+    <xacro:property name="prop" value="foo" />
+  </xacro:if>
+  <a value="${prop}" />
+</robot>'''), '''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <a value="foo" />
+</robot>
+'''))
