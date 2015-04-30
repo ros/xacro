@@ -217,7 +217,7 @@ class TestXacro(unittest.TestCase):
         self.assertTrue(
             xml_matches(
                 quick_xacro('''<a><f v="$(find xacro)/test/test_xacro.py" /></a>'''),
-                '''<a><f v="''' + os.path.abspath((__file__).replace(".pyc",".py").replace("/media/sf_Programovani","/home/peckama2")) + '''" /></a>'''))
+                '''<a><f v="''' + os.path.abspath((__file__).replace(".pyc",".py")) + '''" /></a>'''))
 
     def test_substitution_args_arg(self):
         self.assertTrue(
