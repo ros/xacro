@@ -717,7 +717,7 @@ def set_substitution_args_context(context={}):
     substitution_args_context['arg'] = context
 
 def open_output(output_filename):
-    if output_filename is None:
+    if output_filename is None or output_filename == '':
         return sys.stdout
     else:
         return open(output_filename, 'w')
@@ -746,6 +746,9 @@ def main():
     if len(args) < 1:
         print("No input given")
         print_usage(2)
+
+    if output_filename is None:
+        output_filename = ''
 
     main_process(args[0], output_filename, sys.argv, just_deps, just_includes)
 
