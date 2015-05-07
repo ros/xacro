@@ -17,6 +17,12 @@ catkin_python_setup()
 catkin_install_python(PROGRAMS scripts/xacro
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
+## For backwards compatibility we also install as xacro.py
+## install into share/xacro (instead of lib/xacro)!
+install(PROGRAMS scripts/legacy-xacro.py
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+  RENAME xacro.py)
+
 if(CATKIN_ENABLE_TESTING)
   ## Add folders to be run by python nosetests
   catkin_add_nosetests(test)
