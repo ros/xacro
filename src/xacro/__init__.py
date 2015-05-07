@@ -40,6 +40,7 @@ import string
 import sys
 import xml
 import ast
+import math
 
 from xml.dom.minidom import parse
 
@@ -54,6 +55,13 @@ except NameError:
 # Dictionary of subtitution args
 substitution_args_context = {}
 
+# global symbols dictionary
+# taking simple security measures to forbid access to __builtins__
+# only the very few symbols explicitly listed are allowed
+# for discussion, see: http://nedbatchelder.com/blog/201206/eval_really_is_dangerous.html
+global_symbols = {'__builtins__':{k: __builtins__[k] for k in ['list', 'map', 'str', 'float', 'int']}}
+# also define all math symbols and functions
+global_symbols.update(math.__dict__)
 
 class XacroException(Exception):
     pass
@@ -401,9 +409,7 @@ LEXER = QuickLexer(DOLLAR_DOLLAR_BRACE=r"\$\$+\{",
 def eval_text(text, symbols):
     def handle_expr(s):
         try:
-            # taking simple security measures to forbid access to __builtins__
-            # for discussion, see: http://nedbatchelder.com/blog/201206/eval_really_is_dangerous.html
-            return eval(s, {'__builtins__':{}}, symbols)
+            return eval(s, global_symbols, symbols)
         except NameError as e:
             raise XacroException("%s evaluating expression '%s'" % (str(e), s))
         except Exception as e:
@@ -606,9 +612,7 @@ def eval_all(root, macros={}, symbols=Table()):
 
 
 def eval_self_contained(doc, in_order=False):
-    import math;
     symbols = {}
-    symbols.update(math.__dict__)
 
     if not in_order:
         # process includes, macros, and properties before evaluating stuff
