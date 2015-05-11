@@ -796,3 +796,48 @@ class TestXacro(unittest.TestCase):
         output_file_created = os.path.isfile(output_path)
         shutil.rmtree(tmp_dir_name) # clean up after ourselves
         self.assertFalse(output_file_created)
+
+    def test_numeric_arg_to_property(self):
+        # the problem here was the following: if you assigned a property from an arg, then this properties' value was
+        # no longer converted to a python type, so that e.g. 0.555 remained u'0.555', and when this property is
+        # then used in an expression and you subtract it from another number, there is an exception telling you that
+        # numbers and strings cannot be subtracted
+        set_substitution_args_context({})
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="foo" default="0.555"/>
+  <xacro:property name="prop" value="$(arg foo)" />
+  <link name="my_link">
+    <origin xyz="${prop-0.3} 1 0" />
+  </link>
+</robot>
+''', inorder=True),'''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <link name="my_link">
+    <origin xyz="0.255 1 0"/>
+  </link>
+</robot>'''))
+        set_substitution_args_context({})
+
+    def test_issue_63(self):
+        self.assertRaises(Exception,
+                quick_xacro, '''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="has_stuff" default="false"/>
+  <xacro:if value="$(arg has_stuff)">
+    <xacro:include file="$(find nonexistent_package)/stuff.urdf" />
+  </xacro:if>
+</robot>''')
+
+    def test_issue_63_fixed_with_inorder_processing(self):
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="has_stuff" default="false"/>
+  <xacro:if value="$(arg has_stuff)">
+    <xacro:include file="$(find nonexistent_package)/stuff.urdf" />
+  </xacro:if>
+</robot>''', inorder=True),'<robot xmlns:xacro="http://www.ros.org/wiki/xacro"/>'))
