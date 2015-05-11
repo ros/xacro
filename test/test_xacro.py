@@ -853,3 +853,37 @@ class TestXacro(unittest.TestCase):
     <arg name="base_link" value="foo"/>
   </joint>
 </robot>'''))
+
+    def test_issue_63_fixed_with_inorder_processing(self):
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="has_stuff" default="false"/>
+  <xacro:if value="$(arg has_stuff)">
+    <xacro:include file="$(find nonexistent_package)/stuff.urdf" />
+  </xacro:if>
+</robot>''', inorder=True),'<robot xmlns:xacro="http://www.ros.org/wiki/xacro"/>'))
+
+    def test_issue_68_numeric_arg(self):
+        # If a property is assigned from a substitution arg, then this properties' value was
+        # no longer converted to a python type, so that e.g. 0.5 remained u'0.5'.
+        # If this property is then used in a numerical expression an exception is thrown.
+        set_substitution_args_context({})
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="foo" default="0.5"/>
+  <xacro:property name="prop" value="$(arg foo)" />
+  <link name="my_link">
+    <origin xyz="${prop-0.3} 1 0" />
+  </link>
+</robot>
+''', inorder=True),'''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <link name="my_link">
+    <origin xyz="0.2 1 0"/>
+  </link>
+</robot>'''))
+        set_substitution_args_context({})

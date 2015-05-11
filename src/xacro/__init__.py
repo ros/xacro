@@ -115,6 +115,21 @@ class Table:
         self.unevaluated = set() # set of unevaluated variables
         self.recursive = [] # list of currently resolved vars (to resolve recursive definitions)
 
+    def _eval_literal(self, value):
+        if isinstance(value, _basestr):
+            try:
+                # try to evaluate as literal, e.g. number, boolean, etc.
+                # this is needed to handle numbers in property definitions as numbers, not strings
+                evaluated = ast.literal_eval(value)
+                # However, (simple) list, tuple, dict expressions will be evaluated as such too,
+                # which would break expected behaviour. Thus we only accept the evaluation otherwise.
+                if not isinstance(evaluated, (list, dict, tuple)):
+                    return evaluated
+            except:
+                pass
+
+        return value
+
     def _resolve_(self,key):
         # lazy evaluation
         if key in self.unevaluated:
@@ -122,7 +137,7 @@ class Table:
                 raise XacroException("recursive variable definition: %s" %
                                      " -> ".join(self.recursive + [key]))
             self.recursive.append(key)
-            self.table[key] = eval_text(self.table[key], self)
+            self.table[key] = self._eval_literal(eval_text(self.table[key], self))
             self.unevaluated.remove(key)
             self.recursive.remove(key)
         # return evaluated result
@@ -137,19 +152,7 @@ class Table:
             raise KeyError(key)
 
     def __setitem__(self, key, value):
-        if isinstance(value, _basestr):
-            try:
-                # try to evaluate as literal, e.g. number, boolean, etc.
-                # this is needed to handle numbers in property definitions as numbers, not strings
-                evaluated = ast.literal_eval(value)
-                # However, (simple) list, tuple, dict expressions will be evaluated as such too,
-                # which would break expected behaviour. Thus we only accept the evaluation otherwise.
-                if not isinstance(evaluated, (list, dict, tuple)):
-                    value = evaluated
-            except:
-                # otherwise simply store as original string for later (re)evaluation
-                pass
-
+        value = self._eval_literal(value)
         self.table[key] = value
         if isinstance(value, _basestr):
             # strings need to be evaluated again at first access
