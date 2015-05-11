@@ -114,7 +114,7 @@ class Table:
                 raise XacroException("recursive variable definition: %s" %
                                      " -> ".join(self.recursive + [key]))
             self.recursive.append(key)
-            self.table[key] = eval_text(self.table[key], self)
+            self.table[key] = self._eval_literals_(eval_text(self.table[key], self))
             self.unevaluated.remove(key)
             self.recursive.remove(key)
         # return evaluated result
@@ -129,15 +129,7 @@ class Table:
             raise KeyError(key)
 
     def __setitem__(self, key, value):
-        # TODO: does this still work in python3 ?
-        if isinstance(value, basestring):
-            try:
-                # try to evaluate as literal, e.g. number, boolean, etc.
-                value = ast.literal_eval(value)
-            except:
-                # otherwise simply store as original string for later (re)evaluation
-                pass
-
+        value = self._eval_literals_(value)
         self.table[key] = value
         if isinstance(value, basestring):
             # strings need to be evaluated again at first access
@@ -145,6 +137,18 @@ class Table:
         elif key in self.unevaluated:
             # all other types cannot be evaluated
             self.unevaluated.remove(key)
+
+    def _eval_literals_(self, value):
+        # TODO: does this still work in python3 ?
+        if isinstance(value, basestring):
+            try:
+                # try to evaluate as literal, e.g. number, boolean, etc.
+                return ast.literal_eval(value)
+            except:
+                # otherwise simply store as original string for later (re)evaluation
+                return value
+
+        return value
 
     def __contains__(self, key):
         return \
