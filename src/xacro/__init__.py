@@ -141,7 +141,12 @@ class Table:
         if isinstance(value, basestring):
             try:
                 # try to evaluate as literal, e.g. number, boolean, etc.
-                value = ast.literal_eval(value)
+                # this is needed to handle numbers in property definitions as numbers, not strings
+                evaluated = ast.literal_eval(value)
+                # However, (simple) list, tuple, dict expressions will be evaluated as such too,
+                # which would break expected behaviour. Thus we only accept the evaluation otherwise.
+                if not isinstance(evaluated, (list, dict, tuple)):
+                    value = evaluated
             except:
                 # otherwise simply store as original string for later (re)evaluation
                 pass
