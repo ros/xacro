@@ -137,8 +137,7 @@ class Table:
             raise KeyError(key)
 
     def __setitem__(self, key, value):
-        # TODO: does this still work in python3 ?
-        if isinstance(value, basestring):
+        if isinstance(value, _basestr):
             try:
                 # try to evaluate as literal, e.g. number, boolean, etc.
                 # this is needed to handle numbers in property definitions as numbers, not strings
@@ -152,7 +151,7 @@ class Table:
                 pass
 
         self.table[key] = value
-        if isinstance(value, basestring):
+        if isinstance(value, _basestr):
             # strings need to be evaluated again at first access
             self.unevaluated.add(key)
         elif key in self.unevaluated:
@@ -582,7 +581,7 @@ def eval_all(root, macros={}, symbols=Table()):
                 value = eval_text(node.getAttribute('value'), symbols)
                 try: 
                     # try to interpret value as boolean
-                    if isinstance(value, basestring): 
+                    if isinstance(value, _basestr):
                         if   value == "true": keep = True
                         elif value == "false": keep = False
                         else: keep = ast.literal_eval(value)
