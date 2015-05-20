@@ -52,7 +52,7 @@ try:
 except NameError:
     _basestr = str
 
-# Dictionary of subtitution args
+# Dictionary of substitution args
 substitution_args_context = {}
 
 # global symbols dictionary
@@ -165,7 +165,7 @@ class Table:
 
     def __str__(self):
         s = str(self.table)
-        if isinstance (self.parent, Table):
+        if isinstance(self.parent, Table):
             s += "\n  parent: "
             s += str(self.parent)
         return s
@@ -254,7 +254,7 @@ def child_nodes(elt):
         c = c.nextSibling
 
 all_includes = []
-basedir="."
+basedir = "."
 
 # Deprecated message for <include> tags that don't have <xacro:include> prepended:
 deprecated_include_msg = """DEPRECATED IN HYDRO:
@@ -423,7 +423,7 @@ def eval_text(text, symbols):
         return eval_extension("$(%s)" % s)
 
     results = []
-    lex = QuickLexer(LEXER);
+    lex = QuickLexer(LEXER)
     lex.lex(text)
     while lex.peek():
         if lex.peek()[0] == lex.EXPR:
@@ -435,7 +435,7 @@ def eval_text(text, symbols):
         elif lex.peek()[0] == lex.DOLLAR_DOLLAR_BRACE:
             results.append(lex.next()[1][1:])
     # return single element as is, i.e. typed
-    if (len(results) == 1): return results[0]
+    if len(results) == 1: return results[0]
     # otherwise join elements to a string
     else: return ''.join(map(str, results))
 
