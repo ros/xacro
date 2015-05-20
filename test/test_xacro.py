@@ -775,11 +775,9 @@ class TestXacro(unittest.TestCase):
         set_substitution_args_context({})
         self.assertRaises(Exception,
             quick_xacro, '''\
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <link name="my_link">
-    <origin xyz="0 0 $(arg foo)"/>
-  </link>
-</robot>
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <a arg="$(arg foo)"/>
+</a>
 ''')
         set_substitution_args_context({})
 
@@ -829,41 +827,25 @@ class TestXacro(unittest.TestCase):
         self.assertTrue(
             xml_matches(
                 quick_xacro('''\
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <xacro:macro name="fixed_link" params="parent_link:=base_link child_link *joint_pose">
-    <link name="${child_link}"/>
-    <joint name="${child_link}_joint" type="fixed">
-      <xacro:insert_block name="joint_pose" />
-      <parent link="${parent_link}"/>
-      <child link="${child_link}" />
-      <arg name="${parent_link}" value="${child_link}"/>
-    </joint>
-  </xacro:macro>
-  <xacro:fixed_link child_link="foo">
-    <origin xyz="0 0 0" rpy="0 0 0" />
-  </xacro:fixed_link >
-</robot>'''),
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <arg name="foo" value="bar"/>
+</a>'''),
 '''\
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <link name="foo"/>
-  <joint name="foo_joint" type="fixed">
-    <origin rpy="0 0 0" xyz="0 0 0"/>
-    <parent link="base_link"/>
-    <child link="foo"/>
-    <arg name="base_link" value="foo"/>
-  </joint>
-</robot>'''))
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <arg name="foo" value="bar"/>
+</a>'''))
 
     def test_issue_63_fixed_with_inorder_processing(self):
         self.assertTrue(
             xml_matches(
                 quick_xacro('''\
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
   <xacro:arg name="has_stuff" default="false"/>
   <xacro:if value="$(arg has_stuff)">
     <xacro:include file="$(find nonexistent_package)/stuff.urdf" />
   </xacro:if>
-</robot>''', inorder=True),'<robot xmlns:xacro="http://www.ros.org/wiki/xacro"/>'))
+</a>''', inorder=True),
+'<a xmlns:xacro="http://www.ros.org/wiki/xacro"/>'))
 
     def test_issue_68_numeric_arg(self):
         # If a property is assigned from a substitution arg, then this properties' value was
@@ -873,17 +855,13 @@ class TestXacro(unittest.TestCase):
         self.assertTrue(
             xml_matches(
                 quick_xacro('''\
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
   <xacro:arg name="foo" default="0.5"/>
   <xacro:property name="prop" value="$(arg foo)" />
-  <link name="my_link">
-    <origin xyz="${prop-0.3} 1 0" />
-  </link>
-</robot>
+  <a prop="${prop-0.3}"/>
+</a>
 ''', inorder=True),'''\
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <link name="my_link">
-    <origin xyz="0.2 1 0"/>
-  </link>
-</robot>'''))
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <a prop="0.2"/>
+</a>'''))
         set_substitution_args_context({})

@@ -130,7 +130,7 @@ class Table:
 
         return value
 
-    def _resolve_(self,key):
+    def _resolve_(self, key):
         # lazy evaluation
         if key in self.unevaluated:
             if key in self.recursive:
