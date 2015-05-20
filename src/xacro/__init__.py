@@ -458,6 +458,28 @@ def handle_dynamic_macro_name(node, macros, symbols):
     node.removeAttribute('macro')
     node.tagName = name
 
+def get_boolean_value(value, condition):
+    """
+    Return a boolean value that corresponds to the given Xacro condition value.
+    Values "true", "1" and "1.0" are supposed to be True.
+    Values "false", "0" and "0.0" are supposed to be False.
+    All other values raise an exception.
+
+    :param value: The value to be evaluated. The value has to already be evaluated by Xacro.
+    :param condition: The original condition text in the XML.
+    :return: The corresponding boolean value, or a Python expression that, converted to boolean, corresponds to it.
+    :raises ValueError: If the condition value is incorrect.
+    """
+    try:
+        if isinstance(value, _basestr):
+            if   value == 'true': return True
+            elif value == 'false': return False
+            else: return ast.literal_eval(value)
+        else: return bool(value)
+    except:
+        raise XacroException("Xacro conditional \"%s\" evaluated to \"%s\", which is not a boolean expression." % (condition, value))
+
+
 # Expands macros, replaces properties, and evaluates expressions
 def eval_all(root, macros={}, symbols=Table()):
     # Evaluates the attributes for the root node
@@ -578,16 +600,8 @@ def eval_all(root, macros={}, symbols=Table()):
                 node = None
 
             elif node.tagName in ['if', 'xacro:if', 'unless', 'xacro:unless']:
-                value = eval_text(node.getAttribute('value'), symbols)
-                try: 
-                    # try to interpret value as boolean
-                    if isinstance(value, _basestr):
-                        if   value == "true": keep = True
-                        elif value == "false": keep = False
-                        else: keep = ast.literal_eval(value)
-                    else: keep = bool(value)
-                except:
-                    raise XacroException("Xacro conditional \"%s\" evaluated to \"%s\", which is not a boolean expression." % (node.getAttribute('value'), value))
+                cond = node.getAttribute('value')
+                keep = get_boolean_value(eval_text(cond, symbols), cond)
                 if node.tagName in ['unless', 'xacro:unless']: keep = not keep
                 if keep:
                     for e in list(child_nodes(node)):
