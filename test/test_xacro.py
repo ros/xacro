@@ -796,3 +796,31 @@ class TestXacro(unittest.TestCase):
         output_file_created = os.path.isfile(output_path)
         shutil.rmtree(tmp_dir_name) # clean up after ourselves
         self.assertFalse(output_file_created)
+
+    def test_iterable_literals_plain(self):
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''\
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="list" value="[0, 1+1, 2]"/>
+  <xacro:property name="tuple" value="(0,1+1,2)"/>
+  <xacro:property name="dict" value="{'a':0, 'b':1+1, 'c':2}"/>
+  <a list="${list}" tuple="${tuple}" dict="${dict}"/>
+</a>''', inorder=True),
+'''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <a list="[0, 1+1, 2]" tuple="(0,1+1,2)" dict="{'a':0, 'b':1+1, 'c':2}"/>
+</a>'''))
+
+    def test_iterable_literals_eval(self):
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''\
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="list" value="${[0, 1+1, 2]}"/>
+  <xacro:property name="tuple" value="${(0,1+1,2)}"/>
+  <xacro:property name="dic" value="${dict(a=0, b=1+1, c=2)}"/>
+  <a list="${list}" tuple="${tuple}" dict="${dic}"/>
+</a>''', inorder=True),
+'''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <a list="[0, 2, 2]" tuple="(0, 2, 2)" dict="{'a': 0, 'c': 2, 'b': 2}"/>
+</a>'''))
