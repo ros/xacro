@@ -9,8 +9,20 @@ set(_xacro_py
 @[end if]@
 
 macro(xacro_add_xacro_file input output)
+  set(options OPTIONAL INORDER)
+  set(multiValueArgs REMAP)
+  cmake_parse_arguments(_XACRO "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if(_XACRO_INORDER)
+    set(_XACRO_INORDER "--inorder")
+  else()
+    unset(_XACRO_INORDER)
+  endif()
+
+  # create absolute input filename (if not yet absolute)
+  get_filename_component(input_abs ${input} ABSOLUTE)
+
   # Call out to xacro to get dependencies
-  execute_process(COMMAND ${_xacro_py} --deps ${input}
+  execute_process(COMMAND ${_xacro_py} --deps ${input_abs} ${_XACRO_REMAP}
     ERROR_VARIABLE _xacro_err_ignore
     OUTPUT_VARIABLE _xacro_deps_result
     OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -18,7 +30,7 @@ macro(xacro_add_xacro_file input output)
   separate_arguments(_xacro_deps_result)
 
   add_custom_command(OUTPUT ${output}
-    COMMAND ${CATKIN_ENV} ${_xacro_py}
-    ARGS ${input} -o ${output}
-    DEPENDS ${input} ${_xacro_deps_result})
+    COMMAND echo "running XACRO: ${_xacro_py} ${_XACRO_INORDER} -o ${output} ${input_abs} ${_XACRO_REMAP}"
+    COMMAND ${CATKIN_ENV} ${_xacro_py} ${_XACRO_INORDER} -o ${output} ${input_abs} ${_XACRO_REMAP}
+    DEPENDS ${input_abs} ${_xacro_deps_result})
 endmacro(xacro_add_xacro_file)
