@@ -701,5 +701,5 @@ def main():
     for comment in banner:
         doc.insertBefore(comment, first)
 
-    open_output(output_filename).write(doc.toprettyxml(indent='  '))
+    open_output(output_filename).write(doc.toprettyxml(indent='  ').encode("utf-8:))
     print()
