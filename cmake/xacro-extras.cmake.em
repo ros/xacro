@@ -39,3 +39,11 @@ ${_xacro_err}")
     COMMAND ${CATKIN_ENV} ${_xacro_py} ${_XACRO_INORDER} -o ${output} ${input_abs} ${_XACRO_REMAP}
     DEPENDS ${input_abs} ${_xacro_deps_result})
 endmacro(xacro_add_xacro_file)
+
+macro(xacro_add_target input output)
+  xacro_add_xacro_file(${input} ${output} ${ARGN})
+  # create target name from ${output} (which might contain directory separators)
+  file(TO_CMAKE_PATH ${output} _target_name)
+  string(REPLACE "/" "_" _target_name _auto_gen_${_target_name})
+  add_custom_target(${_target_name} ALL DEPENDS ${output})
+endmacro(xacro_add_target)
