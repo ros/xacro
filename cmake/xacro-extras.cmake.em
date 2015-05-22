@@ -39,3 +39,8 @@ macro(xacro_add_xacro_file input output)
     COMMAND ${CATKIN_ENV} ${_xacro_py} ${_XACRO_INORDER} -o ${output} ${input_abs} ${_XACRO_REMAP}
     DEPENDS ${input_abs} ${_xacro_deps_result})
 endmacro(xacro_add_xacro_file)
+
+macro(xacro_add_target input output)
+  xacro_add_xacro_file(${input} ${output} ${ARGN})
+  add_custom_target(_auto_gen_${output} ALL DEPENDS ${output})
+endmacro(xacro_add_target)
