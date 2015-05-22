@@ -58,4 +58,4 @@ sys.path = backup_path
 
 xacro.main()
 
-print('Use of deprecated xacro.py. Please, resort to xacro.', file=sys.stderr)
+print('xacro.py is deprecated, please use xacro instead.', file=sys.stderr)
