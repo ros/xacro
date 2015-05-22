@@ -56,5 +56,18 @@ import xacro
 # Restore the path
 sys.path = backup_path
 
-if __name__ == '__main__':
-    xacro.main()
+xacro.main()
+
+# issue deprecation warning
+# - on color-enabled terminals in yellow
+# - otherwise with WARNING prepended
+def is_tty(stream): # taken from catkin_tools/common.py
+    """Returns True if the given stream is a tty, else False"""
+    return hasattr(stream, 'isatty') and stream.isatty()
+
+msg = 'xacro.py is deprecated; please use xacro instead'
+if is_tty(sys.stderr):
+    msg = '\033[93m%s\033[0m' % msg
+else:
+    msg = 'WARNING: %s' % msg
+print(msg, file=sys.stderr)
