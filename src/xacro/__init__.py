@@ -40,6 +40,7 @@ import string
 import sys
 import xml
 import ast
+import math
 
 from xml.dom.minidom import parse
 
@@ -51,9 +52,16 @@ try:
 except NameError:
     _basestr = str
 
-# Dictionary of subtitution args
+# Dictionary of substitution args
 substitution_args_context = {}
 
+# global symbols dictionary
+# taking simple security measures to forbid access to __builtins__
+# only the very few symbols explicitly listed are allowed
+# for discussion, see: http://nedbatchelder.com/blog/201206/eval_really_is_dangerous.html
+global_symbols = {'__builtins__':{k: __builtins__[k] for k in ['list', 'dict', 'map', 'str', 'float', 'int']}}
+# also define all math symbols and functions
+global_symbols.update(math.__dict__)
 
 class XacroException(Exception):
     pass
@@ -107,14 +115,29 @@ class Table:
         self.unevaluated = set() # set of unevaluated variables
         self.recursive = [] # list of currently resolved vars (to resolve recursive definitions)
 
-    def _resolve_(self,key):
+    def _eval_literal(self, value):
+        if isinstance(value, _basestr):
+            try:
+                # try to evaluate as literal, e.g. number, boolean, etc.
+                # this is needed to handle numbers in property definitions as numbers, not strings
+                evaluated = ast.literal_eval(value)
+                # However, (simple) list, tuple, dict expressions will be evaluated as such too,
+                # which would break expected behaviour. Thus we only accept the evaluation otherwise.
+                if not isinstance(evaluated, (list, dict, tuple)):
+                    return evaluated
+            except:
+                pass
+
+        return value
+
+    def _resolve_(self, key):
         # lazy evaluation
         if key in self.unevaluated:
             if key in self.recursive:
                 raise XacroException("recursive variable definition: %s" %
                                      " -> ".join(self.recursive + [key]))
             self.recursive.append(key)
-            self.table[key] = eval_text(self.table[key], self)
+            self.table[key] = self._eval_literal(eval_text(self.table[key], self))
             self.unevaluated.remove(key)
             self.recursive.remove(key)
         # return evaluated result
@@ -129,17 +152,9 @@ class Table:
             raise KeyError(key)
 
     def __setitem__(self, key, value):
-        # TODO: does this still work in python3 ?
-        if isinstance(value, basestring):
-            try:
-                # try to evaluate as literal, e.g. number, boolean, etc.
-                value = ast.literal_eval(value)
-            except:
-                # otherwise simply store as original string for later (re)evaluation
-                pass
-
+        value = self._eval_literal(value)
         self.table[key] = value
-        if isinstance(value, basestring):
+        if isinstance(value, _basestr):
             # strings need to be evaluated again at first access
             self.unevaluated.add(key)
         elif key in self.unevaluated:
@@ -153,20 +168,25 @@ class Table:
 
     def __str__(self):
         s = str(self.table)
-        if isinstance (self.parent, Table):
+        if isinstance(self.parent, Table):
             s += "\n  parent: "
             s += str(self.parent)
         return s
 
 
 class QuickLexer(object):
-    def __init__(self, **res):
+    def __init__(self, *args, **kwargs):
+        if args:
+            # copy attributes + variables from other instance
+            other = args[0]
+            self.__dict__.update(other.__dict__)
+        else:
+            self.res = []
+            for k, v in kwargs.items():
+                self.__setattr__(k, len(self.res))
+                self.res.append(re.compile(v))
         self.str = ""
         self.top = None
-        self.res = []
-        for k, v in res.items():
-            self.__setattr__(k, len(self.res))
-            self.res.append(v)
 
     def lex(self, str):
         self.str = str
@@ -180,7 +200,7 @@ class QuickLexer(object):
         result = self.top
         self.top = None
         for i in range(len(self.res)):
-            m = re.match(self.res[i], self.str)
+            m = self.res[i].match(self.str)
             if m:
                 self.top = (i, m.group(0))
                 self.str = self.str[m.end():]
@@ -237,7 +257,7 @@ def child_nodes(elt):
         c = c.nextSibling
 
 all_includes = []
-basedir="."
+basedir = "."
 
 # Deprecated message for <include> tags that don't have <xacro:include> prepended:
 deprecated_include_msg = """DEPRECATED IN HYDRO:
@@ -388,13 +408,15 @@ def grab_properties(doc, table=Table()):
         elt = next_element(previous)
     return table
 
+LEXER = QuickLexer(DOLLAR_DOLLAR_BRACE=r"\$\$+\{",
+                   EXPR=r"\$\{[^\}]*\}",
+                   EXTENSION=r"\$\([^\)]*\)",
+                   TEXT=r"([^\$]|\$[^{(]|\$$)+")
 # evaluate text and return typed value
 def eval_text(text, symbols):
     def handle_expr(s):
         try:
-            # taking simple security measures to forbid access to __builtins__
-            # for discussion, see: http://nedbatchelder.com/blog/201206/eval_really_is_dangerous.html
-            return eval(s, {'__builtins__':{}}, symbols)
+            return eval(s, global_symbols, symbols)
         except NameError as e:
             raise XacroException("%s evaluating expression '%s'" % (str(e), s))
         except Exception as e:
@@ -404,10 +426,7 @@ def eval_text(text, symbols):
         return eval_extension("$(%s)" % s)
 
     results = []
-    lex = QuickLexer(DOLLAR_DOLLAR_BRACE=r"\$\$+\{",
-                     EXPR=r"\$\{[^\}]*\}",
-                     EXTENSION=r"\$\([^\)]*\)",
-                     TEXT=r"([^\$]|\$[^{(]|\$$)+")
+    lex = QuickLexer(LEXER)
     lex.lex(text)
     while lex.peek():
         if lex.peek()[0] == lex.EXPR:
@@ -419,7 +438,7 @@ def eval_text(text, symbols):
         elif lex.peek()[0] == lex.DOLLAR_DOLLAR_BRACE:
             results.append(lex.next()[1][1:])
     # return single element as is, i.e. typed
-    if (len(results) == 1): return results[0]
+    if len(results) == 1: return results[0]
     # otherwise join elements to a string
     else: return ''.join(map(str, results))
 
@@ -441,6 +460,28 @@ def handle_dynamic_macro_name(node, macros, symbols):
     # finally remove 'macro' attribute and replace tagName for the resolved macro name
     node.removeAttribute('macro')
     node.tagName = name
+
+def get_boolean_value(value, condition):
+    """
+    Return a boolean value that corresponds to the given Xacro condition value.
+    Values "true", "1" and "1.0" are supposed to be True.
+    Values "false", "0" and "0.0" are supposed to be False.
+    All other values raise an exception.
+
+    :param value: The value to be evaluated. The value has to already be evaluated by Xacro.
+    :param condition: The original condition text in the XML.
+    :return: The corresponding boolean value, or a Python expression that, converted to boolean, corresponds to it.
+    :raises ValueError: If the condition value is incorrect.
+    """
+    try:
+        if isinstance(value, _basestr):
+            if   value == 'true': return True
+            elif value == 'false': return False
+            else: return ast.literal_eval(value)
+        else: return bool(value)
+    except:
+        raise XacroException("Xacro conditional \"%s\" evaluated to \"%s\", which is not a boolean expression." % (condition, value))
+
 
 # Expands macros, replaces properties, and evaluates expressions
 def eval_all(root, macros={}, symbols=Table()):
@@ -484,7 +525,7 @@ def eval_all(root, macros={}, symbols=Table()):
                         defaultmap[splitParam[0]] = splitParam[1]
                         params.remove(param)
                         params.append(splitParam[0])
-                        
+
                     elif len(splitParam) != 1:
                         raise XacroException("Invalid parameter definition")
 
@@ -529,14 +570,14 @@ def eval_all(root, macros={}, symbols=Table()):
 
                 node = None
 
-            elif node.tagName == 'arg' or node.tagName == 'xacro:arg':
+            elif node.tagName == 'xacro:arg':
                 name = node.getAttribute('name')
                 if not name:
                     raise XacroException("Argument name missing")
                 default = node.getAttribute('default')
                 if default and name not in substitution_args_context['arg']:
                     substitution_args_context['arg'][name] = default
-                
+
                 node.parentNode.removeChild(node)
                 node = None
 
@@ -562,16 +603,8 @@ def eval_all(root, macros={}, symbols=Table()):
                 node = None
 
             elif node.tagName in ['if', 'xacro:if', 'unless', 'xacro:unless']:
-                value = eval_text(node.getAttribute('value'), symbols)
-                try: 
-                    # try to interpret value as boolean
-                    if isinstance(value, basestring): 
-                        if   value == "true": keep = True
-                        elif value == "false": keep = False
-                        else: keep = ast.literal_eval(value)
-                    else: keep = bool(value)
-                except:
-                    raise XacroException("Xacro conditional \"%s\" evaluated to \"%s\", which is not a boolean expression." % (node.getAttribute('value'), value))
+                cond = node.getAttribute('value')
+                keep = get_boolean_value(eval_text(cond, symbols), cond)
                 if node.tagName in ['unless', 'xacro:unless']: keep = not keep
                 if keep:
                     for e in list(child_nodes(node)):
@@ -600,9 +633,7 @@ def eval_all(root, macros={}, symbols=Table()):
 
 
 def eval_self_contained(doc, in_order=False):
-    import math;
     symbols = {}
-    symbols.update(math.__dict__)
 
     if not in_order:
         # process includes, macros, and properties before evaluating stuff
@@ -629,13 +660,13 @@ def open_output(output_filename):
     if output_filename is None:
         return sys.stdout
     else:
-        return open(output_filename, 'w') 
+        return open(output_filename, 'w')
 
 def main():
     global basedir
 
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "ho:", 
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "ho:",
                                        ['deps', 'includes', 'inorder'])
     except getopt.GetoptError as err:
         print(str(err))
@@ -650,7 +681,7 @@ def main():
         if o == '-h':
             print_usage(0)
         elif o == '-o':
-            output_filename = a 
+            output_filename = a
         elif o == '--deps':
             just_deps = True
         elif o == '--includes':

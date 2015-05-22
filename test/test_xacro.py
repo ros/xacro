@@ -775,11 +775,9 @@ class TestXacro(unittest.TestCase):
         set_substitution_args_context({})
         self.assertRaises(Exception,
             quick_xacro, '''\
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <link name="my_link">
-    <origin xyz="0 0 $(arg foo)"/>
-  </link>
-</robot>
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <a arg="$(arg foo)"/>
+</a>
 ''')
         set_substitution_args_context({})
 
@@ -796,3 +794,74 @@ class TestXacro(unittest.TestCase):
         output_file_created = os.path.isfile(output_path)
         shutil.rmtree(tmp_dir_name) # clean up after ourselves
         self.assertFalse(output_file_created)
+
+    def test_iterable_literals_plain(self):
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''\
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="list" value="[0, 1+1, 2]"/>
+  <xacro:property name="tuple" value="(0,1+1,2)"/>
+  <xacro:property name="dict" value="{'a':0, 'b':1+1, 'c':2}"/>
+  <a list="${list}" tuple="${tuple}" dict="${dict}"/>
+</a>''', inorder=True),
+'''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <a list="[0, 1+1, 2]" tuple="(0,1+1,2)" dict="{'a':0, 'b':1+1, 'c':2}"/>
+</a>'''))
+
+    def test_iterable_literals_eval(self):
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''\
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="list" value="${[0, 1+1, 2]}"/>
+  <xacro:property name="tuple" value="${(0,1+1,2)}"/>
+  <xacro:property name="dic" value="${dict(a=0, b=1+1, c=2)}"/>
+  <a list="${list}" tuple="${tuple}" dict="${dic}"/>
+</a>''', inorder=True),
+'''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <a list="[0, 2, 2]" tuple="(0, 2, 2)" dict="{'a': 0, 'c': 2, 'b': 2}"/>
+</a>'''))
+
+    def test_ros_arg_param(self):
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''\
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <arg name="foo" value="bar"/>
+</a>'''),
+'''\
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <arg name="foo" value="bar"/>
+</a>'''))
+
+    def test_issue_63_fixed_with_inorder_processing(self):
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''\
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="has_stuff" default="false"/>
+  <xacro:if value="$(arg has_stuff)">
+    <xacro:include file="$(find nonexistent_package)/stuff.urdf" />
+  </xacro:if>
+</a>''', inorder=True),
+'<a xmlns:xacro="http://www.ros.org/wiki/xacro"/>'))
+
+    def test_issue_68_numeric_arg(self):
+        # If a property is assigned from a substitution arg, then this properties' value was
+        # no longer converted to a python type, so that e.g. 0.5 remained u'0.5'.
+        # If this property is then used in a numerical expression an exception is thrown.
+        set_substitution_args_context({})
+        self.assertTrue(
+            xml_matches(
+                quick_xacro('''\
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="foo" default="0.5"/>
+  <xacro:property name="prop" value="$(arg foo)" />
+  <a prop="${prop-0.3}"/>
+</a>
+''', inorder=True),'''\
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <a prop="0.2"/>
+</a>'''))
+        set_substitution_args_context({})
