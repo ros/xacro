@@ -22,6 +22,7 @@ macro(xacro_add_xacro_file input output)
   get_filename_component(input_abs ${input} ABSOLUTE)
 
   # Call out to xacro to get dependencies
+  message(STATUS "xacro: determining deps for: " ${input} " ...")
   execute_process(COMMAND ${_xacro_py} --deps ${input_abs} ${_XACRO_REMAP}
     ERROR_VARIABLE _xacro_err
     OUTPUT_VARIABLE _xacro_deps_result
