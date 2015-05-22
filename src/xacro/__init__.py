@@ -684,17 +684,14 @@ def process_doc(doc,
     if just_deps or just_includes:
         process_includes(doc)
 
-    import math;
-    symbols = {}
-
     if not in_order:
         # process includes, macros, and properties before evaluating stuff
         process_includes(doc)
         macros = grab_macros(doc)
-        symbols = grab_properties(doc, Table(symbols))
+        symbols = grab_properties(doc, Table())
     else:
         macros  = {}
-        symbols = Table(symbols)
+        symbols = Table()
 
     eval_all(doc.documentElement, macros, symbols)
 
