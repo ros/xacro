@@ -32,7 +32,6 @@
 
 from __future__ import print_function, division
 
-import getopt
 import glob
 import os
 import re
@@ -42,10 +41,10 @@ import xml
 import ast
 import math
 
-from xml.dom.minidom import parse
-
+import rospy
 from roslaunch import substitution_args
 from rosgraph.names import load_mappings
+from optparse import OptionParser
 
 try:
     _basestr = basestring
@@ -632,72 +631,78 @@ def eval_all(root, macros={}, symbols=Table()):
     return macros
 
 
-def eval_self_contained(doc, in_order=False):
-    symbols = {}
+def process_cli_args(argv, require_input=True):
+    args = {}
+    parser = OptionParser(usage="usage: %prog [options] <input>")
+    parser.add_option("-o", dest="output", metavar="FILE",
+                      help="write output to FILE instead of stdout")
+    parser.add_option("--inorder", action="store_true", dest="in_order",
+                      help="evaluate document in read order")
+    parser.add_option("--deps", action="store_true", dest="just_deps",
+                      help="print file dependencies")
+    parser.add_option("--includes", action="store_true", dest="just_includes",
+                      help="only process includes")
+
+    # process substitution args
+    mappings = load_mappings(argv)
+
+    parser.set_defaults(in_order=False, just_deps=False, just_includes=False)
+    (options, pos_args) = parser.parse_args(rospy.myargv(argv))
+
+    if len(pos_args) != 1:
+        if require_input:
+            parser.error("expected exactly one input file as argument")
+        else:
+            pos_args = [None]
+
+    options.mappings = mappings
+    return options, pos_args[0]
+
+
+def parse(inp):
+    global basedir
+    basedir="."
+
+    if isinstance(inp, _basestr):
+        doc = xml.dom.minidom.parseString(inp)
+    elif isinstance(inp, file):
+        doc = xml.dom.minidom.parse(inp)
+        basedir = os.path.dirname(inp.name)
+    else:
+        doc = inp
+
+    return doc
+
+
+def process_doc(doc,
+                in_order=False, just_deps=False, just_includes=False,
+                mappings=None, **kwargs):
+    # set substitution args
+    if mappings is not None:
+        substitution_args_context['arg'] = mappings
+
+    if just_deps or just_includes:
+        process_includes(doc)
+        return
 
     if not in_order:
         # process includes, macros, and properties before evaluating stuff
         process_includes(doc)
         macros = grab_macros(doc)
-        symbols = grab_properties(doc, Table(symbols))
+        symbols = grab_properties(doc, Table())
     else:
         macros  = {}
-        symbols = Table(symbols)
+        symbols = Table()
 
     eval_all(doc.documentElement, macros, symbols)
 
-def print_usage(exit_code=0):
-    print("Usage: %s [-o <output>] <input>" % 'xacro.py')
-    print("       %s --deps       Prints dependencies" % 'xacro.py')
-    print("       %s --includes   Only evalutes includes" % 'xacro.py')
-    sys.exit(exit_code)
+    # reset substitution args
+    substitution_args_context['arg'] = {}
 
-
-def set_substitution_args_context(context={}):
-    substitution_args_context['arg'] = context
-
-def open_output(output_filename):
-    if output_filename is None:
-        return sys.stdout
-    else:
-        return open(output_filename, 'w')
 
 def main():
-    global basedir
-
-    try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "ho:",
-                                       ['deps', 'includes', 'inorder'])
-    except getopt.GetoptError as err:
-        print(str(err))
-        print_usage(2)
-
-    just_deps = False
-    just_includes = False
-    in_order = False
-
-    output_filename = None
-    for o, a in opts:
-        if o == '-h':
-            print_usage(0)
-        elif o == '-o':
-            output_filename = a
-        elif o == '--deps':
-            just_deps = True
-        elif o == '--includes':
-            just_includes = True
-        elif o == '--inorder':
-            in_order = True
-
-    if len(args) < 1:
-        print("No input given")
-        print_usage(2)
-
-    # Process substitution args
-    set_substitution_args_context(load_mappings(sys.argv))
-
-    f = open(args[0])
-    doc = None
+    opts, input_file = process_cli_args(sys.argv[1:])
+    f = open(input_file)
     try:
         doc = parse(f)
     except xml.parsers.expat.ExpatError:
@@ -710,27 +715,27 @@ def main():
     finally:
         f.close()
 
-    basedir = os.path.dirname(args[0])
-    if just_deps or just_includes:
-        process_includes(doc)
-        if just_deps:
-            sys.stdout.write(" ".join(all_includes))
-            sys.stdout.write("\n")
-        if just_includes:
-            open_output(output_filename).write(doc.toprettyxml(indent='  '))
-            print()
-        return
+    process_doc(doc, **vars(opts))
+    out = open(opts.output, 'w') if opts.output else sys.stdout
 
-    eval_self_contained(doc, in_order)
+    if opts.just_deps:
+        out.write(" ".join(all_includes))
+        print()
+        return
+    if opts.just_includes:
+        out.write(doc.toprettyxml(indent='  '))
+        print()
+        return
 
     banner = [xml.dom.minidom.Comment(c) for c in
               [" %s " % ('=' * 83),
-               " |    This document was autogenerated by xacro from %-30s | " % args[0],
+               " |    This document was autogenerated by xacro from %-30s | " % input_file,
                " |    EDITING THIS FILE BY HAND IS NOT RECOMMENDED  %-30s | " % "",
                " %s " % ('=' * 83)]]
     first = doc.firstChild
     for comment in banner:
         doc.insertBefore(comment, first)
 
-    open_output(output_filename).write(doc.toprettyxml(indent='  '))
+    out.write(doc.toprettyxml(indent='  '))
     print()
+    if opts.output: out.close()
