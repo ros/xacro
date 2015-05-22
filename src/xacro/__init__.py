@@ -700,6 +700,15 @@ def process_doc(doc,
     substitution_args_context['arg'] = {}
 
 
+def open_output(output_filename):
+    if output_filename is None:
+        return sys.stdout
+    else:
+        dir_name = os.path.dirname(output_filename)
+        if dir_name and not os.path.isdir(dir_name): os.makedirs(dir_name)
+        return open(output_filename, 'w')
+
+
 def main():
     opts, input_file = process_cli_args(sys.argv[1:])
     f = open(input_file)
@@ -716,7 +725,7 @@ def main():
         f.close()
 
     process_doc(doc, **vars(opts))
-    out = open(opts.output, 'w') if opts.output else sys.stdout
+    out = open_output(opts.output)
 
     if opts.just_deps:
         out.write(" ".join(all_includes))
