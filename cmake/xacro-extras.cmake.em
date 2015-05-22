@@ -29,8 +29,13 @@ macro(xacro_add_xacro_file input output)
 
   separate_arguments(_xacro_deps_result)
 
+  # stringify _XACRO_REMAP: turning list into a space-separated string
+  foreach(remap ${_XACRO_REMAP})
+    set(_xacro_remap_args "${_xacro_remap_args} ${remap}")
+  endforeach(remap)
+
   add_custom_command(OUTPUT ${output}
-    COMMAND echo "running XACRO: ${_xacro_py} ${_XACRO_INORDER} -o ${output} ${input_abs} ${_XACRO_REMAP}"
+    COMMAND echo ${_xacro_py} ${_XACRO_INORDER} -o ${output} ${input_abs} ${_XACRO_REMAP}
     COMMAND ${CATKIN_ENV} ${_xacro_py} ${_XACRO_INORDER} -o ${output} ${input_abs} ${_XACRO_REMAP}
     DEPENDS ${input_abs} ${_xacro_deps_result})
 endmacro(xacro_add_xacro_file)
