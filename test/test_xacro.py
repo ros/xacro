@@ -129,6 +129,10 @@ def quick_xacro(xml, cli=None, **kwargs):
     xacro.process_doc(doc, **kwargs)
     return doc
 
+def run_xacro(input_path, *args):
+    test_dir = os.path.abspath(os.path.dirname(__file__))
+    xacro_path = os.path.join(test_dir, '..', 'scripts', 'xacro')
+    subprocess.call([xacro_path, input_path] + list(args))
 
 class TestMatchXML(unittest.TestCase):
     def test_normalize_whitespace_text(self):
@@ -767,12 +771,9 @@ class TestXacro(unittest.TestCase):
     def test_broken_input_doesnt_create_empty_output_file(self):
         # run xacro on broken input file to make sure we don't create an
         # empty output file
-        test_dir = os.path.abspath(os.path.dirname(__file__))
-        xacro_path = os.path.join(test_dir, '..', 'scripts', 'xacro')
         tmp_dir_name = tempfile.mkdtemp() # create directory we can trash
         output_path = os.path.join(tmp_dir_name, "should_not_exist")
-        broken_file_path = os.path.join(test_dir, 'broken.xacro')
-        errcode = subprocess.call([xacro_path, broken_file_path, '-o', output_path])
+        run_xacro('broken.xacro', '-o', output_path)
 
         output_file_created = os.path.isfile(output_path)
         shutil.rmtree(tmp_dir_name) # clean up after ourselves
