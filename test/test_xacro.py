@@ -353,27 +353,19 @@ class TestXacro(unittest.TestCase):
             xml_matches(quick_xacro('''\
 <a xmlns:xacro="http://www.ros.org/xacro">
   <xacro:include filename="include1.xml" /></a>'''),
-                        '''<a xmlns:xacro="http://www.ros.org/xacro"><foo /><bar /></a>'''))
+                        '''<a xmlns:xacro="http://www.ros.org/xacro"><inc1/></a>'''))
 
     def test_include_glob(self):
-        self.assertTrue(
-            xml_matches(quick_xacro('''\
-<a xmlns:xacro="http://www.ros.org/xacro">
-  <xacro:include filename="include*.xml" /></a>'''),
-                        '<a xmlns:xacro="http://www.ros.org/xacro"><foo /><bar /><baz /></a>'))
+        input  = '''<a xmlns:xacro="http://www.ros.org/xacro">
+                    <xacro:include filename="include{glob}.xml"/></a>'''
+        result = '<a xmlns:xacro="http://www.ros.org/xacro"><inc1/><inc2/></a>'
+        for pattern in ['*', '?', '[1-2]']:
+            self.assertTrue(xml_matches(quick_xacro(input.format(glob=pattern)), result))
 
     def test_include_nonexistent(self):
         self.assertRaises(xacro.XacroException,
                           quick_xacro, '''<a xmlns:xacro="http://www.ros.org/xacro">
                              <xacro:include filename="include-nada.xml" /></a>''')
-
-    def test_include_from_variable(self):
-        doc = ('''<a xmlns:xacro="http://www.ros.org/xacro">
-        <xacro:property name="file" value="include1.xml"/>
-        <xacro:include filename="${file}" /></a>''')
-        self.assertTrue(
-            xml_matches(quick_xacro(doc, in_order=True),
-                        '''<a xmlns:xacro="http://www.ros.org/xacro"><foo /><bar /></a>'''))
 
     def test_include_lazy(self):
         doc = ('''<a xmlns:xacro="http://www.ros.org/xacro">
@@ -381,6 +373,26 @@ class TestXacro(unittest.TestCase):
         self.assertTrue(
             xml_matches(quick_xacro(doc, in_order=True),
                         '''<a xmlns:xacro="http://www.ros.org/xacro"/>'''))
+
+    def test_include_from_variable(self):
+        doc = ('''<a xmlns:xacro="http://www.ros.org/xacro">
+        <xacro:property name="file" value="include1.xml"/>
+        <xacro:include filename="${file}" /></a>''')
+        self.assertTrue(
+            xml_matches(quick_xacro(doc, in_order=True),
+                        '''<a xmlns:xacro="http://www.ros.org/xacro"><inc1/></a>'''))
+
+    def test_include_recursive(self):
+        self.assertTrue(
+            xml_matches(quick_xacro('''\
+<a xmlns:xacro="http://www.ros.org/xacro">
+    <xacro:include filename="include1.xml"/>
+    <xacro:include filename="./include1.xml"/>
+    <xacro:include filename="subdir/include-recursive.xacro"/>
+</a>'''),
+'''<a xmlns:xacro="http://www.ros.org/xacro">
+<inc1/><inc1/>
+<subdir_inc1/><subdir_inc1/></a>'''))
 
     def test_boolean_if_statement(self):
         self.assertTrue(
@@ -779,6 +791,19 @@ class TestXacro(unittest.TestCase):
         shutil.rmtree(tmp_dir_name) # clean up after ourselves
 
         self.assertFalse(output_file_created)
+
+    def test_create_subdirs(self):
+        # run xacro to create output file in non-existent directory
+        # to make sure this directory will be created by xacro
+        tmp_dir_name = tempfile.mkdtemp() # create directory we can trash
+        shutil.rmtree(tmp_dir_name) # ensure directory is removed
+        output_path = os.path.join(tmp_dir_name, "out")
+        run_xacro('include1.xml', '-o', output_path)
+
+        output_file_created = os.path.isfile(output_path)
+        shutil.rmtree(tmp_dir_name) # clean up after ourselves
+
+        self.assertTrue(output_file_created)
 
     def test_iterable_literals_plain(self):
         self.assertTrue(
