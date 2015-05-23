@@ -2,8 +2,8 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.10.2 (2015-05-23)
+-------------------
 
 * added --debug option to explicitly enable stack traces
   By default, only show error message to the user.
