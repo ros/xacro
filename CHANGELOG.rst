@@ -2,6 +2,77 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
+* added --debug option to explicitly enable stack traces
+  By default, only show error message to the user.
+  Stack traces are only interesting for xacro developers.
+* recursive include processing
+  - more informed error messages (which file was included from where)
+  - allows relative path names for include filename specs
+  they are interpreted relative to the current file
+* new substitution command $(cwd) to extract current working directory
+* added unittest cases
+  - creation of required subdirs for output
+  - recursive xacro:include
+  - extended test_include_glob() to check for all glob patterns
+* added run_xacro() function to simplify unittests running xacro script
+* moved xacro.py back to original location
+* nicely colored deprecation warning
+* create required dirs before opening output file
+* added convenience cmake-macro xacro_add_target()
+  to auto-generate xacro-processed files
+* added cmake status message before launching xacro
+  (xacro might run for quite a while)
+* fetch xacro --deps errors at report them as a warning
+* simplified deprecation message
+* added missing return statement
+* removed obsolete math import
+  left over from deaaae2c69edd7d5e185eeb098c1521d8711608b
+* install xacro.py again (for backwards compatibility)
+  usage of xacro.py issues a deprecation warning
+* simplified scripts/xacro - removed xacro.py
+  - made run script "scripts/xacro" and install process follow standards
+  - removed xacro.py
+  - added dependencies to setup.py
+  Having the binaries xacro and xacro.py installed side by side causes
+  problems, because xacro.py is wrongly taken as the module.
+  This was avoided by the rather complex filtering of the sys.path.
+  Switched to ROS standard now, using a binary script called "xacro".
+* changed tests to use the whole xacro processing pipeline
+  utilizing the modularization of main() from previous commit
+  This simplifies several existing tests, especially these using files on disk.
+* split main() into process_cli_arg(), parse(), process_doc()
+* extended cmake macro xacro_add_xacro_file()
+  - handle INORDER option
+  - handle REMAP arguments
+  - create absolute input file names automatically
+  usage: xacro_add_xacro_file(input output INORDER REMAP ...)
+* stripped new unit tests to essential xml snippets
+* merged pull request `#68 <https://github.com/ros/xacro/issues/68>`_: eval properties assigned from <arg> tags as literals
+  In the following example:
+  <xacro:arg name="val" default="0.5"/>
+  <xacro:property name="val" value="$(arg val)"/>
+  ${val} was not evaluated as a number, but as string only.
+  Thus numerical expressions failed with an exception.
+* factored out get_boolean_value()
+* <xacro:arg> needs to be fully specified
+* (handling <arg> tags (without xacro ns-prefix) disabled native <arg> tags)
+  add test for eating launch parameter arguments
+  remove check for "arg" parameter.
+  move new test function to bottom of source
+* added unit tests for evaluation of list, tuple, and dict literals
+* fixed some code style issues
+* fixed string-isinstance checks (for python 3 compatibility)
+* do not evaluate list, dict, tuple expressions as literals (without ${} syntax)
+* added dict to list of known global symbols
+* focused global_symbols definition in the beginning of the file
+  added some basic python symbols: list, str, float, int and map
+  allowing some basic computation
+* tuning performance: instantiate QuickLexer's regexps only once
+* Contributors: Robert Haschke, Martin Pecka, Mike O'Driscoll, Morgan Quigley
+
 1.10.1 (2015-04-01)
 -------------------
 * improved error handling and more descriptive error messages
