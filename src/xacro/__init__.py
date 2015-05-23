@@ -256,7 +256,6 @@ def child_nodes(elt):
         c = c.nextSibling
 
 all_includes = []
-basedir = "."
 
 # Deprecated message for <include> tags that don't have <xacro:include> prepended:
 deprecated_include_msg = """DEPRECATED IN HYDRO:
@@ -265,7 +264,7 @@ deprecated_include_msg = """DEPRECATED IN HYDRO:
   xacro includes:
      sed -i 's/<include/<xacro:include/g' `find . -iname *.xacro`"""
 
-include_no_matches_msg = """Include tag filename spec \"{}\" matched no files."""
+include_no_matches_msg = """Include tag's filename spec \"{}\" matched no files."""
 
 
 def is_include(elt):
@@ -288,10 +287,11 @@ def is_include(elt):
             print(deprecated_include_msg, file=sys.stderr)
     return True
 
-def process_include(elt, symbols):
-    namespaces = {}
+
+def parse_includes(elt, parent_filename, symbols):
     filename_spec = eval_text(elt.getAttribute('filename'), symbols)
     if not os.path.isabs(filename_spec):
+        basedir = os.path.dirname(parent_filename) if parent_filename else '.'
         filename_spec = os.path.join(basedir, filename_spec)
 
     if re.search('[*[?]+', filename_spec):
@@ -306,42 +306,50 @@ def process_include(elt, symbols):
     for filename in filenames:
         global all_includes
         all_includes.append(filename)
+
         try:
-            with open(filename) as f:
-                try:
-                    included = parse(f)
-                except Exception as e:
-                    raise XacroException(
-                        "included file \"%s\" generated an error during XML parsing: %s"
-                        % (filename, str(e)))
+            yield parse(None, filename), filename
         except IOError as e:
-            raise XacroException("included file \"%s\" could not be opened: %s" % (filename, str(e)))
+            raise XacroException("failed to open include file: %s\n%s" % (filename, str(e)))
 
-        # Replaces the include tag with the nodes of the included file
-        for c in child_nodes(included.documentElement):
-            elt.parentNode.insertBefore(c.cloneNode(deep=True), elt)
 
-        # Grabs all the declared namespaces of the included document
-        for name, value in included.documentElement.attributes.items():
-            if name.startswith('xmlns:'):
-                namespaces[name] = value
+def process_include(elt, included):
+    # Replaces the include tag with the nodes of the included file
+    for c in child_nodes(included.documentElement):
+        elt.parentNode.insertBefore(c.cloneNode(deep=True), elt)
 
     # Makes sure the final document declares all the namespaces of the included documents.
-    for k, v in namespaces.items():
-        elt.parentNode.setAttribute(k, v)
+    for name, value in included.documentElement.attributes.items():
+        if name.startswith('xmlns:'):
+            elt.parentNode.setAttribute(name, value)
 
-    elt.parentNode.removeChild(elt)
+
+def print_location_msg(e, filename):
+    msg = 'error in file:' if getattr(e, '_xacro_first', True) else 'included from:'
+    e._xacro_first = False
+    if filename:
+        print(msg, filename, file=sys.stderr)
+
 
 ## @throws XacroException if a parsing error occurs with an included document
-def process_includes(doc, dir=None):
-    global basedir
-    if dir: basedir = dir
-
+def process_includes(doc, filename):
     previous = doc.documentElement
     elt = next_element(previous)
     while elt:
         if is_include(elt):
-            process_include(elt, {})
+            try:
+                for included, included_filename in parse_includes(elt, filename, {}):
+                    # recursively process includes
+                    process_includes(included, included_filename)
+                    # embed included doc before elt
+
+                    process_include(elt, included)
+            except Exception as e:
+                print_location_msg(e, filename)
+                raise
+
+            elt.parentNode.removeChild(elt)
+
         else:
             previous = elt
 
@@ -483,7 +491,7 @@ def get_boolean_value(value, condition):
 
 
 # Expands macros, replaces properties, and evaluates expressions
-def eval_all(root, macros={}, symbols=Table()):
+def eval_all(root, filename, macros={}, symbols=Table()):
     # Evaluates the attributes for the root node
     for at in root.attributes.items():
         result = str(eval_text(at[1], symbols))
@@ -494,7 +502,17 @@ def eval_all(root, macros={}, symbols=Table()):
     while node:
         if node.nodeType == xml.dom.Node.ELEMENT_NODE:
             if is_include(node):
-                process_include(node, symbols)
+                try:
+                    for included, included_filename in parse_includes(node, filename, symbols):
+                        # recursively process includes
+                        eval_all(included.documentElement, included_filename, macros, symbols)
+                        # embed included doc before node
+                        process_include(node, included)
+                except Exception as e:
+                    print_location_msg(e, filename)
+                    raise
+
+                node.parentNode.removeChild(node)
                 node = next_node(previous)
                 continue
 
@@ -539,7 +557,7 @@ def eval_all(root, macros={}, symbols=Table()):
 
                 # Pulls out the block arguments, in order
                 cloned = node.cloneNode(deep=True)
-                eval_all(cloned, macros, symbols)
+                eval_all(cloned, filename, macros, symbols)
                 block = cloned.firstChild
                 for param in params[:]:
                     if param[0] == '*':
@@ -560,7 +578,7 @@ def eval_all(root, macros={}, symbols=Table()):
                 if params:
                     raise XacroException("Parameters [%s] were not set for macro %s" %
                                          (",".join(params), str(node.tagName)))
-                eval_all(body, macros, scoped)
+                eval_all(body, filename, macros, scoped)
 
                 # Replaces the macro node with the expansion
                 for e in list(child_nodes(body)):  # Ew
@@ -642,6 +660,8 @@ def process_cli_args(argv, require_input=True):
                       help="print file dependencies")
     parser.add_option("--includes", action="store_true", dest="just_includes",
                       help="only process includes")
+    parser.add_option("--debug", action="store_true", dest="debug",
+                      help="print stack trace on exceptions")
 
     # process substitution args
     mappings = load_mappings(argv)
@@ -659,22 +679,31 @@ def process_cli_args(argv, require_input=True):
     return options, pos_args[0]
 
 
-def parse(inp):
-    global basedir
-    basedir="."
+def parse(inp, filename=None):
+    """
+    Parse input or filename into a DOM tree.
+    If inp is None, open filename and load from there.
+    Otherwise, parse inp, either as string or file object.
+    If inp is already a DOM tree, this function is a noop.
+    :return:xml.dom.minidom.Document
+    :raise: xml.parsers.expat.ExpatError
+    """
+    f = None
+    if inp is None:
+        inp = f = open(filename)
 
-    if isinstance(inp, _basestr):
-        doc = xml.dom.minidom.parseString(inp)
-    elif isinstance(inp, file):
-        doc = xml.dom.minidom.parse(inp)
-        basedir = os.path.dirname(inp.name)
-    else:
-        doc = inp
+    try:
+        if isinstance(inp, _basestr):
+            return xml.dom.minidom.parseString(inp)
+        elif isinstance(inp, file):
+            return xml.dom.minidom.parse(inp)
+        return inp
 
-    return doc
+    finally:
+        if f: f.close()
 
 
-def process_doc(doc,
+def process_doc(doc, filename=None,
                 in_order=False, just_deps=False, just_includes=False,
                 mappings=None, **kwargs):
     # set substitution args
@@ -682,19 +711,19 @@ def process_doc(doc,
         substitution_args_context['arg'] = mappings
 
     if just_deps or just_includes:
-        process_includes(doc)
+        process_includes(doc, filename)
         return
 
     if not in_order:
         # process includes, macros, and properties before evaluating stuff
-        process_includes(doc)
+        process_includes(doc, filename)
         macros = grab_macros(doc)
         symbols = grab_properties(doc, Table())
     else:
         macros  = {}
         symbols = Table()
 
-    eval_all(doc.documentElement, macros, symbols)
+    eval_all(doc.documentElement, filename, macros, symbols)
 
     # reset substitution args
     substitution_args_context['arg'] = {}
@@ -711,20 +740,27 @@ def open_output(output_filename):
 
 def main():
     opts, input_file = process_cli_args(sys.argv[1:])
-    f = open(input_file)
     try:
-        doc = parse(f)
-    except xml.parsers.expat.ExpatError:
-        sys.stderr.write("Expat parsing error.  Check that:\n")
-        sys.stderr.write(" - Your XML is correctly formed\n")
-        sys.stderr.write(" - You have the xacro xmlns declaration: " +
-                         "xmlns:xacro=\"http://www.ros.org/wiki/xacro\"\n")
-        sys.stderr.write("\n")
-        raise
-    finally:
-        f.close()
+        doc = parse(None, input_file)
+        process_doc(doc, filename=input_file, **vars(opts))
 
-    process_doc(doc, **vars(opts))
+    except xml.parsers.expat.ExpatError as e:
+        print("XML parsing error: ", str(e), file=sys.stderr)
+        print("Check that:", file=sys.stderr)
+        print(" - Your XML is well-formed", file=sys.stderr)
+        print(" - You have the xacro xmlns declaration:",
+              "xmlns:xacro=\"http://www.ros.org/wiki/xacro\"", file=sys.stderr)
+        sys.exit(2) # indicate failure, but don't print stack trace on XML errors
+
+    except Exception as e:
+        print(file=sys.stderr) # add empty separator line before error
+        if opts.debug:
+            raise # create stack trace
+        else:
+            print('{name}: {msg}'.format(name=type(e).__name__, msg=str(e)),
+                  file=sys.stderr)
+            sys.exit(2) # indicate failure, but don't print stack trace on XML errors
+
     out = open_output(opts.output)
 
     if opts.just_deps:
