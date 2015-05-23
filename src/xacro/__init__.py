@@ -660,6 +660,8 @@ def process_cli_args(argv, require_input=True):
                       help="print file dependencies")
     parser.add_option("--includes", action="store_true", dest="just_includes",
                       help="only process includes")
+    parser.add_option("--debug", action="store_true", dest="debug",
+                      help="print stack trace on exceptions")
 
     # process substitution args
     mappings = load_mappings(argv)
@@ -748,7 +750,16 @@ def main():
         print(" - Your XML is well-formed", file=sys.stderr)
         print(" - You have the xacro xmlns declaration:",
               "xmlns:xacro=\"http://www.ros.org/wiki/xacro\"", file=sys.stderr)
-        raise
+        sys.exit(2) # indicate failure, but don't print stack trace on XML errors
+
+    except Exception as e:
+        print(file=sys.stderr) # add empty separator line before error
+        if opts.debug:
+            raise # create stack trace
+        else:
+            print('{name}: {msg}'.format(name=type(e).__name__, msg=str(e)),
+                  file=sys.stderr)
+            sys.exit(2) # indicate failure, but don't print stack trace on XML errors
 
     out = open_output(opts.output)
 
