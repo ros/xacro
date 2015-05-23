@@ -67,6 +67,8 @@ class XacroException(Exception):
 
 
 def eval_extension(str):
+    if str == '$(cwd)':
+        return os.getcwd()
     return substitution_args.resolve_args(str, context=substitution_args_context, resolve_anon=False)
 
 

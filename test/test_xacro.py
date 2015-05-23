@@ -392,7 +392,7 @@ class TestXacro(unittest.TestCase):
 </a>'''),
 '''<a xmlns:xacro="http://www.ros.org/xacro">
 <inc1/><inc1/>
-<subdir_inc1/><subdir_inc1/></a>'''))
+<subdir_inc1/><subdir_inc1/><inc1/></a>'''))
 
     def test_boolean_if_statement(self):
         self.assertTrue(
