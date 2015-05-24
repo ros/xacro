@@ -25,6 +25,8 @@ install(PROGRAMS xacro.py DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 if(CATKIN_ENABLE_TESTING)
   ## Add folders to be run by python nosetests
   catkin_add_nosetests(test)
+  ## add tests for xacro's cmake functions
+  add_subdirectory(test)
 endif()
 
 roslint_python()

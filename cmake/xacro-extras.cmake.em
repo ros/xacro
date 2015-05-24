@@ -38,6 +38,7 @@ add_custom_target(_xacro_generated_to_devel_space_ ALL)
 function(xacro_add_xacro_file input)
   # parse arguments
   set(options INORDER)
+  set(oneValueArgs OUTPUT)
   set(multiValueArgs REMAP)
   cmake_parse_arguments(_XACRO "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -118,7 +119,7 @@ function(xacro_install target)
 
   ## rule to create target dir
   file(TO_CMAKE_PATH ${CATKIN_PACKAGE_SHARE_DESTINATION}/${_XACRO_DESTINATION} dest)
-  set(TARGET_DIR ${CATKIN_DEVEL_PREFIX}/${dest})
+  file(TO_CMAKE_PATH ${CATKIN_DEVEL_PREFIX}/${dest} TARGET_DIR)
   add_custom_command(OUTPUT ${TARGET_DIR}
     COMMAND ${CMAKE_COMMAND} -E make_directory ${TARGET_DIR}
     COMMENT "creating dir ${TARGET_DIR}")
@@ -133,7 +134,7 @@ function(xacro_install target)
     add_custom_command(OUTPUT ${tgt}
       COMMAND ${CMAKE_COMMAND} -E copy ${output} ${tgt}
       DEPENDS ${TARGET_DIR} ${output}
-      COMMENT "Installing: ${tgt}"
+      COMMENT "Copying to devel space: ${tgt}"
       )
   endforeach()
 
