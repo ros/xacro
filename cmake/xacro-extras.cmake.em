@@ -8,7 +8,7 @@ set(_xacro_py
   )
 @[end if]@
 
-add_custom_target(_xacro_generated_to_devel_space_ ALL)
+add_custom_target(${PROJECT_NAME}_xacro_generated_to_devel_space_ ALL)
 
 
 ## xacro_add_xacro_file(<input> [<output>] [INORDER] [REMAP <arg> <arg> ...]
@@ -139,9 +139,10 @@ function(xacro_install target)
   endforeach()
 
   ## rule to create devel space tgts
-  add_custom_target(${target}_to_devel_space_ DEPENDS ${tgts})
+  add_custom_target(${PROJECT_NAME}_${target}_to_devel_space_ DEPENDS ${tgts})
   # add to main target _xacro_generated_to_devel_space_
-  add_dependencies(_xacro_generated_to_devel_space_ ${target}_to_devel_space_)
+  add_dependencies(${PROJECT_NAME}_xacro_generated_to_devel_space_ 
+                   ${PROJECT_NAME}_${target}_to_devel_space_)
 
 
   ## normal install
@@ -189,7 +190,7 @@ function(xacro_add_files)
 
   if(outputs)
     # link to target
-    add_custom_target(${_XACRO_TARGET} ALL DEPENDS ${outputs})
+    add_custom_target(${PROJECT_NAME}_${_XACRO_TARGET} ALL DEPENDS ${outputs})
 
     # install?
     if(_XACRO_INSTALL)
