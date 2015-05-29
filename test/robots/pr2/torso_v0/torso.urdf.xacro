@@ -15,7 +15,7 @@
       <safety_controller  k_velocity="2000000" soft_lower_limit="${0.0+0.0115}" soft_upper_limit="${0.33-0.005}" k_position="100" />
       <calibration falling="0.00475" />
       <dynamics damping="20000.0" />
-      <insert_block name="origin" />
+      <xacro:insert_block name="origin" />
       <parent link="${parent}"/>
       <child link="${name}_link"/>
     </joint>

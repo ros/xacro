@@ -18,7 +18,7 @@
   <!-- When mounted properly, should have same origin as head plate frame -->
   <xacro:macro name="pr2_head_sensor_package_v0" params="name hd_frame_name hd_camera_name stereo_name parent *origin">
     <joint name="${name}_frame_joint" type="fixed">
-      <insert_block name="origin" />
+      <xacro:insert_block name="origin" />
       <parent link="${parent}"/>
       <child link="${name}_link"/>
     </joint>

@@ -12,7 +12,7 @@
   <xacro:macro name="wge100_camera_v0" params="name camera_name image_format image_topic_name camera_info_topic_name parent hfov focal_length frame_id hack_baseline image_width image_height *origin">
 
     <joint name="${name}_frame_joint" type="fixed">
-      <insert_block name="origin" />
+      <xacro:insert_block name="origin" />
       <parent link="${parent}"/>
       <child link="${name}_frame"/>
     </joint>

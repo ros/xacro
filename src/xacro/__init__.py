@@ -45,6 +45,7 @@ import rospy
 from roslaunch import substitution_args
 from rosgraph.names import load_mappings
 from optparse import OptionParser
+from .color import warning, error, message
 
 try:
     _basestr = basestring
@@ -65,6 +66,33 @@ global_symbols.update(math.__dict__)
 class XacroException(Exception):
     pass
 
+
+# deprecate non-namespaced use of xacro tags (issues #41, #59, #60)
+def deprecated_tag(tagName, _issued=[False]):
+    if _issued[0]:
+        return
+    _issued[0] = True
+
+    warning("""deprecated: xacro tags should be prepended with 'xacro' xml namespace.""".format(tag=tagName))
+    message("""Use the following script to fix incorrect usage:
+    find . -iname "*.xacro" | xargs sed -i 's#<\([/]\\?\)\(if\|unless\|include\|arg\|property\|macro\|insert_block\)#<\\1xacro:\\2#g'""")
+
+# require xacro namespace?
+allow_non_prefixed_tags = True
+
+def check_deprecated_tag(tagName):
+    """
+    Check whether tagName starts with xacro prefix. If not, issue a warning.
+    :param tagName:
+    :return: True if tagName is accepted as xacro tag
+             False if tagName doesn't start with xacro prefix, but the prefix is required
+    """
+    if tagName.startswith('xacro:'):
+        return True
+    else:
+        if allow_non_prefixed_tags:
+            deprecated_tag(tagName)
+        return allow_non_prefixed_tags
 
 def eval_extension(str):
     if str == '$(cwd)':
@@ -259,13 +287,6 @@ def child_nodes(elt):
 
 all_includes = []
 
-# Deprecated message for <include> tags that don't have <xacro:include> prepended:
-deprecated_include_msg = """DEPRECATED IN HYDRO:
-  The <include> tag should be prepended with 'xacro' if that is the intended use
-  of it, such as <xacro:include ...>. Use the following script to fix incorrect
-  xacro includes:
-     sed -i 's/<include/<xacro:include/g' `find . -iname *.xacro`"""
-
 include_no_matches_msg = """Include tag's filename spec \"{}\" matched no files."""
 
 
@@ -286,7 +307,7 @@ def is_include(elt):
             return False
         else:
             # throw a deprecated warning
-            print(deprecated_include_msg, file=sys.stderr)
+            deprecated_tag(elt.tagName)
     return True
 
 
@@ -358,13 +379,15 @@ def process_includes(doc, filename):
         elt = next_element(previous)
 
 def grab_macro(elt, macros):
-    if elt.tagName not in ['macro', 'xacro:macro']: 
-        raise XacroException("expected macro element")
+    assert(elt.tagName in ['macro', 'xacro:macro'])
 
     name = elt.getAttribute('name')
     macros[name] = elt
     macros['xacro:' + name] = elt
     elt.parentNode.removeChild(elt)
+
+    if name == 'call':
+        warning("deprecated use of macro name 'call'; xacro:call became a new keyword")
 
 # Returns a dictionary: { macro_name => macro_xml_block }
 def grab_macros(doc):
@@ -373,7 +396,8 @@ def grab_macros(doc):
     previous = doc.documentElement
     elt = next_element(previous)
     while elt:
-        if elt.tagName == 'macro' or elt.tagName == 'xacro:macro':
+        if elt.tagName in ['macro', 'xacro:macro'] \
+                and check_deprecated_tag(elt.tagName):
             grab_macro(elt, macros)
         else:
             previous = elt
@@ -382,8 +406,7 @@ def grab_macros(doc):
     return macros
 
 def grab_property(elt, table):
-    if elt.tagName not in ['property', 'xacro:property']: 
-        raise XacroException("expected property element")
+    assert(elt.tagName in ['property', 'xacro:property'])
 
     name = elt.getAttribute('name')
     value = None
@@ -409,7 +432,8 @@ def grab_properties(doc, table=Table()):
     previous = doc.documentElement
     elt = next_element(previous)
     while elt:
-        if elt.tagName == 'property' or elt.tagName == 'xacro:property':
+        if elt.tagName in ['property', 'xacro:property'] \
+                and check_deprecated_tag(elt.tagName):
             grab_property(elt, table)
         else:
             previous = elt
@@ -454,8 +478,8 @@ def eval_text(text, symbols):
 # Assuming a node xacro:call, this function resolves the final macro name and
 # adapts the node's tagName accordingly to pretend a call for this macro
 def handle_dynamic_macro_name(node, macros, symbols):
+    # for now, allow deprecated use of macro named 'call':
     if node.tagName in macros:
-        print ("DEPRECATED use of macro name 'call'. xacro:call became a new keyword.", file=sys.stderr)
         return
 
     name = node.getAttribute('macro')
@@ -519,17 +543,19 @@ def eval_all(root, filename, macros={}, symbols=Table()):
                 node = next_node(previous)
                 continue
 
-            if node.tagName in ['property', 'xacro:property']:
+            if node.tagName in ['property', 'xacro:property'] \
+                    and check_deprecated_tag(node.tagName):
                 grab_property(node, symbols)
                 node = next_node(previous)
                 continue
 
-            if node.tagName in ['macro', 'xacro:macro']:
+            if node.tagName in ['macro', 'xacro:macro'] \
+                    and check_deprecated_tag(node.tagName):
                 grab_macro(node, macros)
                 node = next_node(previous)
                 continue
 
-            if node.tagName in ['xacro:call']:
+            if node.tagName == 'xacro:call':
                 handle_dynamic_macro_name(node, macros, symbols)
 
             if node.tagName in macros:
@@ -590,7 +616,8 @@ def eval_all(root, filename, macros={}, symbols=Table()):
 
                 node = None
 
-            elif node.tagName == 'xacro:arg':
+            elif node.tagName in ['arg', 'xacro:arg'] \
+                    and check_deprecated_tag(node.tagName):
                 name = node.getAttribute('name')
                 if not name:
                     raise XacroException("Argument name missing")
@@ -601,7 +628,8 @@ def eval_all(root, filename, macros={}, symbols=Table()):
                 node.parentNode.removeChild(node)
                 node = None
 
-            elif node.tagName == 'insert_block' or node.tagName == 'xacro:insert_block':
+            elif node.tagName in ['insert_block', 'xacro:insert_block'] \
+                    and check_deprecated_tag(node.tagName):
                 name = node.getAttribute('name')
 
                 if ("**" + name) in symbols:
@@ -622,7 +650,8 @@ def eval_all(root, filename, macros={}, symbols=Table()):
 
                 node = None
 
-            elif node.tagName in ['if', 'xacro:if', 'unless', 'xacro:unless']:
+            elif node.tagName in ['if', 'xacro:if', 'unless', 'xacro:unless'] \
+                    and check_deprecated_tag(node.tagName):
                 cond = node.getAttribute('value')
                 keep = get_boolean_value(eval_text(cond, symbols), cond)
                 if node.tagName in ['unless', 'xacro:unless']: keep = not keep
@@ -663,6 +692,9 @@ def process_cli_args(argv, require_input=True):
                       help="print file dependencies")
     parser.add_option("--includes", action="store_true", dest="just_includes",
                       help="only process includes")
+    parser.add_option("--xacro-ns", action="store_false", default=True, dest="xacro_ns",
+                      help="require xacro namespace prefix for tags "
+                           "(no deprecation msg)")
     parser.add_option("--debug", action="store_true", dest="debug",
                       help="print stack trace on exceptions")
 
@@ -712,10 +744,13 @@ def parse(inp, filename=None):
 
 def process_doc(doc, filename=None,
                 in_order=False, just_deps=False, just_includes=False,
-                mappings=None, **kwargs):
+                mappings=None, xacro_ns=True, **kwargs):
     # set substitution args
     if mappings is not None:
         substitution_args_context['arg'] = mappings
+
+    global allow_non_prefixed_tags
+    allow_non_prefixed_tags = xacro_ns
 
     if just_deps or just_includes:
         process_includes(doc, filename)
@@ -752,7 +787,7 @@ def main():
         process_doc(doc, filename=input_file, **vars(opts))
 
     except xml.parsers.expat.ExpatError as e:
-        print("XML parsing error: ", str(e), file=sys.stderr)
+        error("XML parsing error: %s" % str(e), alt_text=None)
         print("Check that:", file=sys.stderr)
         print(" - Your XML is well-formed", file=sys.stderr)
         print(" - You have the xacro xmlns declaration:",
@@ -764,8 +799,7 @@ def main():
         if opts.debug:
             raise # create stack trace
         else:
-            print('{name}: {msg}'.format(name=type(e).__name__, msg=str(e)),
-                  file=sys.stderr)
+            error('{name}: {msg}'.format(name=type(e).__name__, msg=str(e)))
             sys.exit(2) # indicate failure, but don't print stack trace on XML errors
 
     out = open_output(opts.output)

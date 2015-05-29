@@ -7,7 +7,7 @@
   <xacro:macro name="microstrain_3dmgx2_imu_v0" params="name parent *origin imu_topic update_rate stdev">
     <joint name="${name}_joint" type="fixed">
       <axis xyz="0 1 0" />
-      <insert_block name="origin" />
+      <xacro:insert_block name="origin" />
       <parent link="${parent}_link"/>
       <child link="${name}_link"/>
     </joint>
