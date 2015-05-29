@@ -179,18 +179,18 @@ class TestXacro(unittest.TestCase):
 
     def test_inorder_processing(self):
         src = '''<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <property name="foo" value="1.0"/>
-  <property name="mount" value="base1"/>
+  <xacro:property name="foo" value="1.0"/>
+  <xacro:property name="mount" value="base1"/>
   <xacro:macro name="ee" params="side *origin">
-    <link name="${side}_base1"> <insert_block name="origin"/> </link>
+    <link name="${side}_base1"> <xacro:insert_block name="origin"/> </link>
   </xacro:macro>
   <xacro:ee side="left"> <origin>1 ${foo}</origin> </xacro:ee>
   <joint name="mount" type="fixed"> <child link="${mount}"/> </joint>
 
-  <property name="foo" value="3.0"/>
-  <property name="mount" value="base2"/>
+  <xacro:property name="foo" value="3.0"/>
+  <xacro:property name="mount" value="base2"/>
   <xacro:macro name="ee" params="side *origin">
-    <link name="${side}_base2"> <insert_block name="origin"/> </link>
+    <link name="${side}_base2"> <xacro:insert_block name="origin"/> </link>
   </xacro:macro>
   <xacro:ee side="right"> <origin>2 ${foo}</origin> </xacro:ee>
   <joint name="mount" type="fixed"> <child link="${mount}"/> </joint>
@@ -215,15 +215,15 @@ class TestXacro(unittest.TestCase):
     def test_DEPRECATED_should_replace_before_macroexpand(self):
         self.assertTrue(
             xml_matches(
-                quick_xacro('''<a>
-<macro name="inner" params="*the_block">
-  <in_the_inner><insert_block name="the_block" /></in_the_inner>
-</macro>
-<macro name="outer" params="*the_block">
-  <in_the_outer><inner><insert_block name="the_block" /></inner></in_the_outer>
-</macro>
+                quick_xacro('''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+<xacro:macro name="inner" params="*the_block">
+  <in_the_inner><xacro:insert_block name="the_block" /></in_the_inner>
+</xacro:macro>
+<xacro:macro name="outer" params="*the_block">
+  <in_the_outer><inner><xacro:insert_block name="the_block" /></inner></in_the_outer>
+</xacro:macro>
 <outer><woot /></outer></a>'''),
-                '''<a>
+                '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
 <in_the_outer><in_the_inner><woot /></in_the_inner></in_the_outer></a>'''))
 
     def test_should_replace_before_macroexpand(self):
@@ -234,7 +234,7 @@ class TestXacro(unittest.TestCase):
   <in_the_inner><xacro:insert_block name="the_block" /></in_the_inner>
 </xacro:macro>
 <xacro:macro name="outer" params="*the_block">
-  <in_the_outer><xacro:inner><insert_block name="the_block" /></xacro:inner></in_the_outer>
+  <in_the_outer><xacro:inner><xacro:insert_block name="the_block" /></xacro:inner></in_the_outer>
 </xacro:macro>
 <xacro:outer><woot /></xacro:outer></a>'''),
                 '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
@@ -482,7 +482,7 @@ class TestXacro(unittest.TestCase):
         self.assertTrue(
             xml_matches(quick_xacro('''
 <a xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <property name="xyz" value="5 -2"/>
+  <xacro:property name="xyz" value="5 -2"/>
   <foo>${xyz}</foo>
 </a>'''),
 '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
