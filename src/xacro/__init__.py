@@ -342,8 +342,8 @@ def process_includes(doc, filename):
                     # recursively process includes
                     process_includes(included, included_filename)
                     # embed included doc before elt
-
                     process_include(elt, included)
+
             except Exception as e:
                 print_location_msg(e, filename)
                 raise
@@ -508,6 +508,7 @@ def eval_all(root, filename, macros={}, symbols=Table()):
                         eval_all(included.documentElement, included_filename, macros, symbols)
                         # embed included doc before node
                         process_include(node, included)
+
                 except Exception as e:
                     print_location_msg(e, filename)
                     raise
@@ -698,6 +699,10 @@ def parse(inp, filename=None):
         elif isinstance(inp, file):
             return xml.dom.minidom.parse(inp)
         return inp
+
+    except Exception as e:
+        print_location_msg(e, filename)
+        raise
 
     finally:
         if f: f.close()
