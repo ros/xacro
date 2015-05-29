@@ -839,7 +839,7 @@ class TestXacro(unittest.TestCase):
                 quick_xacro('''\
 <a xmlns:xacro="http://www.ros.org/wiki/xacro">
   <arg name="foo" value="bar"/>
-</a>'''),
+</a>''', xacro_ns=False),
 '''\
 <a xmlns:xacro="http://www.ros.org/wiki/xacro">
   <arg name="foo" value="bar"/>

@@ -77,9 +77,22 @@ def deprecated_tag(tagName, _issued=[False]):
     message("""Use the following script to fix incorrect usage:
     find . -iname "*.xacro" | xargs sed -i 's#<\([/]\\?\)\(if\|unless\|include\|arg\|property\|macro\|insert_block\)#<\\1xacro:\\2#g'""")
 
+# require xacro namespace?
+allow_non_prefixed_tags = True
+
 def check_deprecated_tag(tagName):
-    if not tagName.startswith('xacro:'):
-        deprecated_tag(tagName)
+    """
+    Check whether tagName starts with xacro prefix. If not, issue a warning.
+    :param tagName:
+    :return: True if tagName is accepted as xacro tag
+             False if tagName doesn't start with xacro prefix, but the prefix is required
+    """
+    if tagName.startswith('xacro:'):
+        return True
+    else:
+        if allow_non_prefixed_tags:
+            deprecated_tag(tagName)
+        return allow_non_prefixed_tags
 
 def eval_extension(str):
     if str == '$(cwd)':
@@ -367,7 +380,6 @@ def process_includes(doc, filename):
 
 def grab_macro(elt, macros):
     assert(elt.tagName in ['macro', 'xacro:macro'])
-    check_deprecated_tag(elt.tagName)
 
     name = elt.getAttribute('name')
     macros[name] = elt
@@ -384,7 +396,8 @@ def grab_macros(doc):
     previous = doc.documentElement
     elt = next_element(previous)
     while elt:
-        if elt.tagName == 'macro' or elt.tagName == 'xacro:macro':
+        if elt.tagName in ['macro', 'xacro:macro'] \
+                and check_deprecated_tag(elt.tagName):
             grab_macro(elt, macros)
         else:
             previous = elt
@@ -394,7 +407,6 @@ def grab_macros(doc):
 
 def grab_property(elt, table):
     assert(elt.tagName in ['property', 'xacro:property'])
-    check_deprecated_tag(elt.tagName)
 
     name = elt.getAttribute('name')
     value = None
@@ -420,7 +432,8 @@ def grab_properties(doc, table=Table()):
     previous = doc.documentElement
     elt = next_element(previous)
     while elt:
-        if elt.tagName == 'property' or elt.tagName == 'xacro:property':
+        if elt.tagName in ['property', 'xacro:property'] \
+                and check_deprecated_tag(elt.tagName):
             grab_property(elt, table)
         else:
             previous = elt
@@ -529,12 +542,14 @@ def eval_all(root, filename, macros={}, symbols=Table()):
                 node = next_node(previous)
                 continue
 
-            if node.tagName in ['property', 'xacro:property']:
+            if node.tagName in ['property', 'xacro:property'] \
+                    and check_deprecated_tag(node.tagName):
                 grab_property(node, symbols)
                 node = next_node(previous)
                 continue
 
-            if node.tagName in ['macro', 'xacro:macro']:
+            if node.tagName in ['macro', 'xacro:macro'] \
+                    and check_deprecated_tag(node.tagName):
                 grab_macro(node, macros)
                 node = next_node(previous)
                 continue
@@ -600,7 +615,8 @@ def eval_all(root, filename, macros={}, symbols=Table()):
 
                 node = None
 
-            elif node.tagName == 'xacro:arg':
+            elif node.tagName in ['arg', 'xacro:arg'] \
+                    and check_deprecated_tag(node.tagName):
                 name = node.getAttribute('name')
                 if not name:
                     raise XacroException("Argument name missing")
@@ -611,8 +627,8 @@ def eval_all(root, filename, macros={}, symbols=Table()):
                 node.parentNode.removeChild(node)
                 node = None
 
-            elif node.tagName == 'insert_block' or node.tagName == 'xacro:insert_block':
-                check_deprecated_tag(node.tagName)
+            elif node.tagName in ['insert_block', 'xacro:insert_block'] \
+                    and check_deprecated_tag(node.tagName):
                 name = node.getAttribute('name')
 
                 if ("**" + name) in symbols:
@@ -633,8 +649,8 @@ def eval_all(root, filename, macros={}, symbols=Table()):
 
                 node = None
 
-            elif node.tagName in ['if', 'xacro:if', 'unless', 'xacro:unless']:
-                check_deprecated_tag(node.tagName)
+            elif node.tagName in ['if', 'xacro:if', 'unless', 'xacro:unless'] \
+                    and check_deprecated_tag(node.tagName):
                 cond = node.getAttribute('value')
                 keep = get_boolean_value(eval_text(cond, symbols), cond)
                 if node.tagName in ['unless', 'xacro:unless']: keep = not keep
@@ -675,6 +691,9 @@ def process_cli_args(argv, require_input=True):
                       help="print file dependencies")
     parser.add_option("--includes", action="store_true", dest="just_includes",
                       help="only process includes")
+    parser.add_option("--xacro-ns", action="store_false", default=True, dest="xacro_ns",
+                      help="require xacro namespace prefix for tags "
+                           "(no deprecation msg)")
     parser.add_option("--debug", action="store_true", dest="debug",
                       help="print stack trace on exceptions")
 
@@ -720,10 +739,13 @@ def parse(inp, filename=None):
 
 def process_doc(doc, filename=None,
                 in_order=False, just_deps=False, just_includes=False,
-                mappings=None, **kwargs):
+                mappings=None, xacro_ns=True, **kwargs):
     # set substitution args
     if mappings is not None:
         substitution_args_context['arg'] = mappings
+
+    global allow_non_prefixed_tags
+    allow_non_prefixed_tags = xacro_ns
 
     if just_deps or just_includes:
         process_includes(doc, filename)
