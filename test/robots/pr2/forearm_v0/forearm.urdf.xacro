@@ -17,7 +17,7 @@
   <xacro:macro name="pr2_forearm_v0" params="side parent reflect *origin">
 
     <joint name="${side}_forearm_joint" type="fixed">
-      <insert_block name="origin" /> <!-- transform from parent link to this joint frame -->
+      <xacro:insert_block name="origin" /> <!-- transform from parent link to this joint frame -->
       <parent link="${parent}"/>
       <child link="${side}_forearm_link"/>
     </joint>

@@ -13,25 +13,25 @@
   <xacro:include filename="$(find xacro)/test/robots/pr2/common.xacro" />
 
   <!-- Inertial properties differ slightly for left vs right arm -->
-  <property name="uar_xyz1" value= "0.21398" />
-  <property name="uar_xyz2" value="-0.01621" />
-  <property name="uar_xyz3" value="-0.00020" />
-  <property name="uar_ixx"  value= "0.01537748957" />
-  <property name="uar_ixy"  value= "0.00375711247" />
-  <property name="uar_ixz"  value="-0.00070852914" />
-  <property name="uar_iyy"  value= "0.07473670440" />
-  <property name="uar_iyz"  value="-0.00017936450" />
-  <property name="uar_izz"  value= "0.07608763307" />
+  <xacro:property name="uar_xyz1" value= "0.21398" />
+  <xacro:property name="uar_xyz2" value="-0.01621" />
+  <xacro:property name="uar_xyz3" value="-0.00020" />
+  <xacro:property name="uar_ixx"  value= "0.01537748957" />
+  <xacro:property name="uar_ixy"  value= "0.00375711247" />
+  <xacro:property name="uar_ixz"  value="-0.00070852914" />
+  <xacro:property name="uar_iyy"  value= "0.07473670440" />
+  <xacro:property name="uar_iyz"  value="-0.00017936450" />
+  <xacro:property name="uar_izz"  value= "0.07608763307" />
 
-  <property name="ual_xyz1" value= "0.21405" />
-  <property name="ual_xyz2" value= "0.01658" />
-  <property name="ual_xyz3" value="-0.00057" />
-  <property name="ual_ixx"  value= "0.01530603856" />
-  <property name="ual_ixy"  value="-0.00339324862" />
-  <property name="ual_ixz"  value= "0.00060765455" />
-  <property name="ual_iyy"  value= "0.07473694455" />
-  <property name="ual_iyz"  value="-0.00019953729" />
-  <property name="ual_izz"  value= "0.07601594191" />
+  <xacro:property name="ual_xyz1" value= "0.21405" />
+  <xacro:property name="ual_xyz2" value= "0.01658" />
+  <xacro:property name="ual_xyz3" value="-0.00057" />
+  <xacro:property name="ual_ixx"  value= "0.01530603856" />
+  <xacro:property name="ual_ixy"  value="-0.00339324862" />
+  <xacro:property name="ual_ixz"  value= "0.00060765455" />
+  <xacro:property name="ual_iyy"  value= "0.07473694455" />
+  <xacro:property name="ual_iyz"  value="-0.00019953729" />
+  <xacro:property name="ual_izz"  value= "0.07601594191" />
 
 
   <!-- ============================   Upper Arm   ============================ -->

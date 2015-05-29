@@ -10,7 +10,7 @@
   <xacro:macro name="hokuyo_lx30_laser_v0" params="name parent *origin ros_topic update_rate min_angle max_angle">
     <joint name="${name}_joint" type="fixed">
       <axis xyz="0 1 0" />
-      <insert_block name="origin" />
+      <xacro:insert_block name="origin" />
       <parent link="${parent}_link"/>
       <child link="${name}_link"/>
     </joint>

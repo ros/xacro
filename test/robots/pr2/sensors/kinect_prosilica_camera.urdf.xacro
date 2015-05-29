@@ -6,7 +6,7 @@
   
   <xacro:include filename="$(find xacro)/test/robots/pr2/sensors/kinect_prosilica_camera.gazebo.xacro" />
 
-  <property name="ir_depth_rgb_offset_y" value="0.01"/> <!-- FIXME: what is this offset? -->
+  <xacro:property name="ir_depth_rgb_offset_y" value="0.01"/> <!-- FIXME: what is this offset? -->
 
   <!-- kinect and prosilica combo -->
   <xacro:macro name="kinect_prosilica_camera_swept_back_v0" params="name parent *origin">

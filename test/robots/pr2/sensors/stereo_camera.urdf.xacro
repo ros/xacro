@@ -10,18 +10,18 @@
 
   <xacro:include filename="$(find xacro)/test/robots/pr2/sensors/stereo_camera.gazebo.xacro" />
 
-  <property name="stereo_dx" value="0.00" />
-  <property name="stereo_dy" value="-0.09" /> <!-- +y to the left -->
-  <property name="stereo_dz" value="0.00" />
-  <property name="stereo_rx" value="0.00" />
-  <property name="stereo_ry" value="0.00" />
-  <property name="stereo_rz" value="0.00" />
+  <xacro:property name="stereo_dx" value="0.00" />
+  <xacro:property name="stereo_dy" value="-0.09" /> <!-- +y to the left -->
+  <xacro:property name="stereo_dz" value="0.00" />
+  <xacro:property name="stereo_rx" value="0.00" />
+  <xacro:property name="stereo_ry" value="0.00" />
+  <xacro:property name="stereo_rz" value="0.00" />
 
   <!-- this macro is used for creating wide and narrow double stereo camera links -->
   <xacro:macro name="stereo_camera_v0" params="name parent focal_length hfov image_format image_width image_height *origin">
 
     <joint name="${name}_frame_joint" type="fixed">
-      <insert_block name="origin" />
+      <xacro:insert_block name="origin" />
       <parent link="${parent}"/>
       <child link="${name}_link"/>
     </joint>

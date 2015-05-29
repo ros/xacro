@@ -13,35 +13,35 @@
   <!-- all link geometry sizes are obtained from Function provided CAD model unless stated otherwise -->
   <!-- all simplified collision geometry are hand approximated from CAD model, sometimes from respective bounding boxes -->
 
-  <property name="M_PI" value="3.1415926535897931" />
+  <xacro:property name="M_PI" value="3.1415926535897931" />
 
-  <property name="caster_offset_x" value="0.2246" />
-  <property name="caster_offset_y" value="0.2246" />
-  <property name="caster_offset_z" value="0.0282" />
+  <xacro:property name="caster_offset_x" value="0.2246" />
+  <xacro:property name="caster_offset_y" value="0.2246" />
+  <xacro:property name="caster_offset_z" value="0.0282" />
 
-  <property name="caster_wheel_offset_y" value="0.049" />
-  <property name="wheel_length" value="0.034" />
-  <property name="wheel_radius" value="0.074792" />   <!-- This is the 'effective' wheel radius. Wheel radius for uncompressed wheel is 0.079.  mp 20080801 -->
+  <xacro:property name="caster_wheel_offset_y" value="0.049" />
+  <xacro:property name="wheel_length" value="0.034" />
+  <xacro:property name="wheel_radius" value="0.074792" />   <!-- This is the 'effective' wheel radius. Wheel radius for uncompressed wheel is 0.079.  mp 20080801 -->
 
-  <property name="base_cg_x" value="-0.061" />
-  <property name="base_cg_y" value="0.0" />
-  <property name="base_cg_z" value="${0.5*0.293}" />
-  <property name="base_mass" value="116.0" />
+  <xacro:property name="base_cg_x" value="-0.061" />
+  <xacro:property name="base_cg_y" value="0.0" />
+  <xacro:property name="base_cg_z" value="${0.5*0.293}" />
+  <xacro:property name="base_mass" value="116.0" />
 
   <!-- simplified box collision geometry for base -->
-  <property name="base_size_x" value="0.65" />
-  <property name="base_size_y" value="0.65" />
-  <property name="base_size_z" value="0.23" />
-  <property name="base_collision_size_z" value="0.04" />
+  <xacro:property name="base_size_x" value="0.65" />
+  <xacro:property name="base_size_y" value="0.65" />
+  <xacro:property name="base_size_z" value="0.23" />
+  <xacro:property name="base_collision_size_z" value="0.04" />
 
   <!-- simplified box collision geometry for hokuyo laser -->
-  <property name="base_laser_x" value="0.275" />
-  <property name="base_laser_y" value="0.0" />
-  <property name="base_laser_z" value="0.252" />
-  <property name="base_laser_size_x" value="0.06" />
-  <property name="base_laser_size_y" value="0.06" />
-  <property name="base_laser_size_z" value="0.03" />
-  <property name="base_laser_collision_offset_z" value="0.023" />
+  <xacro:property name="base_laser_x" value="0.275" />
+  <xacro:property name="base_laser_y" value="0.0" />
+  <xacro:property name="base_laser_z" value="0.252" />
+  <xacro:property name="base_laser_size_x" value="0.06" />
+  <xacro:property name="base_laser_size_y" value="0.06" />
+  <xacro:property name="base_laser_size_z" value="0.03" />
+  <xacro:property name="base_laser_collision_offset_z" value="0.023" />
 
   <!--                                                      -->
   <!--           wheel                                      -->
@@ -94,7 +94,7 @@
       <safety_controller  k_velocity="10" />
       <calibration rising="${ref_position}" />
       <dynamics damping="1.0" friction="0.0" />
-      <insert_block name="origin" />
+      <xacro:insert_block name="origin" />
       <parent link="${parent}"/>
       <child link="${suffix}_rotation_link" />
     </joint>
@@ -132,7 +132,7 @@
 
     <xacro:pr2_caster_hub_v0 parent="${parent}" suffix="${suffix}_caster"
                              ref_position="${ref_position}" >
-      <insert_block name="origin" />
+      <xacro:insert_block name="origin" />
     </xacro:pr2_caster_hub_v0>
 
     <!-- wheel macros -->

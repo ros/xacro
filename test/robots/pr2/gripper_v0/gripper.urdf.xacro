@@ -8,19 +8,19 @@
   <xacro:include filename="$(find xacro)/test/robots/pr2/gripper_v0/gripper.gazebo.xacro" />
   <xacro:include filename="$(find xacro)/test/robots/pr2/gripper_v0/gripper.transmission.xacro" />
 
-  <property name="M_PI" value="3.1415926535897931" />
+  <xacro:property name="M_PI" value="3.1415926535897931" />
 
-  <property name="gripper_upper_angle" value="0.548" />
-  <property name="gripper_lower_angle" value="0.00" />
+  <xacro:property name="gripper_upper_angle" value="0.548" />
+  <xacro:property name="gripper_lower_angle" value="0.00" />
 
-  <property name="finger_damping"             value="0.02" />
-  <property name="gripper_damping"            value="10.0" />
-  <property name="finger_tip_damping"         value="0.001" />
+  <xacro:property name="finger_damping"             value="0.02" />
+  <xacro:property name="gripper_damping"            value="10.0" />
+  <xacro:property name="finger_tip_damping"         value="0.001" />
 
-  <property name="finger_joint_effort_limit"  value="1000.0" />
+  <xacro:property name="finger_joint_effort_limit"  value="1000.0" />
 
-  <property name="finger_to_finger_tip_x"     value="0.09137" />
-  <property name="palm_to_finger_x"           value="0.07691" />
+  <xacro:property name="finger_to_finger_tip_x"     value="0.09137" />
+  <xacro:property name="palm_to_finger_x"           value="0.07691" />
 
   <xacro:macro name="pr2_finger_limits_v0">
     <!-- limits on passive finger and finger top joints without
@@ -197,7 +197,7 @@
   <xacro:macro name="pr2_gripper_v0" params="side reflect parent *origin gear_ratio screw_reduction theta0 phi0 t0 L0 h a b r">
 
     <joint name="${side}_gripper_palm_joint" type="fixed">
-      <insert_block name="origin"/>
+      <xacro:insert_block name="origin"/>
       <parent link="${parent}"/>
       <child link="${side}_gripper_palm_link"/>
     </joint>
