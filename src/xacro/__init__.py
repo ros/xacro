@@ -1,5 +1,5 @@
+# Copyright (c) 2015, Open Source Robotics Foundation, Inc.
 # Copyright (c) 2013, Willow Garage, Inc.
-# Copyright (c) 2014, Open Source Robotics Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,8 +27,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-# Author: Stuart Glaser
-# Maintainer: William Woodall <william@osrfoundation.org>
+# Authors: Stuart Glaser, William Woodall, Robert Haschke
+# Maintainer: Morgan Quigley <morgan@osrfoundation.org>
 
 from __future__ import print_function, division
 
