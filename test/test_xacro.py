@@ -405,7 +405,7 @@ class TestXacro(TestXacroCommentsIgnored):
             self.assert_matches(self.quick_xacro(input.format(glob=pattern)), result)
 
     def test_include_nonexistent(self):
-        self.assertRaises(xacro.XacroException,
+        self.assertRaises(IOError,
                           self.quick_xacro, '''<a xmlns:xacro="http://www.ros.org/xacro">
                              <xacro:include filename="include-nada.xml" /></a>''')
 
