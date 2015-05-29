@@ -87,7 +87,9 @@ global_symbols.update(math.__dict__)
 
 
 class XacroException(Exception):
-    pass
+    def __init__(self, msg=None, macro=None):
+        super(XacroException, self).__init__(msg)
+        self.macros = [] if macro is None else [macro]
 
 
 # deprecate non-namespaced use of xacro tags (issues #41, #59, #60)
@@ -400,8 +402,11 @@ def grab_macro(elt, macros):
     assert(elt.tagName in ['macro', 'xacro:macro'])
 
     name = elt.getAttribute('name')
-    macros[name] = elt
-    macros['xacro:' + name] = elt
+    # append current filestack to previous list of definitions
+    _, defs = macros.get(name, (None, []))
+    defs.append(filestack)
+
+    macros['xacro:' + name] = macros[name] = (elt, defs)
     elt.parentNode.removeChild(elt)
 
     if name == 'call':
@@ -589,7 +594,8 @@ def eval_all(root, macros={}, symbols=Table()):
                 handle_dynamic_macro_name(node, macros, symbols)
 
             if node.tagName in macros:
-                body = macros[node.tagName].cloneNode(deep=True)
+                m = macros[node.tagName]
+                body = m[0].cloneNode(deep=True)
                 params = body.getAttribute('params').split()
 
                 # Parse default values for any parameters
@@ -603,30 +609,30 @@ def eval_all(root, macros={}, symbols=Table()):
                         params.append(splitParam[0])
 
                     elif len(splitParam) != 1:
-                        raise XacroException("Invalid parameter definition")
+                        raise XacroException("Invalid parameter definition", macro=m)
 
                 # Expands the macro
                 scoped = Table(symbols)
                 for name, value in node.attributes.items():
                     if name not in params:
-                        raise XacroException("Invalid parameter \"%s\" while expanding macro \"%s\"" %
-                                             (str(name), str(node.tagName)))
+                        raise XacroException("Invalid parameter \"%s\"" % str(name), macro=m)
                     params.remove(name)
                     scoped[name] = eval_text(value, symbols)
 
                 # Pulls out the block arguments, in order
                 cloned = node.cloneNode(deep=True)
                 eval_all(cloned, macros, symbols)
-                block = cloned.firstChild
+                block = first_child_element(cloned)
                 for param in params[:]:
                     if param[0] == '*':
-                        while block and block.nodeType != xml.dom.Node.ELEMENT_NODE:
-                            block = block.nextSibling
                         if not block:
-                            raise XacroException("Not enough blocks while evaluating macro %s" % str(node.tagName))
+                            raise XacroException("Not enough blocks", macro=m)
                         params.remove(param)
                         scoped[param] = block
-                        block = block.nextSibling
+                        block = next_sibling_element(block)
+
+                if block is not None:
+                    raise XacroException("Unused block \"%s\"" % block.tagName, macro=m)
 
                 # Try to load defaults for any remaining non-block parameters
                 for param in params[:]:
@@ -635,9 +641,16 @@ def eval_all(root, macros={}, symbols=Table()):
                         params.remove(param)
 
                 if params:
-                    raise XacroException("Parameters [%s] were not set for macro %s" %
-                                         (",".join(params), str(node.tagName)))
-                eval_all(body, macros, scoped)
+                    raise XacroException("Undefined parameters [%s]" % ",".join(params), macro=m)
+
+                try:
+                    eval_all(body, macros, scoped)
+                except XacroException as e:
+                    try:
+                        e.macros.append(m)
+                    except AttributeError: # e.macros not yet defined
+                        e.macros = [m]
+                    raise
 
                 # Replaces the macro node with the expansion
                 for e in list(child_nodes(body)):  # Ew
@@ -675,7 +688,7 @@ def eval_all(root, macros={}, symbols=Table()):
                     node.parentNode.insertBefore(block.cloneNode(deep=True), node)
                     node.parentNode.removeChild(node)
                 else:
-                    raise XacroException("Block \"%s\" was never declared" % name)
+                    raise XacroException("Undefined block \"%s\"" % name)
 
                 node = None
 
@@ -820,8 +833,16 @@ def open_output(output_filename):
             raise XacroException("Failed to open output: %s" % str(e))
 
 
-def print_filestack(filestack, file=sys.stderr):
-    msg = 'when processing:'
+def print_location(filestack, macros=None, file=sys.stderr):
+    if macros is None: macros = []
+    msg = 'when instantiating macro:'
+    for m, defs in macros:
+        name = m.getAttribute('name')
+        location = '(%s)' % defs[-1][-1]
+        print(msg, name, location, file=file)
+        msg = 'instantiated from:'
+
+    msg = 'in file:' if macros else 'when processing file:'
     for f in reversed(filestack):
         if f is None: f = 'string'
         print(msg, f, file=file)
@@ -838,7 +859,7 @@ def main():
 
     except xml.parsers.expat.ExpatError as e:
         error("XML parsing error: %s" % str(e), alt_text=None)
-        print_filestack(filestack)
+        print_location(filestack)
         print(file=sys.stderr) # add empty separator line before error
         print("Check that:", file=sys.stderr)
         print(" - Your XML is well-formed", file=sys.stderr)
@@ -847,12 +868,13 @@ def main():
         sys.exit(2)  # indicate failure, but don't print stack trace on XML errors
 
     except Exception as e:
-        print_filestack(filestack)
-        print(file=sys.stderr)  # add empty separator line before error
         if opts.debug:
+            print_location(filestack, getattr(e, 'macros', None))
+            print(file=sys.stderr)  # add empty separator line before error
             raise  # create stack trace
         else:
             error('{name}: {msg}'.format(name=type(e).__name__, msg=str(e)))
+            print_location(filestack, getattr(e, 'macros', None))
             sys.exit(2)  # indicate failure, but don't print stack trace on XML errors
 
     if opts.just_deps:
