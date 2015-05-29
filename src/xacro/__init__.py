@@ -351,7 +351,7 @@ def get_include_files(elt, parent_filename, symbols):
         # Globbing behaviour
         filenames = sorted(glob.glob(filename_spec))
         if len(filenames) == 0:
-            print(include_no_matches_msg.format(filename_spec), file=sys.stderr)
+            warning(include_no_matches_msg.format(filename_spec))
     else:
         # Default behaviour
         filenames = [filename_spec]
@@ -446,8 +446,8 @@ def grab_property(elt, table):
 
     bad = string.whitespace + "${}"
     if any(ch in name for ch in bad):
-        sys.stderr.write('Property names may not have whitespace, ' +
-                         '"{", "}", or "$" : "' + name + '"')
+        warning('Property names may not have whitespace, ' +
+                '"{", "}", or "$" : "' + name + '"')
         return
 
     table[name] = value
