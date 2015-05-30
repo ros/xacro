@@ -776,8 +776,18 @@ def open_output(output_filename):
         return sys.stdout
     else:
         dir_name = os.path.dirname(output_filename)
-        if dir_name and not os.path.isdir(dir_name): os.makedirs(dir_name)
-        return open(output_filename, 'w')
+        if dir_name:
+            try:
+                os.makedirs(dir_name)
+            except os.error:
+                # errors occur when dir_name exists or creation failed
+                # ignore error here; opening of file will fail if directory is still missing
+                pass
+
+        try:
+            return open(output_filename, 'w')
+        except IOError as e:
+            raise XacroException("Failed to open output: %s" % str(e))
 
 
 def main():
@@ -785,6 +795,7 @@ def main():
     try:
         doc = parse(None, input_file)
         process_doc(doc, filename=input_file, **vars(opts))
+        out = open_output(opts.output)
 
     except xml.parsers.expat.ExpatError as e:
         error("XML parsing error: %s" % str(e), alt_text=None)
@@ -801,8 +812,6 @@ def main():
         else:
             error('{name}: {msg}'.format(name=type(e).__name__, msg=str(e)))
             sys.exit(2) # indicate failure, but don't print stack trace on XML errors
-
-    out = open_output(opts.output)
 
     if opts.just_deps:
         out.write(" ".join(all_includes))
