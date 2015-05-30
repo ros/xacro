@@ -41,9 +41,8 @@ import xml
 import ast
 import math
 
-import rospy
 from roslaunch import substitution_args
-from rosgraph.names import load_mappings
+from rosgraph.names import load_mappings, REMAP
 from optparse import OptionParser
 from .color import warning, error, message
 
@@ -702,7 +701,8 @@ def process_cli_args(argv, require_input=True):
     mappings = load_mappings(argv)
 
     parser.set_defaults(in_order=False, just_deps=False, just_includes=False)
-    (options, pos_args) = parser.parse_args(rospy.myargv(argv))
+    filtered_args = [a for a in argv if not REMAP in a] # filter-out REMAP args
+    (options, pos_args) = parser.parse_args(filtered_args)
 
     if len(pos_args) != 1:
         if require_input:
