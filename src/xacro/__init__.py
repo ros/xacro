@@ -125,7 +125,10 @@ def check_deprecated_tag(tag_name):
 def eval_extension(s):
     if s == '$(cwd)':
         return os.getcwd()
-    return substitution_args.resolve_args(s, context=substitution_args_context, resolve_anon=False)
+    try:
+        return substitution_args.resolve_args(s, context=substitution_args_context, resolve_anon=False)
+    except substitution_args.ArgException as e:
+        raise XacroException("Undefined substitution argument '%s'" % str(e))
 
 
 # Better pretty printing of xml
