@@ -132,7 +132,7 @@ function(xacro_install target)
 
     # rule to create devel space tgt
     add_custom_command(OUTPUT ${tgt}
-      COMMAND ${CMAKE_COMMAND} -E copy ${output} ${tgt}
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different ${output} ${tgt}
       DEPENDS ${TARGET_DIR} ${output}
       COMMENT "Copying to devel space: ${tgt}"
       )
