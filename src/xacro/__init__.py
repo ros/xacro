@@ -171,7 +171,7 @@ def fixed_writexml(self, writer, indent="", addindent="", newl=""):
         for node in self.childNodes:
             # skip whitespace-only text nodes
             if node.nodeType == xml.dom.minidom.Node.TEXT_NODE and \
-               not node.data.strip():
+                    (not node.data or node.data.isspace()):
                 continue
             node.writexml(writer, indent + addindent, addindent, newl)
         writer.write("%s</%s>%s" % (indent, self.tagName, newl))
