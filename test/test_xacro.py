@@ -885,6 +885,19 @@ class TestXacroInorder(TestXacro):
         super(TestXacroInorder, self).__init__(*args, **kwargs)
         self.in_order = True
 
+    def test_yaml_support(self):
+        src = '''
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="settings" value="${load_yaml('settings.yaml')}"/>
+  <xacro:property name="type" value="$(arg type)"/>
+  <xacro:include filename="${settings['arms'][type]['file']}"/>
+  <xacro:call macro="${settings['arms'][type]['macro']}"/>
+</a>'''
+        res = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro"><{tag}/></a>'''
+        for i in ['inc1', 'inc2']:
+            self.assert_matches(self.quick_xacro(src, cli=['type:=%s' % i]),
+                                res.format(tag=i))
+
 
 if __name__ == '__main__':
     unittest.main()

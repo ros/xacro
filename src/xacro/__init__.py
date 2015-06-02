@@ -77,6 +77,34 @@ def restore_filestack(oldstack):
     filestack = oldstack
 
 
+def abs_filename_spec(filename_spec):
+    """
+    Prepend the dirname of the currently processed file
+    if filename_spec is not yet absolute
+    """
+    if not os.path.isabs(filename_spec):
+        parent_filename = filestack[-1]
+        basedir = os.path.dirname(parent_filename) if parent_filename else '.'
+        return os.path.join(basedir, filename_spec)
+    return filename_spec
+
+
+def load_yaml(filename):
+    try:
+        import yaml
+    except:
+        raise XacroException("yaml support not available; install python-yaml")
+
+    filename = abs_filename_spec(filename)
+    f = open(filename)
+    oldstack = push_file(filename)
+    try:
+        return yaml.load(f)
+    finally:
+        f.close()
+        restore_filestack(oldstack)
+
+
 # global symbols dictionary
 # taking simple security measures to forbid access to __builtins__
 # only the very few symbols explicitly listed are allowed
@@ -84,6 +112,8 @@ def restore_filestack(oldstack):
 global_symbols = {'__builtins__': {k: __builtins__[k] for k in ['list', 'dict', 'map', 'str', 'float', 'int']}}
 # also define all math symbols and functions
 global_symbols.update(math.__dict__)
+# allow to import dicts from yaml
+global_symbols.update(dict(load_yaml=load_yaml))
 
 
 class XacroException(Exception):
@@ -357,11 +387,9 @@ def is_include(elt):
     return True
 
 
-def get_include_files(elt, parent_filename, symbols):
+def get_include_files(elt, symbols):
     filename_spec = eval_text(elt.getAttribute('filename'), symbols)
-    if not os.path.isabs(filename_spec):
-        basedir = os.path.dirname(parent_filename) if parent_filename else '.'
-        filename_spec = os.path.join(basedir, filename_spec)
+    filename_spec = abs_filename_spec(filename_spec)
 
     if re.search('[*[?]+', filename_spec):
         # Globbing behaviour
@@ -395,7 +423,7 @@ def process_includes(doc):
     elt = next_element(previous)
     while elt:
         if is_include(elt):
-            for filename in get_include_files(elt, filestack[-1], {}):
+            for filename in get_include_files(elt, {}):
                 # extend filestack
                 oldstack = push_file(filename)
                 included = parse(None, filename)
@@ -579,7 +607,7 @@ def eval_all(root, macros={}, symbols=Table()):
     while node:
         if node.nodeType == xml.dom.Node.ELEMENT_NODE:
             if is_include(node):
-                for filename in get_include_files(node, filestack[-1], symbols):
+                for filename in get_include_files(node, symbols):
                     # extend filestack
                     oldstack = push_file(filename)
                     included = parse(None, filename)
