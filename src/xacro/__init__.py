@@ -497,7 +497,8 @@ def eval_text(text, symbols):
             return eval(s, global_symbols, symbols)
         except Exception as e:
             # re-raise as XacroException to add more context
-            raise XacroException(exc=e, suffix="when evaluating expression '%s'" % s)
+            raise XacroException(exc=e,
+                suffix=os.linesep + "when evaluating expression '%s'" % s)
 
     def handle_extension(s):
         return eval_extension("$(%s)" % s)
