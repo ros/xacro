@@ -87,9 +87,20 @@ global_symbols.update(math.__dict__)
 
 
 class XacroException(Exception):
-    def __init__(self, msg=None, macro=None):
+    """
+    XacroException allows to wrap another exception (exc) and to augment
+    its error message: prefixing with msg and suffixing with suffix.
+    str(e) finally prints: msg str(exc) suffix
+    """
+    def __init__(self, msg=None, suffix=None, exc=None, macro=None):
         super(XacroException, self).__init__(msg)
+        self.suffix = suffix
+        self.exc = exc
         self.macros = [] if macro is None else [macro]
+
+    def __str__(self):
+        return ' '.join([str(item) for item in
+                         [self.message, self.exc, self.suffix] if item])
 
 
 # deprecate non-namespaced use of xacro tags (issues #41, #59, #60)
@@ -101,6 +112,8 @@ def deprecated_tag(_issued=[False]):
     warning("deprecated: xacro tags should be prepended with 'xacro' xml namespace.")
     message("""Use the following script to fix incorrect usage:
     find . -iname "*.xacro" | xargs sed -i 's#<\([/]\\?\)\(if\|unless\|include\|arg\|property\|macro\|insert_block\)#<\\1xacro:\\2#g'""")
+    print_location(filestack)
+    print(file=sys.stderr)
 
 
 # require xacro namespace?
@@ -128,7 +141,7 @@ def eval_extension(s):
     try:
         return substitution_args.resolve_args(s, context=substitution_args_context, resolve_anon=False)
     except substitution_args.ArgException as e:
-        raise XacroException("Undefined substitution argument '%s'" % str(e))
+        raise XacroException("Undefined substitution argument", exc=e)
 
 
 # Better pretty printing of xml
@@ -482,10 +495,9 @@ def eval_text(text, symbols):
     def handle_expr(s):
         try:
             return eval(s, global_symbols, symbols)
-        except NameError as e:
-            raise XacroException("%s evaluating expression '%s'" % (str(e), s))
-        except Exception:
-            raise
+        except Exception as e:
+            # re-raise as XacroException to add more context
+            raise XacroException(exc=e, suffix="when evaluating expression '%s'" % s)
 
     def handle_extension(s):
         return eval_extension("$(%s)" % s)
@@ -648,10 +660,10 @@ def eval_all(root, macros={}, symbols=Table()):
 
                 try:
                     eval_all(body, macros, scoped)
-                except XacroException as e:
-                    try:
+                except Exception as e:
+                    if hasattr(e, 'macros'):
                         e.macros.append(m)
-                    except AttributeError: # e.macros not yet defined
+                    else:
                         e.macros = [m]
                     raise
 
@@ -771,7 +783,12 @@ def parse(inp, filename=None):
     """
     f = None
     if inp is None:
-        inp = f = open(filename)
+        try:
+            inp = f = open(filename)
+        except IOError:
+            # do not report currently processed file as "in file ..."
+            filestack.pop()
+            raise
 
     try:
         if isinstance(inp, _basestr):
@@ -833,11 +850,11 @@ def open_output(output_filename):
         try:
             return open(output_filename, 'w')
         except IOError as e:
-            raise XacroException("Failed to open output: %s" % str(e))
+            raise XacroException("Failed to open output:", exc=e)
 
 
-def print_location(filestack, macros=None, file=sys.stderr):
-    if macros is None: macros = []
+def print_location(filestack, err=None, file=sys.stderr):
+    macros = getattr(err, 'macros', []) if err else []
     msg = 'when instantiating macro:'
     for m, defs in macros:
         name = m.getAttribute('name')
@@ -862,7 +879,7 @@ def main():
 
     except xml.parsers.expat.ExpatError as e:
         error("XML parsing error: %s" % str(e), alt_text=None)
-        print_location(filestack)
+        print_location(filestack, e)
         print(file=sys.stderr) # add empty separator line before error
         print("Check that:", file=sys.stderr)
         print(" - Your XML is well-formed", file=sys.stderr)
@@ -871,14 +888,13 @@ def main():
         sys.exit(2)  # indicate failure, but don't print stack trace on XML errors
 
     except Exception as e:
+        error(str(e))
+        print_location(filestack, e)
         if opts.debug:
-            print_location(filestack, getattr(e, 'macros', None))
             print(file=sys.stderr)  # add empty separator line before error
             raise  # create stack trace
         else:
-            error('{name}: {msg}'.format(name=type(e).__name__, msg=str(e)))
-            print_location(filestack, getattr(e, 'macros', None))
-            sys.exit(2)  # indicate failure, but don't print stack trace on XML errors
+            sys.exit(2)  # gracefully exit with error condition
 
     if opts.just_deps:
         out.write(" ".join(all_includes))

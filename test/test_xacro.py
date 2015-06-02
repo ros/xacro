@@ -673,7 +673,7 @@ class TestXacro(TestXacroCommentsIgnored):
 </robot>''')
 
     def test_recursive_bad_math(self):
-        self.assertRaises(ZeroDivisionError,
+        self.assertRaises(xacro.XacroException,
             self.quick_xacro, '''\
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
   <xacro:property name="x" value="0"/>
