@@ -4,123 +4,16 @@
 <!-- |    EDITING THIS FILE BY HAND IS NOT RECOMMENDED                                 | -->
 <!-- =================================================================================== -->
 <robot name="pr2" xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller" xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface" xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#slider" xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor" xmlns:xacro="http://ros.org/wiki/xacro">
-  <!-- The following included files set up definitions of parts of the robot body -->
-  <!-- misc common stuff? -->
-  <!-- Gear Ratio Corrections: Divide transmission reductions by these factors (Nominally 1)-->
-  <!-- ********** Right Arm ********** -->
-  <!-- Flag offsets: Add to the optical flag locations (Nominally 0) -->
-  <!-- ********** Head ********** -->
-  <!-- Head Location: Add to the transform from torso to head_pan_link (Nominally 0) -->
-  <!-- Flag Offsets -->
-  <!-- Casters -->
-  <!-- Stereo Camera Location (Nominally 0) -->
-  <!-- Kinect Camera Location (Nominally 0) -->
-  <!-- HighDef Camera Location (Nominally 0) -->
-  <!-- Throwing in left arm constants to appease the xacro parser -->
-  <!-- PR2 Arm -->
-  <!-- Things that are needed only for Gazebo (not the physical robot).  These include
-       sensor and controller plugin specifications -->
-  <!-- Upperarm roll: internal fixed attchment point for upper arm -->
-  <!-- Gear Ratio Corrections: Divide transmission reductions by these factors (Nominally 1)-->
-  <!-- ********** Right Arm ********** -->
-  <!-- Flag offsets: Add to the optical flag locations (Nominally 0) -->
-  <!-- ********** Head ********** -->
-  <!-- Head Location: Add to the transform from torso to head_pan_link (Nominally 0) -->
-  <!-- Flag Offsets -->
-  <!-- Casters -->
-  <!-- Stereo Camera Location (Nominally 0) -->
-  <!-- Kinect Camera Location (Nominally 0) -->
-  <!-- HighDef Camera Location (Nominally 0) -->
-  <!-- Throwing in left arm constants to appease the xacro parser -->
-  <!--TODO Define and give source-->
   <!--TODO Define and give source-->
   <!-- ============================   Shoulder   ============================ -->
-  <!-- Upperarm roll: internal fixed attchment point for upper arm -->
-  <!-- Things that are needed only for Gazebo (not the physical robot).  These include
-       sensor and controller plugin specifications -->
-  <!-- Elbow flex -->
-  <!-- Forearm roll -->
   <!-- ============================   Upper Arm   ============================ -->
-  <!-- Forearm roll -->
-  <!-- Gear Ratio Corrections: Divide transmission reductions by these factors (Nominally 1)-->
-  <!-- ********** Right Arm ********** -->
-  <!-- Flag offsets: Add to the optical flag locations (Nominally 0) -->
-  <!-- ********** Head ********** -->
-  <!-- Head Location: Add to the transform from torso to head_pan_link (Nominally 0) -->
-  <!-- Flag Offsets -->
-  <!-- Casters -->
-  <!-- Stereo Camera Location (Nominally 0) -->
-  <!-- Kinect Camera Location (Nominally 0) -->
-  <!-- HighDef Camera Location (Nominally 0) -->
-  <!-- Throwing in left arm constants to appease the xacro parser -->
-  <!-- Inertial properties differ slightly for left vs right arm -->
-  <!-- ============================   Upper Arm   ============================ -->
-  <!-- Includes elbow flex, FA roll joints in macros below -->
-  <!-- FA roll joint only -->
-  <!-- Things that are needed only for Gazebo (not the physical robot).  These include
-       sensor and controller plugin specifications -->
-  <!-- Gear Ratio Corrections: Divide transmission reductions by these factors (Nominally 1)-->
-  <!-- ********** Right Arm ********** -->
-  <!-- Flag offsets: Add to the optical flag locations (Nominally 0) -->
-  <!-- ********** Head ********** -->
-  <!-- Head Location: Add to the transform from torso to head_pan_link (Nominally 0) -->
-  <!-- Flag Offsets -->
-  <!-- Casters -->
-  <!-- Stereo Camera Location (Nominally 0) -->
-  <!-- Kinect Camera Location (Nominally 0) -->
-  <!-- HighDef Camera Location (Nominally 0) -->
-  <!-- Throwing in left arm constants to appease the xacro parser -->
   <!-- ============================   Forearm   ============================ -->
-  <!-- PR2 gripper -->
-  <!-- PR2 head -->
-  <!-- PR2 tilting laser mount -->
-  <!-- PR2 torso -->
-  <!-- PR2 base -->
-  <!--  Caster wheel transmission   -->
-  <!-- Hub transmission only -->
   <!-- DATA SOURCES -->
   <!-- all link offsets, CG, limits are obtained from Function Engineering spreadsheet 090224_link_data.xls unless stated otherwise -->
   <!-- all link geometry sizes are obtained from Function provided CAD model unless stated otherwise -->
   <!-- all simplified collision geometry are hand approximated from CAD model, sometimes from respective bounding boxes -->
   <!-- This is the 'effective' wheel radius. Wheel radius for uncompressed wheel is 0.079.  mp 20080801 -->
-  <!-- simplified box collision geometry for base -->
-  <!-- simplified box collision geometry for hokuyo laser -->
-  <!--                                                      -->
-  <!--           wheel                                      -->
-  <!--                                                      -->
-  <!-- Macro for PR2 Caster hub only -->
-  <!-- The xacro macro xacro:pr2_base contains: base, casters and wheels -->
-  <!-- Head sensors -->
-  <!-- This urdf macro defines following sensors:
-       prosilica
-       double stereo camera
-  -->
-  <!-- Made by Kevin for A2 sensor package -->
-  <!-- Origin is center mount screw on sensor plate mount -->
-  <!-- When mounted properly, should have same origin as head plate frame -->
-  <!-- Made by Kevin for double stereo camera for PR-2 Beta. -->
-  <!-- Needs calibration verification, and CAD check. -->
-  <!-- stereo camera macro uses wge100_camera macros -->
-  <!-- hack_baseline is used to simulate right stereo camera projection matrix translation to left stereo camera frame, currently on the hardware,
-       custom left stereo camera frame_id is passed to right stereo wge100 camera node at launch time, baseline is stored on the camera. -->
-  <!-- this macro is used for creating wide and narrow double stereo camera in simulation -->
-  <!-- +y to the left -->
-  <!-- this macro is used for creating wide and narrow double stereo camera links -->
-  <!-- Made by Kevin for double stereo camera for PR-2 Beta. -->
-  <!-- Needs calibration verification, and CAD check. -->
-  <!-- Made by Kevin for A2 sensor package -->
-  <!-- Origin is center mount screw on sensor plate mount -->
-  <!-- When mounted properly, should have same origin as head plate frame -->
   <!-- FIXME: what is this offset? -->
-  <!-- kinect and prosilica combo -->
-  <!-- Camera sensors -->
-  <!-- hack_baseline is used to simulate right stereo camera projection matrix translation to left stereo camera frame, currently on the hardware,
-       custom left stereo camera frame_id is passed to right stereo wge100 camera node at launch time, baseline is stored on the camera. -->
-  <!-- Texture projector -->
-  <!-- this controller is pushed into a body scope (previously model scope)
-     this will only work with added r36415 patch in simulator_gazebo stack
-     otherwise projector will not work without removing the reference tag -->
-  <!-- generic simulator_gazebo plugins for starting mechanism control, ros time, ros battery -->
   <gazebo>
     <plugin filename="libgazebo_ros_controller_manager.so" name="gazebo_ros_controller_manager">
       <alwaysOn>true</alwaysOn>
@@ -139,7 +32,6 @@
       <chargeVoltage>16.41</chargeVoltage>
     </plugin>
   </gazebo>
-  <!-- materials for visualization -->
   <material name="Blue">
     <color rgba="0.0 0.0 0.8 1.0"/>
   </material>
@@ -177,13 +69,6 @@
     <texture filename="package://pr2_description/materials/textures/pr2_wheel_left.png"/>
   </material>
   <!-- Now we can start using the macros included above to define the actual PR2 -->
-  <!-- The first use of a macro.  This one was defined in base.test/robots/pr2.xacro above.
-       A macro like this will expand to a set of link and joint definitions, and to additional
-       Gazebo-related extensions (sensor plugins, etc).  The macro takes an argument, name, 
-       that equals "base", and uses it to generate names for its component links and joints 
-       (e.g., base_link).  The included origin block is also an argument to the macro.  By convention, 
-       the origin block defines where the component is w.r.t its parent (in this case the parent 
-       is the world frame). For more, see http://www.ros.org/wiki/xacro -->
   <link name="base_link">
     <inertial>
       <mass value="116.0"/>
@@ -259,7 +144,6 @@
     <parent link="base_link"/>
     <child link="base_bellow_link"/>
   </joint>
-  <!-- base laser -->
   <joint name="base_laser_joint" type="fixed">
     <axis xyz="0 1 0"/>
     <origin rpy="0 0 0" xyz="0.275 0.0 0.252"/>
@@ -273,7 +157,6 @@
       <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.000001" iyz="0" izz="0.0001"/>
     </inertial>
   </link>
-  <!-- gazebo extensions -->
   <gazebo reference="base_laser_link">
     <sensor name="base_laser" type="ray">
       <always_on>true</always_on>
@@ -305,7 +188,6 @@
       </plugin>
     </sensor>
   </gazebo>
-  <!-- all four caster macros -->
   <joint name="fl_caster_rotation_joint" type="continuous">
     <axis xyz="0 0 1"/>
     <limit effort="6.5" velocity="10"/>
@@ -337,13 +219,11 @@
       </geometry>
     </collision>
   </link>
-  <!-- extensions -->
   <transmission name="fl_caster_rotation_trans" type="pr2_mechanism_model/SimpleTransmission">
     <actuator name="fl_caster_rotation_motor"/>
     <joint name="fl_caster_rotation_joint"/>
     <mechanicalReduction>-79.2380952381</mechanicalReduction>
   </transmission>
-  <!-- wheel macros -->
   <joint name="fl_caster_l_wheel_joint" type="continuous">
     <axis xyz="0 1 0"/>
     <limit effort="7" velocity="15"/>
@@ -375,7 +255,6 @@
       </geometry>
     </collision>
   </link>
-  <!-- extensions -->
   <gazebo reference="fl_caster_l_wheel_link">
     <mu1 value="100.0"/>
     <mu2 value="100.0"/>
@@ -420,7 +299,6 @@
       </geometry>
     </collision>
   </link>
-  <!-- extensions -->
   <gazebo reference="fl_caster_r_wheel_link">
     <mu1 value="100.0"/>
     <mu2 value="100.0"/>
@@ -434,7 +312,6 @@
     <joint name="fl_caster_r_wheel_joint"/>
     <mechanicalReduction>-79.2380952381</mechanicalReduction>
   </transmission>
-  <!-- extensions -->
   <gazebo reference="fl_caster_rotation_link">
     <material value="PR2/caster_texture"/>
   </gazebo>
@@ -469,13 +346,11 @@
       </geometry>
     </collision>
   </link>
-  <!-- extensions -->
   <transmission name="fr_caster_rotation_trans" type="pr2_mechanism_model/SimpleTransmission">
     <actuator name="fr_caster_rotation_motor"/>
     <joint name="fr_caster_rotation_joint"/>
     <mechanicalReduction>-79.2380952381</mechanicalReduction>
   </transmission>
-  <!-- wheel macros -->
   <joint name="fr_caster_l_wheel_joint" type="continuous">
     <axis xyz="0 1 0"/>
     <limit effort="7" velocity="15"/>
@@ -507,7 +382,6 @@
       </geometry>
     </collision>
   </link>
-  <!-- extensions -->
   <gazebo reference="fr_caster_l_wheel_link">
     <mu1 value="100.0"/>
     <mu2 value="100.0"/>
@@ -552,7 +426,6 @@
       </geometry>
     </collision>
   </link>
-  <!-- extensions -->
   <gazebo reference="fr_caster_r_wheel_link">
     <mu1 value="100.0"/>
     <mu2 value="100.0"/>
@@ -566,7 +439,6 @@
     <joint name="fr_caster_r_wheel_joint"/>
     <mechanicalReduction>-79.2380952381</mechanicalReduction>
   </transmission>
-  <!-- extensions -->
   <gazebo reference="fr_caster_rotation_link">
     <material value="PR2/caster_texture"/>
   </gazebo>
@@ -601,13 +473,11 @@
       </geometry>
     </collision>
   </link>
-  <!-- extensions -->
   <transmission name="bl_caster_rotation_trans" type="pr2_mechanism_model/SimpleTransmission">
     <actuator name="bl_caster_rotation_motor"/>
     <joint name="bl_caster_rotation_joint"/>
     <mechanicalReduction>-79.2380952381</mechanicalReduction>
   </transmission>
-  <!-- wheel macros -->
   <joint name="bl_caster_l_wheel_joint" type="continuous">
     <axis xyz="0 1 0"/>
     <limit effort="7" velocity="15"/>
@@ -639,7 +509,6 @@
       </geometry>
     </collision>
   </link>
-  <!-- extensions -->
   <gazebo reference="bl_caster_l_wheel_link">
     <mu1 value="100.0"/>
     <mu2 value="100.0"/>
@@ -684,7 +553,6 @@
       </geometry>
     </collision>
   </link>
-  <!-- extensions -->
   <gazebo reference="bl_caster_r_wheel_link">
     <mu1 value="100.0"/>
     <mu2 value="100.0"/>
@@ -698,7 +566,6 @@
     <joint name="bl_caster_r_wheel_joint"/>
     <mechanicalReduction>-79.2380952381</mechanicalReduction>
   </transmission>
-  <!-- extensions -->
   <gazebo reference="bl_caster_rotation_link">
     <material value="PR2/caster_texture"/>
   </gazebo>
@@ -733,13 +600,11 @@
       </geometry>
     </collision>
   </link>
-  <!-- extensions -->
   <transmission name="br_caster_rotation_trans" type="pr2_mechanism_model/SimpleTransmission">
     <actuator name="br_caster_rotation_motor"/>
     <joint name="br_caster_rotation_joint"/>
     <mechanicalReduction>-79.2380952381</mechanicalReduction>
   </transmission>
-  <!-- wheel macros -->
   <joint name="br_caster_l_wheel_joint" type="continuous">
     <axis xyz="0 1 0"/>
     <limit effort="7" velocity="15"/>
@@ -771,7 +636,6 @@
       </geometry>
     </collision>
   </link>
-  <!-- extensions -->
   <gazebo reference="br_caster_l_wheel_link">
     <mu1 value="100.0"/>
     <mu2 value="100.0"/>
@@ -816,7 +680,6 @@
       </geometry>
     </collision>
   </link>
-  <!-- extensions -->
   <gazebo reference="br_caster_r_wheel_link">
     <mu1 value="100.0"/>
     <mu2 value="100.0"/>
@@ -830,11 +693,9 @@
     <joint name="br_caster_r_wheel_joint"/>
     <mechanicalReduction>-79.2380952381</mechanicalReduction>
   </transmission>
-  <!-- extensions -->
   <gazebo reference="br_caster_rotation_link">
     <material value="PR2/caster_texture"/>
   </gazebo>
-  <!-- gazebo extensions -->
   <gazebo reference="base_link">
     <selfCollide>false</selfCollide>
     <sensor name="base_contact_sensor" type="contact">
@@ -954,7 +815,6 @@
     <child link="torso_lift_motor_screw_link"/>
     <dynamics damping="0.0001"/>
   </joint>
-  <!-- extensions -->
   <gazebo reference="torso_lift_link">
     <sensor name="torso_lift_contact_sensor" type="contact">
       <contact>
@@ -985,7 +845,6 @@
     <mechanicalReduction>-47641.53</mechanicalReduction>
     <simulated_actuated_joint name="torso_lift_motor_screw_joint" simulated_reduction="3141.6"/>
   </transmission>
-  <!-- imu -->
   <joint name="imu_joint" type="fixed">
     <axis xyz="0 1 0"/>
     <origin rpy="0 3.14159265359 0" xyz="-0.02977 -0.1497 0.164"/>
@@ -999,7 +858,6 @@
       <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.000001" iyz="0" izz="0.0001"/>
     </inertial>
   </link>
-  <!-- gazebo extensions -->
   <gazebo>
     <plugin filename="libgazebo_ros_imu.so" name="imu_controller">
       <alwaysOn>true</alwaysOn>
@@ -1012,8 +870,6 @@
       <serviceName>/default_imu</serviceName>
     </plugin>
   </gazebo>
-  <!-- The xacro preprocesser will replace the parameters below, such as ${cal_head_x}, with
-       numerical values that were specified in common.xacro which was included above -->
   <joint name="head_pan_joint" type="revolute">
     <axis xyz="0 0 1"/>
     <limit effort="2.645" lower="-3.007" upper="3.007" velocity="6"/>
@@ -1045,7 +901,6 @@
       </geometry>
     </collision>
   </link>
-  <!-- extensions -->
   <transmission name="head_pan_trans" type="pr2_mechanism_model/SimpleTransmission">
     <actuator name="head_pan_motor"/>
     <joint name="head_pan_joint"/>
@@ -1083,7 +938,6 @@
       </geometry>
     </collision>
   </link>
-  <!-- extensions -->
   <transmission name="head_tilt_trans" type="pr2_mechanism_model/SimpleTransmission">
     <actuator name="head_tilt_motor"/>
     <joint name="head_tilt_joint"/>
@@ -1115,11 +969,9 @@
       </geometry>
     </collision>
   </link>
-  <!-- extensions -->
   <gazebo reference="head_plate_frame">
     <material value="Gazebo/Grey"/>
   </gazebo>
-  <!-- Camera package: double stereo, prosilica -->
   <joint name="sensor_mount_frame_joint" type="fixed">
     <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
     <parent link="head_plate_frame"/>
@@ -1141,7 +993,6 @@
       <material name="Blue"/>
     </visual>
   </link>
-  <!-- Prosilica Camera -->
   <joint name="high_def_frame_joint" type="fixed">
     <origin rpy="0 0 0" xyz="0.046457 -0.110 0.054600"/>
     <parent link="sensor_mount_link"/>
@@ -1166,7 +1017,6 @@
       <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
     </inertial>
   </link>
-  <!-- extensions -->
   <gazebo reference="high_def_frame">
     <sensor name="high_def_sensor" type="camera">
       <always_on>true</always_on>
@@ -1203,7 +1053,6 @@
     </sensor>
     <material value="Gazebo/Black"/>
   </gazebo>
-  <!-- construct wide and narrow double stereo camera -->
   <!-- Define link to stereo cameras, set origin relative to that -->
   <joint name="double_stereo_frame_joint" type="fixed">
     <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
@@ -1226,8 +1075,6 @@
       <material name="Blue"/>
     </visual>
   </link>
-  <!-- Wide camera is on robot right (hca1), narrow on left (hca2)? -->
-  <!-- 15mm offset from center needs check with CAD -->
   <joint name="wide_stereo_frame_joint" type="fixed">
     <origin rpy="0.0   0.0   0.0" xyz="0.045 0.03 0.0501"/>
     <parent link="double_stereo_link"/>
@@ -1251,7 +1098,6 @@
   </joint>
   <!-- optical frame for the stereo camera, with z-forward notation, this is the frame stereo camera images users should refer to -->
   <link name="wide_stereo_optical_frame" type="camera"/>
-  <!-- stereo left camera -->
   <joint name="wide_stereo_l_stereo_camera_frame_joint" type="fixed">
     <origin rpy="0 0 0" xyz="0 0 0"/>
     <parent link="wide_stereo_link"/>
@@ -1270,7 +1116,6 @@
     <child link="wide_stereo_l_stereo_camera_optical_frame"/>
   </joint>
   <link name="wide_stereo_l_stereo_camera_optical_frame"/>
-  <!-- extensions -->
   <gazebo reference="wide_stereo_l_stereo_camera_frame">
     <sensor name="wide_stereo_l_stereo_camera_sensor" type="camera">
       <always_on>true</always_on>
@@ -1311,7 +1156,6 @@
     <turnGravityOff>true</turnGravityOff>
     <material>PR2/Blue</material>
   </gazebo>
-  <!-- stereo right camera -->
   <joint name="wide_stereo_r_stereo_camera_frame_joint" type="fixed">
     <origin rpy="0.0 0.0 0.0" xyz="0.0 -0.09 0.0"/>
     <parent link="wide_stereo_l_stereo_camera_frame"/>
@@ -1330,7 +1174,6 @@
     <child link="wide_stereo_r_stereo_camera_optical_frame"/>
   </joint>
   <link name="wide_stereo_r_stereo_camera_optical_frame"/>
-  <!-- extensions -->
   <gazebo reference="wide_stereo_r_stereo_camera_frame">
     <sensor name="wide_stereo_r_stereo_camera_sensor" type="camera">
       <always_on>true</always_on>
@@ -1371,7 +1214,6 @@
     <turnGravityOff>true</turnGravityOff>
     <material>PR2/Blue</material>
   </gazebo>
-  <!-- extensions -->
   <gazebo reference="wide_stereo_link">
     <material value="PR2/Blue"/>
     <turnGravityOff value="true"/>
@@ -1403,7 +1245,6 @@
   </joint>
   <!-- optical frame for the stereo camera, with z-forward notation, this is the frame stereo camera images users should refer to -->
   <link name="narrow_stereo_optical_frame" type="camera"/>
-  <!-- stereo left camera -->
   <joint name="narrow_stereo_l_stereo_camera_frame_joint" type="fixed">
     <origin rpy="0 0 0" xyz="0 0 0"/>
     <parent link="narrow_stereo_link"/>
@@ -1422,7 +1263,6 @@
     <child link="narrow_stereo_l_stereo_camera_optical_frame"/>
   </joint>
   <link name="narrow_stereo_l_stereo_camera_optical_frame"/>
-  <!-- extensions -->
   <gazebo reference="narrow_stereo_l_stereo_camera_frame">
     <sensor name="narrow_stereo_l_stereo_camera_sensor" type="camera">
       <always_on>true</always_on>
@@ -1463,7 +1303,6 @@
     <turnGravityOff>true</turnGravityOff>
     <material>PR2/Blue</material>
   </gazebo>
-  <!-- stereo right camera -->
   <joint name="narrow_stereo_r_stereo_camera_frame_joint" type="fixed">
     <origin rpy="0.0 0.0 0.0" xyz="0.0 -0.09 0.0"/>
     <parent link="narrow_stereo_l_stereo_camera_frame"/>
@@ -1482,7 +1321,6 @@
     <child link="narrow_stereo_r_stereo_camera_optical_frame"/>
   </joint>
   <link name="narrow_stereo_r_stereo_camera_optical_frame"/>
-  <!-- extensions -->
   <gazebo reference="narrow_stereo_r_stereo_camera_frame">
     <sensor name="narrow_stereo_r_stereo_camera_sensor" type="camera">
       <always_on>true</always_on>
@@ -1523,7 +1361,6 @@
     <turnGravityOff>true</turnGravityOff>
     <material>PR2/Blue</material>
   </gazebo>
-  <!-- extensions -->
   <gazebo reference="narrow_stereo_link">
     <material value="PR2/Blue"/>
     <turnGravityOff value="true"/>
@@ -1532,16 +1369,13 @@
     <material value="Gazebo/White"/>
     <turnGravityOff value="true"/>
   </gazebo>
-  <!-- extensions -->
   <!-- Define link to stereo cameras, set origin relative to that -->
   <gazebo reference="double_stereo_double_stereo_link">
     <material value="PR2/Blue"/>
   </gazebo>
-  <!-- extensions -->
   <gazebo reference="sensor_mount_sensor_link">
     <material value="PR2/Blue"/>
   </gazebo>
-  <!-- Projector -->
   <joint name="projector_wg6802418_frame_joint" type="fixed">
     <origin rpy="0 0 0" xyz="0 0.110 0.0546"/>
     <parent link="head_plate_frame"/>
@@ -1566,7 +1400,6 @@
       <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
     </inertial>
   </link>
-  <!-- extensions -->
   <gazebo reference="projector_wg6802418_child_frame">
     <projector name="projector_wg6802418_projector_wg6802418">
       <pose>0 0 0 0 -1.5707 0</pose>
@@ -1587,7 +1420,6 @@
       <projectorTopicName>projector_wg6802418_controller/projector</projectorTopicName>
     </plugin>
   </gazebo>
-  <!-- Base of Kinect/Prosilica Mount -->
   <!-- stl contains structure + kinect + prosilica combo -->
   <joint name="head_mount_joint" type="fixed">
     <!-- <limit lower="0.1" upper="0.1" effort="10000" velocity="100.0"/> -->
@@ -1654,7 +1486,6 @@
     <child link="head_mount_kinect_ir_optical_frame"/>
   </joint>
   <link name="head_mount_kinect_ir_optical_frame"/>
-  <!-- gazebo extensions -->
   <gazebo reference="head_mount_kinect_ir_link">
     <sensor name="head_mount_ir_sensor" type="depth">
       <always_on>true</always_on>
@@ -1729,7 +1560,6 @@
     <child link="head_mount_kinect_rgb_optical_frame"/>
   </joint>
   <link name="head_mount_kinect_rgb_optical_frame"/>
-  <!-- gazebo extensions -->
   <gazebo reference="head_mount_kinect_rgb_link">
     <sensor name="head_mount_rgb_sensor" type="depth">
       <always_on>true</always_on>
@@ -1803,7 +1633,6 @@
     <child link="head_mount_prosilica_optical_frame"/>
   </joint>
   <link name="head_mount_prosilica_optical_frame"/>
-  <!-- gazebo extensions -->
   <gazebo reference="head_mount_prosilica_link">
     <sensor name="head_mount_prosilica_link_sensor" type="camera">
       <always_on>true</always_on>
@@ -1928,7 +1757,6 @@
       <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.000001" iyz="0" izz="0.0001"/>
     </inertial>
   </link>
-  <!-- gazebo extensions -->
   <gazebo reference="laser_tilt_link">
     <sensor name="laser_tilt" type="ray">
       <always_on>true</always_on>
@@ -1960,7 +1788,6 @@
       </plugin>
     </sensor>
   </gazebo>
-  <!-- extensions -->
   <gazebo reference="laser_tilt_mount_link">
     </gazebo>
   <transmission name="laser_tilt_mount_trans" type="pr2_mechanism_model/SimpleTransmission">
@@ -1968,7 +1795,6 @@
     <joint name="laser_tilt_mount_joint"/>
     <mechanicalReduction>-6.05</mechanicalReduction>
   </transmission>
-  <!-- This is a common convention, to use a reflect parameter that equals +-1 to distinguish left from right -->
   <!-- Shoulder pan -->
   <joint name="r_shoulder_pan_joint" type="revolute">
     <axis xyz="0 0 1"/>
@@ -2036,7 +1862,6 @@
       </geometry>
     </collision>
   </link>
-  <!-- Upper arm roll is separate macro -->
   <joint name="r_upper_arm_roll_joint" type="revolute">
     <axis xyz="1 0 0"/>
     <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -2070,7 +1895,6 @@
       </geometry>
     </collision>
   </link>
-  <!-- extensions -->
   <gazebo reference="r_upper_arm_roll_link">
     <material value="PR2/RollLinks"/>
     <turnGravityOff>true</turnGravityOff>
@@ -2086,7 +1910,6 @@
     <joint name="r_upper_arm_roll_joint"/>
     <mechanicalReduction>32.6525111499</mechanicalReduction>
   </transmission>
-  <!-- extensions -->
   <!-- Shoulder pan -->
   <gazebo reference="r_shoulder_pan_link">
     <turnGravityOff>true</turnGravityOff>
@@ -2143,13 +1966,11 @@
       </geometry>
     </collision>
   </link>
-  <!-- extensions-->
   <gazebo reference="r_upper_arm_link">
     <turnGravityOff>true</turnGravityOff>
   </gazebo>
   <!-- Has upperarm link -->
   <!-- No transmission, since this a fixed joint w/o actuator -->
-  <!-- Elbow flex, FA roll macros -->
   <!-- forearm_roll_link is a fictitious link internal to elbow_flex_link, provides an attachment point for the actual forearm -->
   <joint name="r_forearm_roll_joint" type="continuous">
     <axis xyz="1 0 0"/>
@@ -2338,7 +2159,6 @@
       </geometry>
     </collision>
   </link>
-  <!-- extensions-->
   <gazebo reference="r_forearm_link">
     <turnGravityOff>true</turnGravityOff>
   </gazebo>
@@ -2484,7 +2304,6 @@
     <child link="r_gripper_motor_screw_link"/>
     <dynamics damping="0.0001"/>
   </joint>
-  <!-- pr2 fingers macro -->
   <!-- Finger proximal digit -->
   <joint name="r_gripper_l_finger_joint" type="revolute">
     <axis xyz="0 0 1"/>
@@ -2624,7 +2443,6 @@
       </geometry>
     </collision>
   </link>
-  <!-- extensions -->
   <!-- Finger proximal digit -->
   <gazebo reference="r_gripper_l_finger_link">
     <turnGravityOff>true</turnGravityOff>
@@ -2860,7 +2678,6 @@
 	 but because the urdf does not support graph structures,
 	 this link exists twice -->
   <link name="r_gripper_l_finger_tip_frame"/>
-  <!-- extensions -->
   <gazebo reference="r_gripper_palm_link">
     <turnGravityOff>true</turnGravityOff>
   </gazebo>
@@ -2978,7 +2795,6 @@
       </geometry>
     </collision>
   </link>
-  <!-- Upper arm roll is separate macro -->
   <joint name="l_upper_arm_roll_joint" type="revolute">
     <axis xyz="1 0 0"/>
     <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -3012,7 +2828,6 @@
       </geometry>
     </collision>
   </link>
-  <!-- extensions -->
   <gazebo reference="l_upper_arm_roll_link">
     <material value="PR2/RollLinks"/>
     <turnGravityOff>true</turnGravityOff>
@@ -3028,7 +2843,6 @@
     <joint name="l_upper_arm_roll_joint"/>
     <mechanicalReduction>32.6525111499</mechanicalReduction>
   </transmission>
-  <!-- extensions -->
   <!-- Shoulder pan -->
   <gazebo reference="l_shoulder_pan_link">
     <turnGravityOff>true</turnGravityOff>
@@ -3085,13 +2899,11 @@
       </geometry>
     </collision>
   </link>
-  <!-- extensions-->
   <gazebo reference="l_upper_arm_link">
     <turnGravityOff>true</turnGravityOff>
   </gazebo>
   <!-- Has upperarm link -->
   <!-- No transmission, since this a fixed joint w/o actuator -->
-  <!-- Elbow flex, FA roll macros -->
   <!-- forearm_roll_link is a fictitious link internal to elbow_flex_link, provides an attachment point for the actual forearm -->
   <joint name="l_forearm_roll_joint" type="continuous">
     <axis xyz="1 0 0"/>
@@ -3280,7 +3092,6 @@
       </geometry>
     </collision>
   </link>
-  <!-- extensions-->
   <gazebo reference="l_forearm_link">
     <turnGravityOff>true</turnGravityOff>
   </gazebo>
@@ -3426,7 +3237,6 @@
     <child link="l_gripper_motor_screw_link"/>
     <dynamics damping="0.0001"/>
   </joint>
-  <!-- pr2 fingers macro -->
   <!-- Finger proximal digit -->
   <joint name="l_gripper_l_finger_joint" type="revolute">
     <axis xyz="0 0 1"/>
@@ -3566,7 +3376,6 @@
       </geometry>
     </collision>
   </link>
-  <!-- extensions -->
   <!-- Finger proximal digit -->
   <gazebo reference="l_gripper_l_finger_link">
     <turnGravityOff>true</turnGravityOff>
@@ -3802,7 +3611,6 @@
 	 but because the urdf does not support graph structures,
 	 this link exists twice -->
   <link name="l_gripper_l_finger_tip_frame"/>
-  <!-- extensions -->
   <gazebo reference="l_gripper_palm_link">
     <turnGravityOff>true</turnGravityOff>
   </gazebo>
@@ -3853,8 +3661,6 @@
     <!-- screw joint to capture gripper "dynamics" -->
     <simulated_actuated_joint name="l_gripper_motor_screw_joint" passive_actuated_joint="l_gripper_motor_slider_joint" simulated_reduction="3141.6"/>
   </transmission>
-  <!-- Forearm cam Position is a guess, based on full robot calibration -->
-  <!-- Forearm cam Orientation is from Function -->
   <joint name="l_forearm_cam_frame_joint" type="fixed">
     <origin rpy="-1.57079632679 -0.562868683768 0" xyz=".135 0 .044"/>
     <parent link="l_forearm_roll_link"/>
@@ -3873,7 +3679,6 @@
     <child link="l_forearm_cam_optical_frame"/>
   </joint>
   <link name="l_forearm_cam_optical_frame"/>
-  <!-- extensions -->
   <gazebo reference="l_forearm_cam_frame">
     <sensor name="l_forearm_cam_sensor" type="camera">
       <always_on>true</always_on>
@@ -3932,7 +3737,6 @@
     <child link="r_forearm_cam_optical_frame"/>
   </joint>
   <link name="r_forearm_cam_optical_frame"/>
-  <!-- extensions -->
   <gazebo reference="r_forearm_cam_frame">
     <sensor name="r_forearm_cam_sensor" type="camera">
       <always_on>true</always_on>
