@@ -378,15 +378,26 @@ def get_include_files(elt, parent_filename, symbols):
         yield filename
 
 
+def import_xml_namespaces(parent, attributes):
+    """import all namespace declarations into parent"""
+    for name, value in attributes.items():
+        if name.startswith('xmlns:'):
+            oldAttr = parent.getAttributeNode(name)
+            if oldAttr and oldAttr.value != value:
+                warning("inconsistent namespace redefinitions for {name}:"
+                        "\n old: {old}\n new: {new} ({new_file})".format(
+                    name=name, old=oldAttr.value, new=value,
+                    new_file=filestack[-1]))
+            else:
+                parent.setAttribute(name, value)
+
+
 def process_include(elt, included):
     # Replaces the include tag with the nodes of the included file
     for c in child_nodes(included.documentElement):
         elt.parentNode.insertBefore(c.cloneNode(deep=True), elt)
 
-    # Makes sure the final document declares all the namespaces of the included documents.
-    for name, value in included.documentElement.attributes.items():
-        if name.startswith('xmlns:'):
-            elt.parentNode.setAttribute(name, value)
+    import_xml_namespaces(elt.parentNode, included.documentElement.attributes)
 
 
 # @throws XacroException if a parsing error occurs with an included document
