@@ -12,6 +12,9 @@ import tempfile
 import shutil
 import subprocess
 import re
+from cStringIO import StringIO
+from contextlib import contextmanager
+
 
 # regex to match whitespace
 whitespace = re.compile(r'\s+')
@@ -119,6 +122,16 @@ def xml_matches(a, b, ignore_nodes=[]):
     return True
 
 
+# capture output going to file=sys.stdout | sys.stderr
+@contextmanager
+def capture_stderr(function, *args, **kwargs):
+  old, sys.stderr = sys.stderr, StringIO()  # temporarily replace sys.stderr with StringIO()
+  result = function(*args, **kwargs)
+  sys.stderr.seek(0)
+  yield (result, sys.stderr.read())
+  sys.stderr = old  # restore sys.stderr
+
+
 class TestMatchXML(unittest.TestCase):
     def test_normalize_whitespace_text(self):
         self.assertTrue(text_matches("", " \t\n\r"))
@@ -210,7 +223,9 @@ class TestXacro(TestXacroCommentsIgnored):
         res = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro"><a name="bar"/></a>'''
         # new behaviour would be to resolve to foo of course
         # res = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro"><a name="foo"/></a>'''
-        self.assert_matches(self.quick_xacro(src), res)
+        with capture_stderr(self.quick_xacro, src) as (result, output):
+            self.assert_matches(result, res)
+            self.assertTrue("deprecated use of macro name 'call'" in output)
 
     def test_macro_undefined(self):
         self.assertRaises(xacro.XacroException,
