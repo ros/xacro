@@ -423,6 +423,7 @@ def process_include(elt, symbols, func):
         # restore filestack
         restore_filestack(oldstack)
 
+    remove_previous_comments(elt)
     # replace the include tag with the nodes of the included file(s)
     replace_node(elt, by=included, content_only=True)
 
@@ -442,6 +443,7 @@ def process_includes(elt):
 
 def grab_macro(elt, macros):
     assert(elt.tagName in ['macro', 'xacro:macro'])
+    remove_previous_comments(elt)
 
     name = elt.getAttribute('name')
     if name == 'call':
@@ -471,6 +473,7 @@ def grab_macros(elt, macros):
 
 def grab_property(elt, table):
     assert(elt.tagName in ['property', 'xacro:property'])
+    remove_previous_comments(elt)
 
     name = elt.getAttribute('name')
     value = None
@@ -568,8 +571,29 @@ def get_boolean_value(value, condition):
                              "which is not a boolean expression." % (condition, value))
 
 
-# Recursively evaluate node, expanding macros, replacing properties, and evaluating expressions
+_empty_text_node = xml.dom.minidom.getDOMImplementation().createDocument(None, "dummy", None).createTextNode('\n\n')
+def remove_previous_comments(node):
+    """remove consecutive comments in front of the xacro-specific node"""
+    next = node.nextSibling
+    previous = node.previousSibling
+    while previous:
+        if previous.nodeType == xml.dom.Node.TEXT_NODE and \
+                previous.data.isspace() and previous.data.count('\n') <= 1:
+            previous = previous.previousSibling  # skip a single empty text node (max 1 newline)
+
+        if previous and previous.nodeType == xml.dom.Node.COMMENT_NODE:
+            comment = previous
+            previous = previous.previousSibling
+            node.parentNode.removeChild(comment)
+        else:
+            # insert empty text node to stop removing of comments in future calls
+            # actually this moves the singleton instance to the new location
+            if next: node.parentNode.insertBefore(_empty_text_node, next)
+            return
+
+
 def eval_all(node, macros, symbols):
+    """Recursively evaluate node, expanding macros, replacing properties, and evaluating expressions"""
     # evaluate the attributes
     for name, value in node.attributes.items():
         result = str(eval_text(value, symbols))
@@ -617,10 +641,12 @@ def eval_all(node, macros, symbols):
                 if default and name not in substitution_args_context['arg']:
                     substitution_args_context['arg'][name] = eval_text(default, symbols)
 
+                remove_previous_comments(node)
                 replace_node(node, by=None)
 
             elif node.tagName in ['if', 'xacro:if', 'unless', 'xacro:unless'] \
                     and check_deprecated_tag(node.tagName):
+                remove_previous_comments(node)
                 cond = node.getAttribute('value')
                 keep = get_boolean_value(eval_text(cond, symbols), cond)
                 if node.tagName in ['unless', 'xacro:unless']:
@@ -692,6 +718,7 @@ def eval_all(node, macros, symbols):
                     raise
 
                 # Replaces the macro node with the expansion
+                remove_previous_comments(node)
                 replace_node(node, by=body, content_only=True)
 
             # Handling this one after the normal macro handling will resolve an existing macro 'call' as usual

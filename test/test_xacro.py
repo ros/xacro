@@ -559,6 +559,24 @@ class TestXacro(TestXacroCommentsIgnored):
   <a_block />
 </a>''')
 
+    def test_ignore_xacro_comments(self):
+        self.assert_matches(self.quick_xacro('''
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!-- A -->
+
+  <!-- ignore multiline comments before any xacro tag -->
+  <!-- ignored -->
+  <xacro:property name="foo" value="1"/>
+  <!-- ignored -->
+  <xacro:if value="1"><!-- B --></xacro:if>
+  <!-- ignored -->
+  <xacro:macro name="foo"><!-- C --></xacro:macro>
+  <!-- ignored -->
+  <xacro:foo/>
+</a>'''),
+'''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+<!-- A --><!-- B --><!-- C --></a>''')
+
     def test_recursive_evaluation(self):
         self.assert_matches(
                 self.quick_xacro('''\
