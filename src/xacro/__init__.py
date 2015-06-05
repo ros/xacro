@@ -58,45 +58,49 @@ substitution_args_context = {}
 # taking simple security measures to forbid access to __builtins__
 # only the very few symbols explicitly listed are allowed
 # for discussion, see: http://nedbatchelder.com/blog/201206/eval_really_is_dangerous.html
-global_symbols = {'__builtins__':{k: __builtins__[k] for k in ['list', 'dict', 'map', 'str', 'float', 'int']}}
+global_symbols = {'__builtins__': {k: __builtins__[k] for k in ['list', 'dict', 'map', 'str', 'float', 'int']}}
 # also define all math symbols and functions
 global_symbols.update(math.__dict__)
+
 
 class XacroException(Exception):
     pass
 
 
 # deprecate non-namespaced use of xacro tags (issues #41, #59, #60)
-def deprecated_tag(tagName, _issued=[False]):
+def deprecated_tag(_issued=[False]):
     if _issued[0]:
         return
     _issued[0] = True
 
-    warning("""deprecated: xacro tags should be prepended with 'xacro' xml namespace.""".format(tag=tagName))
+    warning("deprecated: xacro tags should be prepended with 'xacro' xml namespace.")
     message("""Use the following script to fix incorrect usage:
     find . -iname "*.xacro" | xargs sed -i 's#<\([/]\\?\)\(if\|unless\|include\|arg\|property\|macro\|insert_block\)#<\\1xacro:\\2#g'""")
+
 
 # require xacro namespace?
 allow_non_prefixed_tags = True
 
-def check_deprecated_tag(tagName):
+
+def check_deprecated_tag(tag_name):
     """
     Check whether tagName starts with xacro prefix. If not, issue a warning.
-    :param tagName:
+    :param tag_name:
     :return: True if tagName is accepted as xacro tag
              False if tagName doesn't start with xacro prefix, but the prefix is required
     """
-    if tagName.startswith('xacro:'):
+    if tag_name.startswith('xacro:'):
         return True
     else:
         if allow_non_prefixed_tags:
-            deprecated_tag(tagName)
+            deprecated_tag()
         return allow_non_prefixed_tags
 
-def eval_extension(str):
-    if str == '$(cwd)':
+
+def eval_extension(s):
+    if s == '$(cwd)':
         return os.getcwd()
-    return substitution_args.resolve_args(str, context=substitution_args_context, resolve_anon=False)
+    return substitution_args.resolve_args(s, context=substitution_args_context, resolve_anon=False)
 
 
 # Better pretty printing of xml
@@ -122,7 +126,7 @@ def fixed_writexml(self, writer, indent="", addindent="", newl=""):
             self.childNodes[0].writexml(writer, "", "", "")
             writer.write("</%s>%s" % (self.tagName, newl))
             return
-        writer.write(">%s" % (newl))
+        writer.write(">%s" % newl)
         for node in self.childNodes:
             # skip whitespace-only text nodes
             if node.nodeType == xml.dom.minidom.Node.TEXT_NODE and \
@@ -131,7 +135,7 @@ def fixed_writexml(self, writer, indent="", addindent="", newl=""):
             node.writexml(writer, indent + addindent, addindent, newl)
         writer.write("%s</%s>%s" % (indent, self.tagName, newl))
     else:
-        writer.write("/>%s" % (newl))
+        writer.write("/>%s" % newl)
 # replace minidom's function with ours
 xml.dom.minidom.Element.writexml = fixed_writexml
 
@@ -140,10 +144,11 @@ class Table:
     def __init__(self, parent=None):
         self.parent = parent
         self.table = {}
-        self.unevaluated = set() # set of unevaluated variables
-        self.recursive = [] # list of currently resolved vars (to resolve recursive definitions)
+        self.unevaluated = set()  # set of unevaluated variables
+        self.recursive = []  # list of currently resolved vars (to resolve recursive definitions)
 
-    def _eval_literal(self, value):
+    @staticmethod
+    def _eval_literal(value):
         if isinstance(value, _basestr):
             try:
                 # try to evaluate as literal, e.g. number, boolean, etc.
@@ -292,7 +297,8 @@ include_no_matches_msg = """Include tag's filename spec \"{}\" matched no files.
 def is_include(elt):
     # Xacro should not use plain 'include' tags but only namespaced ones. Causes conflicts with
     # other XML elements including Gazebo's <gazebo> extensions
-    if elt.tagName not in ['xacro:include', 'include']: return False
+    if elt.tagName not in ['xacro:include', 'include']:
+        return False
 
     # Temporary fix for ROS Hydro and the xacro include scope problem
     if elt.tagName == 'include':
@@ -306,7 +312,7 @@ def is_include(elt):
             return False
         else:
             # throw a deprecated warning
-            deprecated_tag(elt.tagName)
+            deprecated_tag()
     return True
 
 
@@ -353,7 +359,7 @@ def print_location_msg(e, filename):
         print(msg, filename, file=sys.stderr)
 
 
-## @throws XacroException if a parsing error occurs with an included document
+# @throws XacroException if a parsing error occurs with an included document
 def process_includes(doc, filename):
     previous = doc.documentElement
     elt = next_element(previous)
@@ -377,6 +383,7 @@ def process_includes(doc, filename):
 
         elt = next_element(previous)
 
+
 def grab_macro(elt, macros):
     assert(elt.tagName in ['macro', 'xacro:macro'])
 
@@ -387,6 +394,7 @@ def grab_macro(elt, macros):
 
     if name == 'call':
         warning("deprecated use of macro name 'call'; xacro:call became a new keyword")
+
 
 # Returns a dictionary: { macro_name => macro_xml_block }
 def grab_macros(doc):
@@ -403,6 +411,7 @@ def grab_macros(doc):
 
         elt = next_element(previous)
     return macros
+
 
 def grab_property(elt, table):
     assert(elt.tagName in ['property', 'xacro:property'])
@@ -426,6 +435,7 @@ def grab_property(elt, table):
 
     table[name] = value
 
+
 # Returns a Table of the properties
 def grab_properties(doc, table=Table()):
     previous = doc.documentElement
@@ -440,10 +450,13 @@ def grab_properties(doc, table=Table()):
         elt = next_element(previous)
     return table
 
+
 LEXER = QuickLexer(DOLLAR_DOLLAR_BRACE=r"\$\$+\{",
                    EXPR=r"\$\{[^\}]*\}",
                    EXTENSION=r"\$\([^\)]*\)",
                    TEXT=r"([^\$]|\$[^{(]|\$$)+")
+
+
 # evaluate text and return typed value
 def eval_text(text, symbols):
     def handle_expr(s):
@@ -451,7 +464,7 @@ def eval_text(text, symbols):
             return eval(s, global_symbols, symbols)
         except NameError as e:
             raise XacroException("%s evaluating expression '%s'" % (str(e), s))
-        except Exception as e:
+        except Exception:
             raise
 
     def handle_extension(s):
@@ -470,9 +483,12 @@ def eval_text(text, symbols):
         elif lex.peek()[0] == lex.DOLLAR_DOLLAR_BRACE:
             results.append(lex.next()[1][1:])
     # return single element as is, i.e. typed
-    if len(results) == 1: return results[0]
+    if len(results) == 1:
+        return results[0]
     # otherwise join elements to a string
-    else: return ''.join(map(str, results))
+    else:
+        return ''.join(map(str, results))
+
 
 # Assuming a node xacro:call, this function resolves the final macro name and
 # adapts the node's tagName accordingly to pretend a call for this macro
@@ -482,7 +498,7 @@ def handle_dynamic_macro_name(node, macros, symbols):
         return
 
     name = node.getAttribute('macro')
-    if name == None:
+    if name is None:
         raise XacroException("xacro:call is missing the 'macro' attribute")
 
     name = str(eval_text(name, symbols))
@@ -492,6 +508,7 @@ def handle_dynamic_macro_name(node, macros, symbols):
     # finally remove 'macro' attribute and replace tagName for the resolved macro name
     node.removeAttribute('macro')
     node.tagName = name
+
 
 def get_boolean_value(value, condition):
     """
@@ -507,20 +524,22 @@ def get_boolean_value(value, condition):
     """
     try:
         if isinstance(value, _basestr):
-            if   value == 'true': return True
+            if value == 'true': return True
             elif value == 'false': return False
             else: return ast.literal_eval(value)
-        else: return bool(value)
+        else:
+            return bool(value)
     except:
-        raise XacroException("Xacro conditional \"%s\" evaluated to \"%s\", which is not a boolean expression." % (condition, value))
+        raise XacroException("Xacro conditional \"%s\" evaluated to \"%s\", "
+                             "which is not a boolean expression." % (condition, value))
 
 
 # Expands macros, replaces properties, and evaluates expressions
 def eval_all(root, filename, macros={}, symbols=Table()):
     # Evaluates the attributes for the root node
-    for at in root.attributes.items():
-        result = str(eval_text(at[1], symbols))
-        root.setAttribute(at[0], result)
+    for name, value in root.attributes.items():
+        result = str(eval_text(value, symbols))
+        root.setAttribute(name, result)
 
     previous = root
     node = next_node(previous)
@@ -577,7 +596,7 @@ def eval_all(root, filename, macros={}, symbols=Table()):
                 # Expands the macro
                 scoped = Table(symbols)
                 for name, value in node.attributes.items():
-                    if not name in params:
+                    if name not in params:
                         raise XacroException("Invalid parameter \"%s\" while expanding macro \"%s\"" %
                                              (str(name), str(node.tagName)))
                     params.remove(name)
@@ -612,7 +631,6 @@ def eval_all(root, filename, macros={}, symbols=Table()):
                 for e in list(child_nodes(body)):  # Ew
                     node.parentNode.insertBefore(e, node)
                 node.parentNode.removeChild(node)
-
                 node = None
 
             elif node.tagName in ['arg', 'xacro:arg'] \
@@ -653,21 +671,22 @@ def eval_all(root, filename, macros={}, symbols=Table()):
                     and check_deprecated_tag(node.tagName):
                 cond = node.getAttribute('value')
                 keep = get_boolean_value(eval_text(cond, symbols), cond)
-                if node.tagName in ['unless', 'xacro:unless']: keep = not keep
+                if node.tagName in ['unless', 'xacro:unless']:
+                    keep = not keep
                 if keep:
                     for e in list(child_nodes(node)):
                         node.parentNode.insertBefore(e, node)
 
                 node.parentNode.removeChild(node)
 
-            else:
+            else:  # these are the non-xacro tags
                 if node.tagName.startswith("xacro:"):
                     raise XacroException("unknown macro name: %s" % node.tagName)
 
-                # Evals the attributes
-                for at in node.attributes.items():
-                    result = str(eval_text(at[1], symbols))
-                    node.setAttribute(at[0], result)
+                # evaluate the attributes
+                for name, value in node.attributes.items():
+                    result = str(eval_text(value, symbols))
+                    node.setAttribute(name, result)
                 previous = node
 
         elif node.nodeType == xml.dom.Node.TEXT_NODE:
@@ -681,7 +700,6 @@ def eval_all(root, filename, macros={}, symbols=Table()):
 
 
 def process_cli_args(argv, require_input=True):
-    args = {}
     parser = OptionParser(usage="usage: %prog [options] <input>")
     parser.add_option("-o", dest="output", metavar="FILE",
                       help="write output to FILE instead of stdout")
@@ -701,7 +719,7 @@ def process_cli_args(argv, require_input=True):
     mappings = load_mappings(argv)
 
     parser.set_defaults(in_order=False, just_deps=False, just_includes=False)
-    filtered_args = [a for a in argv if not REMAP in a] # filter-out REMAP args
+    filtered_args = [a for a in argv if REMAP not in a]  # filter-out REMAP args
     (options, pos_args) = parser.parse_args(filtered_args)
 
     if len(pos_args) != 1:
@@ -739,12 +757,13 @@ def parse(inp, filename=None):
         raise
 
     finally:
-        if f: f.close()
+        if f:
+            f.close()
 
 
 def process_doc(doc, filename=None,
                 in_order=False, just_deps=False, just_includes=False,
-                mappings=None, xacro_ns=True, **kwargs):
+                mappings=None, xacro_ns=True, **unused_kwargs):
     # set substitution args
     if mappings is not None:
         substitution_args_context['arg'] = mappings
@@ -762,7 +781,7 @@ def process_doc(doc, filename=None,
         macros = grab_macros(doc)
         symbols = grab_properties(doc, Table())
     else:
-        macros  = {}
+        macros = {}
         symbols = Table()
 
     eval_all(doc.documentElement, filename, macros, symbols)
@@ -803,15 +822,15 @@ def main():
         print(" - Your XML is well-formed", file=sys.stderr)
         print(" - You have the xacro xmlns declaration:",
               "xmlns:xacro=\"http://www.ros.org/wiki/xacro\"", file=sys.stderr)
-        sys.exit(2) # indicate failure, but don't print stack trace on XML errors
+        sys.exit(2)  # indicate failure, but don't print stack trace on XML errors
 
     except Exception as e:
-        print(file=sys.stderr) # add empty separator line before error
+        print(file=sys.stderr)  # add empty separator line before error
         if opts.debug:
-            raise # create stack trace
+            raise  # create stack trace
         else:
             error('{name}: {msg}'.format(name=type(e).__name__, msg=str(e)))
-            sys.exit(2) # indicate failure, but don't print stack trace on XML errors
+            sys.exit(2)  # indicate failure, but don't print stack trace on XML errors
 
     if opts.just_deps:
         out.write(" ".join(all_includes))
@@ -833,4 +852,5 @@ def main():
 
     out.write(doc.toprettyxml(indent='  '))
     print()
-    if opts.output: out.close()
+    if opts.output:
+        out.close()
