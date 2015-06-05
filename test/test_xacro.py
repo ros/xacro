@@ -406,11 +406,14 @@ class TestXacro(TestXacroCommentsIgnored):
                         '''<a xmlns:xacro="http://www.ros.org/xacro"/>''')
 
     def test_include_from_variable(self):
-        doc = ('''<a xmlns:xacro="http://www.ros.org/xacro">
+        doc = '''<a xmlns:xacro="http://www.ros.org/xacro">
         <xacro:property name="file" value="include1.xml"/>
-        <xacro:include filename="${file}" /></a>''')
-        self.assert_matches(self.quick_xacro(doc, in_order=True),
-                        '''<a xmlns:xacro="http://www.ros.org/xacro"><inc1/></a>''')
+        <xacro:include filename="${file}" /></a>'''
+        if self.in_order:
+            self.assert_matches(self.quick_xacro(doc),
+                '''<a xmlns:xacro="http://www.ros.org/xacro"><inc1/></a>''')
+        else:
+            self.assertRaises(xacro.XacroException, self.quick_xacro, doc)
 
     def test_include_recursive(self):
         self.assert_matches(self.quick_xacro('''\

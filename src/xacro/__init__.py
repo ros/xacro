@@ -376,8 +376,14 @@ def is_include(elt):
 
 
 def get_include_files(elt, symbols):
-    filename_spec = eval_text(elt.getAttribute('filename'), symbols)
-    filename_spec = abs_filename_spec(filename_spec)
+    try:
+        filename_spec = eval_text(elt.getAttribute('filename'), symbols)
+        filename_spec = abs_filename_spec(filename_spec)
+    except XacroException as e:
+        if e.exc and isinstance(e.exc, NameError) and symbols is None:
+            raise XacroException('variable filename is supported with --inorder option only')
+        else:
+            raise
 
     if re.search('[*[?]+', filename_spec):
         # Globbing behaviour
