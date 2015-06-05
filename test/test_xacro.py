@@ -234,37 +234,27 @@ class TestXacro(TestXacroCommentsIgnored):
                           <xacro:undefined><foo/><bar/></xacro:undefined></a>''')
 
     def test_inorder_processing(self):
-        src = '''<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+        src = '''<xml xmlns:xacro="http://www.ros.org/wiki/xacro">
   <xacro:property name="foo" value="1.0"/>
-  <xacro:property name="mount" value="base1"/>
-  <xacro:macro name="ee" params="side *origin">
-    <link name="${side}_base1"> <xacro:insert_block name="origin"/> </link>
-  </xacro:macro>
-  <xacro:ee side="left"> <origin>1 ${foo}</origin> </xacro:ee>
-  <joint name="mount" type="fixed"> <child link="${mount}"/> </joint>
-
-  <xacro:property name="foo" value="3.0"/>
-  <xacro:property name="mount" value="base2"/>
-  <xacro:macro name="ee" params="side *origin">
-    <link name="${side}_base2"> <xacro:insert_block name="origin"/> </link>
-  </xacro:macro>
-  <xacro:ee side="right"> <origin>2 ${foo}</origin> </xacro:ee>
-  <joint name="mount" type="fixed"> <child link="${mount}"/> </joint>
-</robot>'''
-        oldOrder = '''<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <link name="left_base2"> <origin>1 3.0</origin> </link>
-  <joint name="mount" type="fixed"> <child link="base2"/> </joint>
-
-  <link name="right_base2"> <origin>2 3.0</origin> </link>
-  <joint name="mount" type="fixed"> <child link="base2"/> </joint>
-</robot>'''
-        inOrder = '''<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <link name="left_base1"> <origin>1 1.0</origin> </link>
-  <joint name="mount" type="fixed"> <child link="base1"/> </joint>
-
-  <link name="right_base2"> <origin>2 3.0</origin> </link>
-  <joint name="mount" type="fixed"> <child link="base2"/> </joint>
-</robot>'''
+  <xacro:macro name="m" params="foo"><a foo="${foo}"/></xacro:macro>
+  <xacro:m foo="1 ${foo}"/>
+  <!-- now redefining the property and macro -->
+  <xacro:property name="foo" value="2.0"/>
+  <xacro:macro name="m" params="foo"><b bar="${foo}"/></xacro:macro>
+  <xacro:m foo="2 ${foo}"/>
+</xml>'''
+        oldOrder = '''
+<xml xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <b bar="1 2.0"/>
+  <b bar="2 2.0"/>
+</xml>
+'''
+        inOrder = '''
+<xml xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <a foo="1 1.0"/>
+  <b bar="2 2.0"/>
+</xml>
+'''
         self.assert_matches(self.quick_xacro(src), inOrder if self.in_order else oldOrder)
 
     def test_DEPRECATED_should_replace_before_macroexpand(self):
