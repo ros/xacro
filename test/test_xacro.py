@@ -233,6 +233,15 @@ class TestXacro(TestXacroCommentsIgnored):
                           '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
                           <xacro:undefined><foo/><bar/></xacro:undefined></a>''')
 
+    def test_xacro_rename(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="foo" params="name"><xacro:rename xacro:name="${name}"/></xacro:macro>
+  <xacro:foo name="A"/>
+  <xacro:foo name="B"/>
+</a>'''
+        res = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro"><A/><B/></a>'''
+        self.assert_matches(self.quick_xacro(src), res)
+
     def test_inorder_processing(self):
         src = '''<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
   <xacro:property name="foo" value="1.0"/>
