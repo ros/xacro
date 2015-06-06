@@ -227,6 +227,12 @@ class TestXacro(TestXacroCommentsIgnored):
             self.assert_matches(result, res)
             self.assertTrue("deprecated use of macro name 'call'" in output)
 
+    def test_dynamic_macro_undefined(self):
+        self.assertRaises(xacro.XacroException,
+                          self.quick_xacro,
+                          '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+                          <xacro:call name="foo"/></a>''')
+
     def test_macro_undefined(self):
         self.assertRaises(xacro.XacroException,
                           self.quick_xacro,
