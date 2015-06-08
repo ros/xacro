@@ -878,6 +878,20 @@ class TestXacro(TestXacroCommentsIgnored):
   <a prop="0.2"/>
 </a>''')
 
+    def test_transitive_arg_evaluation(self):
+        self.assert_matches(
+                self.quick_xacro('''\
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="foo" default="0.5"/>
+  <xacro:arg name="bar" default="$(arg foo)"/>
+  <xacro:property name="prop" value="$(arg bar)" />
+  <a prop="${prop-0.3}"/>
+</a>
+'''),'''\
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <a prop="0.2"/>
+</a>''')
+
 
 # test class for in-order processing
 class TestXacroInorder(TestXacro):

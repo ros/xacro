@@ -681,7 +681,7 @@ def eval_all(root, macros={}, symbols=Table()):
                     raise XacroException("Argument name missing")
                 default = node.getAttribute('default')
                 if default and name not in substitution_args_context['arg']:
-                    substitution_args_context['arg'][name] = default
+                    substitution_args_context['arg'][name] = eval_text(default, symbols)
 
                 node.parentNode.removeChild(node)
                 node = None
