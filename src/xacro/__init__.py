@@ -194,7 +194,7 @@ class Table:
             try:
                 # try to evaluate as literal, e.g. number, boolean, etc.
                 # this is needed to handle numbers in property definitions as numbers, not strings
-                evaluated = ast.literal_eval(value)
+                evaluated = ast.literal_eval(value.strip())
                 # However, (simple) list, tuple, dict expressions will be evaluated as such too,
                 # which would break expected behaviour. Thus we only accept the evaluation otherwise.
                 if not isinstance(evaluated, (list, dict, tuple)):
