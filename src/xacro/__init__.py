@@ -139,7 +139,8 @@ def eval_extension(s):
     if s == '$(cwd)':
         return os.getcwd()
     try:
-        return substitution_args.resolve_args(s, context=substitution_args_context, resolve_anon=False)
+        value = substitution_args.resolve_args(s, context=substitution_args_context, resolve_anon=False)
+        return Table._eval_literal(value)  # allow numeric values as args
     except substitution_args.ArgException as e:
         raise XacroException("Undefined substitution argument", exc=e)
 
@@ -171,7 +172,7 @@ def fixed_writexml(self, writer, indent="", addindent="", newl=""):
         for node in self.childNodes:
             # skip whitespace-only text nodes
             if node.nodeType == xml.dom.minidom.Node.TEXT_NODE and \
-               not node.data.strip():
+                    (not node.data or node.data.isspace()):
                 continue
             node.writexml(writer, indent + addindent, addindent, newl)
         writer.write("%s</%s>%s" % (indent, self.tagName, newl))
@@ -194,7 +195,7 @@ class Table:
             try:
                 # try to evaluate as literal, e.g. number, boolean, etc.
                 # this is needed to handle numbers in property definitions as numbers, not strings
-                evaluated = ast.literal_eval(value)
+                evaluated = ast.literal_eval(value.strip())
                 # However, (simple) list, tuple, dict expressions will be evaluated as such too,
                 # which would break expected behaviour. Thus we only accept the evaluation otherwise.
                 if not isinstance(evaluated, (list, dict, tuple)):
@@ -211,7 +212,7 @@ class Table:
                 raise XacroException("recursive variable definition: %s" %
                                      " -> ".join(self.recursive + [key]))
             self.recursive.append(key)
-            self.table[key] = self._eval_literal(eval_text(self.table[key], self))
+            self.table[key] = eval_text(self.table[key], self)
             self.unevaluated.remove(key)
             self.recursive.remove(key)
         # return evaluated result

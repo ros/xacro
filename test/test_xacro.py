@@ -563,8 +563,8 @@ class TestXacro(TestXacroCommentsIgnored):
         self.assert_matches(
                 self.quick_xacro('''\
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <xacro:property name="a" value="42"/>
-  <xacro:property name="a2" value="${2*a}"/>
+  <xacro:property name="a" value=" 42 "/>
+  <xacro:property name="a2" value="${ 2 * a }"/>
   <a doubled="${a2}"/>
 </robot>'''),
                 '''\
