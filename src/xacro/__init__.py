@@ -44,6 +44,7 @@ import math
 from roslaunch import substitution_args
 from rosgraph.names import load_mappings, REMAP
 from optparse import OptionParser
+from copy import deepcopy
 from .color import warning, error, message
 
 try:
@@ -53,6 +54,28 @@ except NameError:
 
 # Dictionary of substitution args
 substitution_args_context = {}
+
+
+# Stack of currently processed files
+filestack = []
+
+def push_file(filename):
+    """
+    Push a new filename to the filestack.
+    Instead of directly modifying filestack, a deep-copy is created and modified,
+    while the old filestack is returned.
+    This allows to store the filestack that was active when a macro or property is defined
+    """
+    global filestack
+    oldstack = filestack
+    filestack = deepcopy(filestack)
+    filestack.append(filename)
+    return oldstack
+
+def restore_filestack(oldstack):
+    global filestack
+    filestack = oldstack
+
 
 # global symbols dictionary
 # taking simple security measures to forbid access to __builtins__
@@ -64,7 +87,20 @@ global_symbols.update(math.__dict__)
 
 
 class XacroException(Exception):
-    pass
+    """
+    XacroException allows to wrap another exception (exc) and to augment
+    its error message: prefixing with msg and suffixing with suffix.
+    str(e) finally prints: msg str(exc) suffix
+    """
+    def __init__(self, msg=None, suffix=None, exc=None, macro=None):
+        super(XacroException, self).__init__(msg)
+        self.suffix = suffix
+        self.exc = exc
+        self.macros = [] if macro is None else [macro]
+
+    def __str__(self):
+        return ' '.join([str(item) for item in
+                         [self.message, self.exc, self.suffix] if item])
 
 
 # deprecate non-namespaced use of xacro tags (issues #41, #59, #60)
@@ -76,6 +112,8 @@ def deprecated_tag(_issued=[False]):
     warning("deprecated: xacro tags should be prepended with 'xacro' xml namespace.")
     message("""Use the following script to fix incorrect usage:
     find . -iname "*.xacro" | xargs sed -i 's#<\([/]\\?\)\(if\|unless\|include\|arg\|property\|macro\|insert_block\)#<\\1xacro:\\2#g'""")
+    print_location(filestack)
+    print(file=sys.stderr)
 
 
 # require xacro namespace?
@@ -100,7 +138,10 @@ def check_deprecated_tag(tag_name):
 def eval_extension(s):
     if s == '$(cwd)':
         return os.getcwd()
-    return substitution_args.resolve_args(s, context=substitution_args_context, resolve_anon=False)
+    try:
+        return substitution_args.resolve_args(s, context=substitution_args_context, resolve_anon=False)
+    except substitution_args.ArgException as e:
+        raise XacroException("Undefined substitution argument", exc=e)
 
 
 # Better pretty printing of xml
@@ -316,7 +357,7 @@ def is_include(elt):
     return True
 
 
-def parse_includes(elt, parent_filename, symbols):
+def get_include_files(elt, parent_filename, symbols):
     filename_spec = eval_text(elt.getAttribute('filename'), symbols)
     if not os.path.isabs(filename_spec):
         basedir = os.path.dirname(parent_filename) if parent_filename else '.'
@@ -326,7 +367,7 @@ def parse_includes(elt, parent_filename, symbols):
         # Globbing behaviour
         filenames = sorted(glob.glob(filename_spec))
         if len(filenames) == 0:
-            print(include_no_matches_msg.format(filename_spec), file=sys.stderr)
+            warning(include_no_matches_msg.format(filename_spec))
     else:
         # Default behaviour
         filenames = [filename_spec]
@@ -334,11 +375,7 @@ def parse_includes(elt, parent_filename, symbols):
     for filename in filenames:
         global all_includes
         all_includes.append(filename)
-
-        try:
-            yield parse(None, filename), filename
-        except IOError as e:
-            raise XacroException("failed to open include file: %s\n%s" % (filename, str(e)))
+        yield filename
 
 
 def process_include(elt, included):
@@ -352,29 +389,22 @@ def process_include(elt, included):
             elt.parentNode.setAttribute(name, value)
 
 
-def print_location_msg(e, filename):
-    msg = 'error in file:' if getattr(e, '_xacro_first', True) else 'included from:'
-    e._xacro_first = False
-    if filename:
-        print(msg, filename, file=sys.stderr)
-
-
 # @throws XacroException if a parsing error occurs with an included document
-def process_includes(doc, filename):
+def process_includes(doc):
     previous = doc.documentElement
     elt = next_element(previous)
     while elt:
         if is_include(elt):
-            try:
-                for included, included_filename in parse_includes(elt, filename, {}):
-                    # recursively process includes
-                    process_includes(included, included_filename)
-                    # embed included doc before elt
-                    process_include(elt, included)
-
-            except Exception as e:
-                print_location_msg(e, filename)
-                raise
+            for filename in get_include_files(elt, filestack[-1], {}):
+                # extend filestack
+                oldstack = push_file(filename)
+                included = parse(None, filename)
+                # recursively process includes
+                process_includes(included)
+                # embed included doc before elt
+                process_include(elt, included)
+                # restore filestack
+                restore_filestack(oldstack)
 
             elt.parentNode.removeChild(elt)
 
@@ -388,8 +418,11 @@ def grab_macro(elt, macros):
     assert(elt.tagName in ['macro', 'xacro:macro'])
 
     name = elt.getAttribute('name')
-    macros[name] = elt
-    macros['xacro:' + name] = elt
+    # append current filestack to previous list of definitions
+    _, defs = macros.get(name, (None, []))
+    defs.append(filestack)
+
+    macros['xacro:' + name] = macros[name] = (elt, defs)
     elt.parentNode.removeChild(elt)
 
     if name == 'call':
@@ -429,8 +462,8 @@ def grab_property(elt, table):
 
     bad = string.whitespace + "${}"
     if any(ch in name for ch in bad):
-        sys.stderr.write('Property names may not have whitespace, ' +
-                         '"{", "}", or "$" : "' + name + '"')
+        warning('Property names may not have whitespace, ' +
+                '"{", "}", or "$" : "' + name + '"')
         return
 
     table[name] = value
@@ -462,10 +495,10 @@ def eval_text(text, symbols):
     def handle_expr(s):
         try:
             return eval(s, global_symbols, symbols)
-        except NameError as e:
-            raise XacroException("%s evaluating expression '%s'" % (str(e), s))
-        except Exception:
-            raise
+        except Exception as e:
+            # re-raise as XacroException to add more context
+            raise XacroException(exc=e,
+                suffix=os.linesep + "when evaluating expression '%s'" % s)
 
     def handle_extension(s):
         return eval_extension("$(%s)" % s)
@@ -535,7 +568,7 @@ def get_boolean_value(value, condition):
 
 
 # Expands macros, replaces properties, and evaluates expressions
-def eval_all(root, filename, macros={}, symbols=Table()):
+def eval_all(root, macros={}, symbols=Table()):
     # Evaluates the attributes for the root node
     for name, value in root.attributes.items():
         result = str(eval_text(value, symbols))
@@ -546,16 +579,16 @@ def eval_all(root, filename, macros={}, symbols=Table()):
     while node:
         if node.nodeType == xml.dom.Node.ELEMENT_NODE:
             if is_include(node):
-                try:
-                    for included, included_filename in parse_includes(node, filename, symbols):
-                        # recursively process includes
-                        eval_all(included.documentElement, included_filename, macros, symbols)
-                        # embed included doc before node
-                        process_include(node, included)
-
-                except Exception as e:
-                    print_location_msg(e, filename)
-                    raise
+                for filename in get_include_files(node, filestack[-1], symbols):
+                    # extend filestack
+                    oldstack = push_file(filename)
+                    included = parse(None, filename)
+                    # recursively process includes
+                    eval_all(included.documentElement, macros, symbols)
+                    # embed included doc before node
+                    process_include(node, included)
+                    # restore filestack
+                    restore_filestack(oldstack)
 
                 node.parentNode.removeChild(node)
                 node = next_node(previous)
@@ -577,7 +610,8 @@ def eval_all(root, filename, macros={}, symbols=Table()):
                 handle_dynamic_macro_name(node, macros, symbols)
 
             if node.tagName in macros:
-                body = macros[node.tagName].cloneNode(deep=True)
+                m = macros[node.tagName]
+                body = m[0].cloneNode(deep=True)
                 params = body.getAttribute('params').split()
 
                 # Parse default values for any parameters
@@ -591,30 +625,30 @@ def eval_all(root, filename, macros={}, symbols=Table()):
                         params.append(splitParam[0])
 
                     elif len(splitParam) != 1:
-                        raise XacroException("Invalid parameter definition")
+                        raise XacroException("Invalid parameter definition", macro=m)
 
                 # Expands the macro
                 scoped = Table(symbols)
                 for name, value in node.attributes.items():
                     if name not in params:
-                        raise XacroException("Invalid parameter \"%s\" while expanding macro \"%s\"" %
-                                             (str(name), str(node.tagName)))
+                        raise XacroException("Invalid parameter \"%s\"" % str(name), macro=m)
                     params.remove(name)
                     scoped[name] = eval_text(value, symbols)
 
                 # Pulls out the block arguments, in order
                 cloned = node.cloneNode(deep=True)
-                eval_all(cloned, filename, macros, symbols)
-                block = cloned.firstChild
+                eval_all(cloned, macros, symbols)
+                block = first_child_element(cloned)
                 for param in params[:]:
                     if param[0] == '*':
-                        while block and block.nodeType != xml.dom.Node.ELEMENT_NODE:
-                            block = block.nextSibling
                         if not block:
-                            raise XacroException("Not enough blocks while evaluating macro %s" % str(node.tagName))
+                            raise XacroException("Not enough blocks", macro=m)
                         params.remove(param)
                         scoped[param] = block
-                        block = block.nextSibling
+                        block = next_sibling_element(block)
+
+                if block is not None:
+                    raise XacroException("Unused block \"%s\"" % block.tagName, macro=m)
 
                 # Try to load defaults for any remaining non-block parameters
                 for param in params[:]:
@@ -623,9 +657,16 @@ def eval_all(root, filename, macros={}, symbols=Table()):
                         params.remove(param)
 
                 if params:
-                    raise XacroException("Parameters [%s] were not set for macro %s" %
-                                         (",".join(params), str(node.tagName)))
-                eval_all(body, filename, macros, scoped)
+                    raise XacroException("Undefined parameters [%s]" % ",".join(params), macro=m)
+
+                try:
+                    eval_all(body, macros, scoped)
+                except Exception as e:
+                    if hasattr(e, 'macros'):
+                        e.macros.append(m)
+                    else:
+                        e.macros = [m]
+                    raise
 
                 # Replaces the macro node with the expansion
                 for e in list(child_nodes(body)):  # Ew
@@ -663,7 +704,7 @@ def eval_all(root, filename, macros={}, symbols=Table()):
                     node.parentNode.insertBefore(block.cloneNode(deep=True), node)
                     node.parentNode.removeChild(node)
                 else:
-                    raise XacroException("Block \"%s\" was never declared" % name)
+                    raise XacroException("Undefined block \"%s\"" % name)
 
                 node = None
 
@@ -743,7 +784,12 @@ def parse(inp, filename=None):
     """
     f = None
     if inp is None:
-        inp = f = open(filename)
+        try:
+            inp = f = open(filename)
+        except IOError:
+            # do not report currently processed file as "in file ..."
+            filestack.pop()
+            raise
 
     try:
         if isinstance(inp, _basestr):
@@ -752,16 +798,12 @@ def parse(inp, filename=None):
             return xml.dom.minidom.parse(inp)
         return inp
 
-    except Exception as e:
-        print_location_msg(e, filename)
-        raise
-
     finally:
         if f:
             f.close()
 
 
-def process_doc(doc, filename=None,
+def process_doc(doc,
                 in_order=False, just_deps=False, just_includes=False,
                 mappings=None, xacro_ns=True, **unused_kwargs):
     # set substitution args
@@ -771,20 +813,23 @@ def process_doc(doc, filename=None,
     global allow_non_prefixed_tags
     allow_non_prefixed_tags = xacro_ns
 
+    # if not yet defined: initialize filestack
+    if not filestack: restore_filestack([None])
+
     if just_deps or just_includes:
-        process_includes(doc, filename)
+        process_includes(doc)
         return
 
     if not in_order:
         # process includes, macros, and properties before evaluating stuff
-        process_includes(doc, filename)
+        process_includes(doc)
         macros = grab_macros(doc)
         symbols = grab_properties(doc, Table())
     else:
         macros = {}
         symbols = Table()
 
-    eval_all(doc.documentElement, filename, macros, symbols)
+    eval_all(doc.documentElement, macros, symbols)
 
     # reset substitution args
     substitution_args_context['arg'] = {}
@@ -806,18 +851,37 @@ def open_output(output_filename):
         try:
             return open(output_filename, 'w')
         except IOError as e:
-            raise XacroException("Failed to open output: %s" % str(e))
+            raise XacroException("Failed to open output:", exc=e)
+
+
+def print_location(filestack, err=None, file=sys.stderr):
+    macros = getattr(err, 'macros', []) if err else []
+    msg = 'when instantiating macro:'
+    for m, defs in macros:
+        name = m.getAttribute('name')
+        location = '(%s)' % defs[-1][-1]
+        print(msg, name, location, file=file)
+        msg = 'instantiated from:'
+
+    msg = 'in file:' if macros else 'when processing file:'
+    for f in reversed(filestack):
+        if f is None: f = 'string'
+        print(msg, f, file=file)
+        msg = 'included from:'
 
 
 def main():
     opts, input_file = process_cli_args(sys.argv[1:])
     try:
+        restore_filestack([input_file])
         doc = parse(None, input_file)
-        process_doc(doc, filename=input_file, **vars(opts))
+        process_doc(doc, **vars(opts))
         out = open_output(opts.output)
 
     except xml.parsers.expat.ExpatError as e:
         error("XML parsing error: %s" % str(e), alt_text=None)
+        print_location(filestack, e)
+        print(file=sys.stderr) # add empty separator line before error
         print("Check that:", file=sys.stderr)
         print(" - Your XML is well-formed", file=sys.stderr)
         print(" - You have the xacro xmlns declaration:",
@@ -825,12 +889,13 @@ def main():
         sys.exit(2)  # indicate failure, but don't print stack trace on XML errors
 
     except Exception as e:
-        print(file=sys.stderr)  # add empty separator line before error
+        error(str(e))
+        print_location(filestack, e)
         if opts.debug:
+            print(file=sys.stderr)  # add empty separator line before error
             raise  # create stack trace
         else:
-            error('{name}: {msg}'.format(name=type(e).__name__, msg=str(e)))
-            sys.exit(2)  # indicate failure, but don't print stack trace on XML errors
+            sys.exit(2)  # gracefully exit with error condition
 
     if opts.just_deps:
         out.write(" ".join(all_includes))

@@ -405,7 +405,7 @@ class TestXacro(TestXacroCommentsIgnored):
             self.assert_matches(self.quick_xacro(input.format(glob=pattern)), result)
 
     def test_include_nonexistent(self):
-        self.assertRaises(xacro.XacroException,
+        self.assertRaises(IOError,
                           self.quick_xacro, '''<a xmlns:xacro="http://www.ros.org/xacro">
                              <xacro:include filename="include-nada.xml" /></a>''')
 
@@ -673,7 +673,7 @@ class TestXacro(TestXacroCommentsIgnored):
 </robot>''')
 
     def test_recursive_bad_math(self):
-        self.assertRaises(ZeroDivisionError,
+        self.assertRaises(xacro.XacroException,
             self.quick_xacro, '''\
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
   <xacro:property name="x" value="0"/>
