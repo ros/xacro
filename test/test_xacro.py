@@ -563,8 +563,8 @@ class TestXacro(TestXacroCommentsIgnored):
         self.assert_matches(
                 self.quick_xacro('''\
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <xacro:property name="a" value="42"/>
-  <xacro:property name="a2" value="${2*a}"/>
+  <xacro:property name="a" value=" 42 "/>
+  <xacro:property name="a2" value="${ 2 * a }"/>
   <a doubled="${a2}"/>
 </robot>'''),
                 '''\
@@ -871,6 +871,20 @@ class TestXacro(TestXacroCommentsIgnored):
 <a xmlns:xacro="http://www.ros.org/wiki/xacro">
   <xacro:arg name="foo" default="0.5"/>
   <xacro:property name="prop" value="$(arg foo)" />
+  <a prop="${prop-0.3}"/>
+</a>
+'''),'''\
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <a prop="0.2"/>
+</a>''')
+
+    def test_transitive_arg_evaluation(self):
+        self.assert_matches(
+                self.quick_xacro('''\
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="foo" default="0.5"/>
+  <xacro:arg name="bar" default="$(arg foo)"/>
+  <xacro:property name="prop" value="$(arg bar)" />
   <a prop="${prop-0.3}"/>
 </a>
 '''),'''\

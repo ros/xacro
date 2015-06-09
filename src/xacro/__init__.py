@@ -201,7 +201,7 @@ def fixed_writexml(self, writer, indent="", addindent="", newl=""):
         for node in self.childNodes:
             # skip whitespace-only text nodes
             if node.nodeType == xml.dom.minidom.Node.TEXT_NODE and \
-               not node.data.strip():
+                    (not node.data or node.data.isspace()):
                 continue
             node.writexml(writer, indent + addindent, addindent, newl)
         writer.write("%s</%s>%s" % (indent, self.tagName, newl))
@@ -224,7 +224,7 @@ class Table:
             try:
                 # try to evaluate as literal, e.g. number, boolean, etc.
                 # this is needed to handle numbers in property definitions as numbers, not strings
-                evaluated = ast.literal_eval(value)
+                evaluated = ast.literal_eval(value.strip())
                 # However, (simple) list, tuple, dict expressions will be evaluated as such too,
                 # which would break expected behaviour. Thus we only accept the evaluation otherwise.
                 if not isinstance(evaluated, (list, dict, tuple)):
@@ -720,7 +720,7 @@ def eval_all(root, macros={}, symbols=Table()):
                     raise XacroException("Argument name missing")
                 default = node.getAttribute('default')
                 if default and name not in substitution_args_context['arg']:
-                    substitution_args_context['arg'][name] = default
+                    substitution_args_context['arg'][name] = eval_text(default, symbols)
 
                 node.parentNode.removeChild(node)
                 node = None
