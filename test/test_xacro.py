@@ -405,12 +405,6 @@ class TestXacro(TestXacroCommentsIgnored):
                           self.quick_xacro, '''<a xmlns:xacro="http://www.ros.org/xacro">
                              <xacro:include filename="include-nada.xml" /></a>''')
 
-    def test_include_lazy(self):
-        doc = ('''<a xmlns:xacro="http://www.ros.org/xacro">
-        <xacro:if value="false"><xacro:include filename="non-existent"/></xacro:if></a>''')
-        self.assert_matches(self.quick_xacro(doc, in_order=True),
-                        '''<a xmlns:xacro="http://www.ros.org/xacro"/>''')
-
     def test_include_from_variable(self):
         doc = '''<a xmlns:xacro="http://www.ros.org/xacro">
         <xacro:property name="file" value="include1.xml"/>
@@ -868,17 +862,6 @@ class TestXacro(TestXacroCommentsIgnored):
   <arg name="foo" value="bar"/>
 </a>''')
 
-    def test_issue_63_fixed_with_inorder_processing(self):
-        self.assert_matches(
-                self.quick_xacro('''\
-<a xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <xacro:arg name="has_stuff" default="false"/>
-  <xacro:if value="$(arg has_stuff)">
-    <xacro:include file="$(find nonexistent_package)/stuff.urdf" />
-  </xacro:if>
-</a>''', in_order=True),
-'<a xmlns:xacro="http://www.ros.org/wiki/xacro"/>')
-
     def test_issue_68_numeric_arg(self):
         # If a property is assigned from a substitution arg, then this properties' value was
         # no longer converted to a python type, so that e.g. 0.5 remained u'0.5'.
@@ -915,6 +898,23 @@ class TestXacroInorder(TestXacro):
     def __init__(self, *args, **kwargs):
         super(TestXacroInorder, self).__init__(*args, **kwargs)
         self.in_order = True
+
+    def test_include_lazy(self):
+        doc = ('''<a xmlns:xacro="http://www.ros.org/xacro">
+        <xacro:if value="false"><xacro:include filename="non-existent"/></xacro:if></a>''')
+        self.assert_matches(self.quick_xacro(doc),
+                        '''<a xmlns:xacro="http://www.ros.org/xacro"/>''')
+
+    def test_issue_63_fixed_with_inorder_processing(self):
+        self.assert_matches(
+                self.quick_xacro('''\
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="has_stuff" default="false"/>
+  <xacro:if value="$(arg has_stuff)">
+    <xacro:include file="$(find nonexistent_package)/stuff.urdf" />
+  </xacro:if>
+</a>'''),
+'<a xmlns:xacro="http://www.ros.org/wiki/xacro"/>')
 
     def test_yaml_support(self):
         src = '''
