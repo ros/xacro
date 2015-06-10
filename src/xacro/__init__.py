@@ -211,7 +211,7 @@ def fixed_writexml(self, writer, indent="", addindent="", newl=""):
 xml.dom.minidom.Element.writexml = fixed_writexml
 
 
-class Table:
+class Table(object):
     def __init__(self, parent=None):
         self.parent = parent
         self.table = {}
@@ -276,6 +276,19 @@ class Table:
             s += "\n  parent: "
             s += str(self.parent)
         return s
+
+class NameSpace(object):
+    # dot access (namespace.property) is forwarded to getitem()
+    def __getattr__(self, item):
+        return self.__getitem__(item)
+
+class PropertyNameSpace(Table, NameSpace):
+    def __init__(self, parent=None):
+        super(PropertyNameSpace, self).__init__(parent)
+
+class MacroNameSpace(dict, NameSpace):
+    def __init__(self, *args, **kwargs):
+        super(MacroNameSpace, self).__init__(*args, **kwargs)
 
 
 class QuickLexer(object):
@@ -408,15 +421,26 @@ def import_xml_namespaces(parent, attributes):
                 parent.setAttribute(name, value)
 
 
-def process_include(elt, symbols, func):
+def process_include(elt, macros, symbols, func):
     included = []
+    namespace_spec = elt.getAttribute('ns')
+    if namespace_spec:
+        try:
+            namespace_spec = eval_text(namespace_spec, symbols)
+            macros[namespace_spec] = ns_macros = MacroNameSpace()
+            symbols[namespace_spec] = ns_symbols = PropertyNameSpace()
+            macros = ns_macros
+            symbols = ns_symbols
+        except TypeError:
+            raise XacroException('namespaces are supported with --inorder option only')
+
     for filename in get_include_files(elt, symbols):
         # extend filestack
         oldstack = push_file(filename)
         include = parse(None, filename).documentElement
 
         # recursive call to func
-        func(include)
+        func(include, macros, symbols)
         included.append(include)
         import_xml_namespaces(elt.parentNode, include.attributes)
 
@@ -429,12 +453,12 @@ def process_include(elt, symbols, func):
 
 
 # @throws XacroException if a parsing error occurs with an included document
-def process_includes(elt):
+def process_includes(elt, macros=None, symbols=None):
     elt = first_child_element(elt)
     while elt:
         next = next_sibling_element(elt)
         if is_include(elt):
-            process_include(elt, {}, process_includes)
+            process_include(elt, macros, symbols, process_includes)
         else:
             process_includes(elt)
 
@@ -453,7 +477,7 @@ def grab_macro(elt, macros):
     _, defs = macros.get(name, (None, []))
     defs.append(filestack)
 
-    macros['xacro:' + name] = macros[name] = (elt, defs)
+    macros[name] = (elt, defs)
     replace_node(elt, by=None)
 
 
@@ -547,6 +571,104 @@ def eval_text(text, symbols):
         return ''.join(map(str, results))
 
 
+def handle_dynamic_macro_call(node, macros, symbols):
+    name = node.getAttribute('macro')
+    if not name:
+        raise XacroException("xacro:call is missing the 'macro' attribute")
+    name = str(eval_text(name, symbols))
+
+    # remove 'macro' attribute and rename tag with resolved macro name
+    node.removeAttribute('macro')
+    node.tagName = name
+    # forward to handle_macro_call
+    result = handle_macro_call(node, name, macros, symbols)
+    if not result:  # we expect the call to succeed
+        raise XacroException("unknown macro name '%s' in xacro:call" % name)
+    return True
+
+def handle_macro_call(node, name, macros, symbols):
+    if name.startswith('xacro:'):
+        name = name.replace('xacro:', '')
+
+    try:
+        m = None
+        m = macros[name]  # try simple macro resolution from macros dict
+    except KeyError:
+        pass
+
+    try:
+        #  using eval allows to employ python's resolving mechanism
+        #  to also resolve macros in namespaces, e.g. ns1.ns2.macro
+        m = m or eval(name, dict(__builtins__={}), macros)
+        body = m[0].cloneNode(deep=True)
+    except (NameError, TypeError):  # that wasn't a known macro
+        # TODO If deprecation runs out, this test should be moved up front
+        if node.tagName == 'xacro:call':
+            return handle_dynamic_macro_call(node, macros, symbols)
+        return False
+
+    params = body.getAttribute('params').split()
+
+    # TODO should be moved to grab_macro, storing defaultMap as field in macro
+    # Parse default values for any parameters
+    defaultmap = {}
+    for param in params[:]:
+        splitParam = param.split(':=')
+
+        if len(splitParam) == 2:
+            defaultmap[splitParam[0]] = splitParam[1]
+            params.remove(param)
+            params.append(splitParam[0])
+
+        elif len(splitParam) != 1:
+            raise XacroException("Invalid parameter definition", macro=m)
+
+    # Expands the macro
+    scoped = Table(symbols)  # new local name space for macro evaluation
+    for name, value in node.attributes.items():
+        if name not in params:
+            raise XacroException("Invalid parameter \"%s\"" % str(name), macro=m)
+        params.remove(name)
+        scoped[name] = eval_text(value, symbols)
+
+    # Pulls out the block arguments, in order
+    eval_all(node, macros, symbols)  # for calling eval_all
+    block = first_child_element(node)
+    for param in params[:]:
+        if param[0] == '*':
+            if not block:
+                raise XacroException("Not enough blocks", macro=m)
+            params.remove(param)
+            scoped[param] = block
+            block = next_sibling_element(block)
+
+    if block is not None:
+        raise XacroException("Unused block \"%s\"" % block.tagName, macro=m)
+
+    # Try to load defaults for any remaining non-block parameters
+    for param in params[:]:
+        if param[0] != '*' and param in defaultmap:
+            scoped[param] = defaultmap[param]
+            params.remove(param)
+
+    if params:
+        raise XacroException("Undefined parameters [%s]" % ",".join(params), macro=m)
+
+    try:
+        eval_all(body, macros, scoped)
+    except Exception as e:
+        if hasattr(e, 'macros'):
+            e.macros.append(m)
+        else:
+            e.macros = [m]
+        raise
+
+    # Replaces the macro node with the expansion
+    remove_previous_comments(node)
+    replace_node(node, by=body, content_only=True)
+    return True
+
+
 def get_boolean_value(value, condition):
     """
     Return a boolean value that corresponds to the given Xacro condition value.
@@ -622,7 +744,7 @@ def eval_all(node, macros, symbols):
                 replace_node(node, by=block.cloneNode(deep=True), content_only=content_only)
 
             elif is_include(node):
-                process_include(node, symbols, lambda doc: eval_all(doc, macros, symbols))
+                process_include(node, macros, symbols, eval_all)
 
             elif node.tagName in ['property', 'xacro:property'] \
                     and check_deprecated_tag(node.tagName):
@@ -658,85 +780,8 @@ def eval_all(node, macros, symbols):
                 else:
                     replace_node(node, by=None)
 
-            elif node.tagName in macros:
-                m = macros[node.tagName]
-                body = m[0].cloneNode(deep=True)
-                params = body.getAttribute('params').split()
-
-                # TODO should be moved to grab_macro, storing defaultMap as field in macro
-                # Parse default values for any parameters
-                defaultmap = {}
-                for param in params[:]:
-                    splitParam = param.split(':=')
-
-                    if len(splitParam) == 2:
-                        defaultmap[splitParam[0]] = splitParam[1]
-                        params.remove(param)
-                        params.append(splitParam[0])
-
-                    elif len(splitParam) != 1:
-                        raise XacroException("Invalid parameter definition", macro=m)
-
-                # Expands the macro
-                scoped = Table(symbols)  # new local name space for macro evaluation
-                for name, value in node.attributes.items():
-                    if name not in params:
-                        raise XacroException("Invalid parameter \"%s\"" % str(name), macro=m)
-                    params.remove(name)
-                    scoped[name] = eval_text(value, symbols)
-
-                # Pulls out the block arguments, in order
-                eval_all(node, macros, symbols)  # for calling eval_all
-                block = first_child_element(node)
-                for param in params[:]:
-                    if param[0] == '*':
-                        if not block:
-                            raise XacroException("Not enough blocks", macro=m)
-                        params.remove(param)
-                        scoped[param] = block
-                        block = next_sibling_element(block)
-
-                if block is not None:
-                    raise XacroException("Unused block \"%s\"" % block.tagName, macro=m)
-
-                # Try to load defaults for any remaining non-block parameters
-                for param in params[:]:
-                    if param[0] != '*' and param in defaultmap:
-                        scoped[param] = defaultmap[param]
-                        params.remove(param)
-
-                if params:
-                    raise XacroException("Undefined parameters [%s]" % ",".join(params), macro=m)
-
-                try:
-                    eval_all(body, macros, scoped)
-                except Exception as e:
-                    if hasattr(e, 'macros'):
-                        e.macros.append(m)
-                    else:
-                        e.macros = [m]
-                    raise
-
-                # Replaces the macro node with the expansion
-                remove_previous_comments(node)
-                replace_node(node, by=body, content_only=True)
-
-            # Handling this one after the normal macro handling will resolve an existing macro 'call' as usual
-            # TODO If deprecation runs out, it should be moved before macro handling
-            elif node.tagName == 'xacro:call':
-                name = node.getAttribute('macro')
-                if name is None:
-                    raise XacroException("xacro:call is missing the 'macro' attribute")
-
-                name = str(eval_text(name, symbols))
-                if name not in macros:
-                    raise XacroException("unknown macro name '%s' in xacro:call" % name)
-
-                # remove 'macro' attribute and rename tag with resolved macro name
-                node.removeAttribute('macro')
-                # TODO prepend xacro namespace
-                node.tagName = name
-                continue  # re-process the node with new tagName
+            elif handle_macro_call(node, node.tagName, macros, symbols):
+                pass  # handle_macro_call does all the work of expanding the macro
 
             else:
                 # these are the non-xacro tags

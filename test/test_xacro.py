@@ -433,6 +433,25 @@ class TestXacro(TestXacroCommentsIgnored):
 <inc1/><inc1/>
 <subdir_inc1/><subdir_inc1/><inc1/></a>''')
 
+    def test_include_with_namespace(self):
+        doc = '''
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="var" value="main"/>
+  <xacro:include filename="include1.xacro" ns="A"/>
+  <xacro:include filename="include2.xacro" ns="B"/>
+  <A.foo/><B.foo/>
+  <main var="${var}" A="${2*A.var}" B="${B.var+1}"/>
+</a>'''
+        result = '''
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <inc1/><inc2/><main var="main" A="2" B="3"/>
+</a>'''
+
+        if self.in_order:
+            self.assert_matches(self.quick_xacro(doc), result)
+        else:
+            self.assertRaises(xacro.XacroException, self.quick_xacro, doc)
+
     def test_boolean_if_statement(self):
         self.assert_matches(
                 self.quick_xacro('''\
