@@ -314,51 +314,39 @@ class QuickLexer(object):
 
 def first_child_element(elt):
     c = elt.firstChild
-    while c:
-        if c.nodeType == xml.dom.Node.ELEMENT_NODE:
-            return c
+    while c and c.nodeType != xml.dom.Node.ELEMENT_NODE:
         c = c.nextSibling
-    return None
+    return c
 
 
-def next_sibling_element(elt):
-    c = elt.nextSibling
-    while c:
-        if c.nodeType == xml.dom.Node.ELEMENT_NODE:
-            return c
+def next_sibling_element(node):
+    c = node.nextSibling
+    while c and c.nodeType != xml.dom.Node.ELEMENT_NODE:
         c = c.nextSibling
-    return None
+    return c
 
 
-# Pre-order traversal of the elements
-def next_element(elt):
-    child = first_child_element(elt)
-    if child:
-        return child
-    while elt and elt.nodeType == xml.dom.Node.ELEMENT_NODE:
-        next = next_sibling_element(elt)
-        if next:
-            return next
-        elt = elt.parentNode
-    return None
+def replace_node(node, by, content_only=False):
+    parent = node.parentNode
 
+    if by is not None:
+        if not isinstance(by, list):
+            by = [by]
 
-# Pre-order traversal of all the nodes
-def next_node(node):
-    if node.firstChild:
-        return node.firstChild
-    while node:
-        if node.nextSibling:
-            return node.nextSibling
-        node = node.parentNode
-    return None
+        # insert new content before node
+        for doc in by:
+            if content_only:
+                c = doc.firstChild
+                while c:
+                    n = c.nextSibling
+                    parent.insertBefore(c, node)
+                    c = n
+            else:
+                parent.insertBefore(doc, node)
 
+    # remove node
+    parent.removeChild(node)
 
-def child_nodes(elt):
-    c = elt.firstChild
-    while c:
-        yield c
-        c = c.nextSibling
 
 all_includes = []
 
@@ -420,73 +408,72 @@ def import_xml_namespaces(parent, attributes):
                 parent.setAttribute(name, value)
 
 
-def process_include(elt, included):
-    # Replaces the include tag with the nodes of the included file
-    for c in child_nodes(included.documentElement):
-        elt.parentNode.insertBefore(c.cloneNode(deep=True), elt)
+def process_include(elt, symbols, func):
+    included = []
+    for filename in get_include_files(elt, symbols):
+        # extend filestack
+        oldstack = push_file(filename)
+        include = parse(None, filename).documentElement
 
-    import_xml_namespaces(elt.parentNode, included.documentElement.attributes)
+        # recursive call to func
+        func(include)
+        included.append(include)
+        import_xml_namespaces(elt.parentNode, include.attributes)
+
+        # restore filestack
+        restore_filestack(oldstack)
+
+    remove_previous_comments(elt)
+    # replace the include tag with the nodes of the included file(s)
+    replace_node(elt, by=included, content_only=True)
 
 
 # @throws XacroException if a parsing error occurs with an included document
-def process_includes(doc):
-    previous = doc.documentElement
-    elt = next_element(previous)
+def process_includes(elt):
+    elt = first_child_element(elt)
     while elt:
+        next = next_sibling_element(elt)
         if is_include(elt):
-            for filename in get_include_files(elt, {}):
-                # extend filestack
-                oldstack = push_file(filename)
-                included = parse(None, filename)
-                # recursively process includes
-                process_includes(included)
-                # embed included doc before elt
-                process_include(elt, included)
-                # restore filestack
-                restore_filestack(oldstack)
-
-            elt.parentNode.removeChild(elt)
-
+            process_include(elt, {}, process_includes)
         else:
-            previous = elt
+            process_includes(elt)
 
-        elt = next_element(previous)
+        elt = next
 
 
 def grab_macro(elt, macros):
     assert(elt.tagName in ['macro', 'xacro:macro'])
+    remove_previous_comments(elt)
 
     name = elt.getAttribute('name')
+    if name == 'call':
+        warning("deprecated use of macro name 'call'; xacro:call became a new keyword")
+
     # append current filestack to previous list of definitions
     _, defs = macros.get(name, (None, []))
     defs.append(filestack)
 
     macros['xacro:' + name] = macros[name] = (elt, defs)
-    elt.parentNode.removeChild(elt)
-
-    if name == 'call':
-        warning("deprecated use of macro name 'call'; xacro:call became a new keyword")
+    replace_node(elt, by=None)
 
 
-# Returns a dictionary: { macro_name => macro_xml_block }
-def grab_macros(doc):
-    macros = {}
-
-    previous = doc.documentElement
-    elt = next_element(previous)
+# Fill the dictionary { macro_name => macro_xml_block }
+def grab_macros(elt, macros):
+    elt = first_child_element(elt)
     while elt:
+        next = next_sibling_element(elt)
         if elt.tagName in ['macro', 'xacro:macro'] \
                 and check_deprecated_tag(elt.tagName):
             grab_macro(elt, macros)
         else:
-            previous = elt
+            grab_macros(elt, macros)
 
-        elt = next_element(previous)
-    return macros
+        elt = next
 
 
 def grab_property(elt, table):
     assert(elt.tagName in ['property', 'xacro:property'])
+    remove_previous_comments(elt)
 
     name = elt.getAttribute('name')
     value = None
@@ -497,30 +484,28 @@ def grab_property(elt, table):
         name = '**' + name
         value = elt  # debug
 
-    elt.parentNode.removeChild(elt)
-
     bad = string.whitespace + "${}"
     if any(ch in name for ch in bad):
         warning('Property names may not have whitespace, ' +
                 '"{", "}", or "$" : "' + name + '"')
-        return
+    else:
+        table[name] = value
 
-    table[name] = value
+    replace_node(elt, by=None)
 
 
-# Returns a Table of the properties
-def grab_properties(doc, table=Table()):
-    previous = doc.documentElement
-    elt = next_element(previous)
+# Fill the table of the properties
+def grab_properties(elt, table):
+    elt = first_child_element(elt)
     while elt:
+        next = next_sibling_element(elt)
         if elt.tagName in ['property', 'xacro:property'] \
                 and check_deprecated_tag(elt.tagName):
             grab_property(elt, table)
         else:
-            previous = elt
+            grab_properties(elt, table)
 
-        elt = next_element(previous)
-    return table
+        elt = next
 
 
 LEXER = QuickLexer(DOLLAR_DOLLAR_BRACE=r"\$\$+\{",
@@ -562,26 +547,6 @@ def eval_text(text, symbols):
         return ''.join(map(str, results))
 
 
-# Assuming a node xacro:call, this function resolves the final macro name and
-# adapts the node's tagName accordingly to pretend a call for this macro
-def handle_dynamic_macro_name(node, macros, symbols):
-    # for now, allow deprecated use of macro named 'call':
-    if node.tagName in macros:
-        return
-
-    name = node.getAttribute('macro')
-    if name is None:
-        raise XacroException("xacro:call is missing the 'macro' attribute")
-
-    name = str(eval_text(name, symbols))
-    if name not in macros:
-        raise XacroException("unknown macro name '%s' in xacro:call" % name)
-
-    # finally remove 'macro' attribute and replace tagName for the resolved macro name
-    node.removeAttribute('macro')
-    node.tagName = name
-
-
 def get_boolean_value(value, condition):
     """
     Return a boolean value that corresponds to the given Xacro condition value.
@@ -606,53 +571,99 @@ def get_boolean_value(value, condition):
                              "which is not a boolean expression." % (condition, value))
 
 
-# Expands macros, replaces properties, and evaluates expressions
-def eval_all(root, macros={}, symbols=Table()):
-    # Evaluates the attributes for the root node
-    for name, value in root.attributes.items():
+_empty_text_node = xml.dom.minidom.getDOMImplementation().createDocument(None, "dummy", None).createTextNode('\n\n')
+def remove_previous_comments(node):
+    """remove consecutive comments in front of the xacro-specific node"""
+    next = node.nextSibling
+    previous = node.previousSibling
+    while previous:
+        if previous.nodeType == xml.dom.Node.TEXT_NODE and \
+                previous.data.isspace() and previous.data.count('\n') <= 1:
+            previous = previous.previousSibling  # skip a single empty text node (max 1 newline)
+
+        if previous and previous.nodeType == xml.dom.Node.COMMENT_NODE:
+            comment = previous
+            previous = previous.previousSibling
+            node.parentNode.removeChild(comment)
+        else:
+            # insert empty text node to stop removing of comments in future calls
+            # actually this moves the singleton instance to the new location
+            if next: node.parentNode.insertBefore(_empty_text_node, next)
+            return
+
+
+def eval_all(node, macros, symbols):
+    """Recursively evaluate node, expanding macros, replacing properties, and evaluating expressions"""
+    # evaluate the attributes
+    for name, value in node.attributes.items():
         result = str(eval_text(value, symbols))
-        root.setAttribute(name, result)
+        node.setAttribute(name, result)
 
-    previous = root
-    node = next_node(previous)
+    node = node.firstChild
     while node:
+        next = node.nextSibling
         if node.nodeType == xml.dom.Node.ELEMENT_NODE:
-            if is_include(node):
-                for filename in get_include_files(node, symbols):
-                    # extend filestack
-                    oldstack = push_file(filename)
-                    included = parse(None, filename)
-                    # recursively process includes
-                    eval_all(included.documentElement, macros, symbols)
-                    # embed included doc before node
-                    process_include(node, included)
-                    # restore filestack
-                    restore_filestack(oldstack)
+            if node.tagName in ['insert_block', 'xacro:insert_block'] \
+                    and check_deprecated_tag(node.tagName):
+                name = node.getAttribute('name')
 
-                node.parentNode.removeChild(node)
-                node = next_node(previous)
-                continue
+                if ("**" + name) in symbols:
+                    # Multi-block
+                    block = symbols['**' + name]
+                    content_only = True
+                elif ("*" + name) in symbols:
+                    # Single block
+                    block = symbols['*' + name]
+                    content_only = False
+                else:
+                    raise XacroException("Undefined block \"%s\"" % name)
 
-            if node.tagName in ['property', 'xacro:property'] \
+                # cloning block allows to insert the same block multiple times
+                replace_node(node, by=block.cloneNode(deep=True), content_only=content_only)
+
+            elif is_include(node):
+                process_include(node, symbols, lambda doc: eval_all(doc, macros, symbols))
+
+            elif node.tagName in ['property', 'xacro:property'] \
                     and check_deprecated_tag(node.tagName):
                 grab_property(node, symbols)
-                node = next_node(previous)
-                continue
 
-            if node.tagName in ['macro', 'xacro:macro'] \
+            elif node.tagName in ['macro', 'xacro:macro'] \
                     and check_deprecated_tag(node.tagName):
                 grab_macro(node, macros)
-                node = next_node(previous)
-                continue
 
-            if node.tagName == 'xacro:call':
-                handle_dynamic_macro_name(node, macros, symbols)
+            elif node.tagName in ['arg', 'xacro:arg'] \
+                    and check_deprecated_tag(node.tagName):
+                name = node.getAttribute('name')
+                if not name:
+                    raise XacroException("Argument name missing")
+                default = node.getAttribute('default')
+                if default and name not in substitution_args_context['arg']:
+                    substitution_args_context['arg'][name] = eval_text(default, symbols)
 
-            if node.tagName in macros:
+                remove_previous_comments(node)
+                replace_node(node, by=None)
+
+            elif node.tagName in ['if', 'xacro:if', 'unless', 'xacro:unless'] \
+                    and check_deprecated_tag(node.tagName):
+                remove_previous_comments(node)
+                cond = node.getAttribute('value')
+                keep = get_boolean_value(eval_text(cond, symbols), cond)
+                if node.tagName in ['unless', 'xacro:unless']:
+                    keep = not keep
+
+                if keep:
+                    eval_all(node, macros, symbols)
+                    replace_node(node, by=node, content_only=True)
+                else:
+                    replace_node(node, by=None)
+
+            elif node.tagName in macros:
                 m = macros[node.tagName]
                 body = m[0].cloneNode(deep=True)
                 params = body.getAttribute('params').split()
 
+                # TODO should be moved to grab_macro, storing defaultMap as field in macro
                 # Parse default values for any parameters
                 defaultmap = {}
                 for param in params[:]:
@@ -667,7 +678,7 @@ def eval_all(root, macros={}, symbols=Table()):
                         raise XacroException("Invalid parameter definition", macro=m)
 
                 # Expands the macro
-                scoped = Table(symbols)
+                scoped = Table(symbols)  # new local name space for macro evaluation
                 for name, value in node.attributes.items():
                     if name not in params:
                         raise XacroException("Invalid parameter \"%s\"" % str(name), macro=m)
@@ -675,9 +686,8 @@ def eval_all(root, macros={}, symbols=Table()):
                     scoped[name] = eval_text(value, symbols)
 
                 # Pulls out the block arguments, in order
-                cloned = node.cloneNode(deep=True)
-                eval_all(cloned, macros, symbols)
-                block = first_child_element(cloned)
+                eval_all(node, macros, symbols)  # for calling eval_all
+                block = first_child_element(node)
                 for param in params[:]:
                     if param[0] == '*':
                         if not block:
@@ -708,75 +718,38 @@ def eval_all(root, macros={}, symbols=Table()):
                     raise
 
                 # Replaces the macro node with the expansion
-                for e in list(child_nodes(body)):  # Ew
-                    node.parentNode.insertBefore(e, node)
-                node.parentNode.removeChild(node)
-                node = None
+                remove_previous_comments(node)
+                replace_node(node, by=body, content_only=True)
 
-            elif node.tagName in ['arg', 'xacro:arg'] \
-                    and check_deprecated_tag(node.tagName):
-                name = node.getAttribute('name')
-                if not name:
-                    raise XacroException("Argument name missing")
-                default = node.getAttribute('default')
-                if default and name not in substitution_args_context['arg']:
-                    substitution_args_context['arg'][name] = eval_text(default, symbols)
+            # Handling this one after the normal macro handling will resolve an existing macro 'call' as usual
+            # TODO If deprecation runs out, it should be moved before macro handling
+            elif node.tagName == 'xacro:call':
+                name = node.getAttribute('macro')
+                if name is None:
+                    raise XacroException("xacro:call is missing the 'macro' attribute")
 
-                node.parentNode.removeChild(node)
-                node = None
+                name = str(eval_text(name, symbols))
+                if name not in macros:
+                    raise XacroException("unknown macro name '%s' in xacro:call" % name)
 
-            elif node.tagName in ['insert_block', 'xacro:insert_block'] \
-                    and check_deprecated_tag(node.tagName):
-                name = node.getAttribute('name')
+                # remove 'macro' attribute and rename tag with resolved macro name
+                node.removeAttribute('macro')
+                # TODO prepend xacro namespace
+                node.tagName = name
+                continue  # re-process the node with new tagName
 
-                if ("**" + name) in symbols:
-                    # Multi-block
-                    block = symbols['**' + name]
-
-                    for e in list(child_nodes(block)):
-                        node.parentNode.insertBefore(e.cloneNode(deep=True), node)
-                    node.parentNode.removeChild(node)
-                elif ("*" + name) in symbols:
-                    # Single block
-                    block = symbols['*' + name]
-
-                    node.parentNode.insertBefore(block.cloneNode(deep=True), node)
-                    node.parentNode.removeChild(node)
-                else:
-                    raise XacroException("Undefined block \"%s\"" % name)
-
-                node = None
-
-            elif node.tagName in ['if', 'xacro:if', 'unless', 'xacro:unless'] \
-                    and check_deprecated_tag(node.tagName):
-                cond = node.getAttribute('value')
-                keep = get_boolean_value(eval_text(cond, symbols), cond)
-                if node.tagName in ['unless', 'xacro:unless']:
-                    keep = not keep
-                if keep:
-                    for e in list(child_nodes(node)):
-                        node.parentNode.insertBefore(e, node)
-
-                node.parentNode.removeChild(node)
-
-            else:  # these are the non-xacro tags
+            else:
+                # these are the non-xacro tags
                 if node.tagName.startswith("xacro:"):
                     raise XacroException("unknown macro name: %s" % node.tagName)
 
-                # evaluate the attributes
-                for name, value in node.attributes.items():
-                    result = str(eval_text(value, symbols))
-                    node.setAttribute(name, result)
-                previous = node
+                eval_all(node, macros, symbols)
 
+        # TODO: Also evaluate content of COMMENT_NODEs?
         elif node.nodeType == xml.dom.Node.TEXT_NODE:
             node.data = str(eval_text(node.data, symbols))
-            previous = node
-        else:
-            previous = node
 
-        node = next_node(previous)
-    return macros
+        node = next
 
 
 def process_cli_args(argv, require_input=True):
@@ -856,17 +829,16 @@ def process_doc(doc,
     if not filestack: restore_filestack([None])
 
     if just_deps or just_includes:
-        process_includes(doc)
+        process_includes(doc.documentElement)
         return
 
+    macros = {}
+    symbols = Table()
     if not in_order:
         # process includes, macros, and properties before evaluating stuff
-        process_includes(doc)
-        macros = grab_macros(doc)
-        symbols = grab_properties(doc, Table())
-    else:
-        macros = {}
-        symbols = Table()
+        process_includes(doc.documentElement)
+        grab_macros(doc, macros)
+        grab_properties(doc, symbols)
 
     eval_all(doc.documentElement, macros, symbols)
 
