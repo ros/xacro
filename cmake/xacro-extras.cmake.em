@@ -26,7 +26,6 @@ add_custom_target(${PROJECT_NAME}_xacro_generated_to_devel_space_ ALL)
 ##   xacro_add_xacro_file(${xacro_file} INORDER REMAP bar:=foo foo:=bar)
 ##   list(APPEND xacro_outputs ${XACRO_OUTPUT_FILE})
 ## endforeach()
-## add_custom_target(xacro_target ALL DEPENDS ${xacro_outputs})
 ## xacro_install(xacro_target ${xacro_outputs} DESTINATION xml)
 ##
 ## Be aware, that xacro_install() is required to install into both, install and devel space.
