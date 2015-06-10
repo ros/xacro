@@ -41,6 +41,7 @@ import xml
 import ast
 import math
 
+from keyword import iskeyword
 from roslaunch import substitution_args
 from rosgraph.names import load_mappings, REMAP
 from optparse import OptionParser
@@ -465,6 +466,25 @@ def process_includes(elt, macros=None, symbols=None):
         elt = next
 
 
+def is_valid_name(name):
+    """
+    Checks whether name is a valid property or macro identifier.
+    With python-based evaluation, we need to avoid name clashes with python keywords.
+    """
+    # Resulting AST of simple identifier is <Module [<Expr <Name "foo">>]>
+    try:
+        root = ast.parse(name)
+
+        if isinstance(root, ast.Module) and \
+           len(root.body) == 1 and isinstance(root.body[0], ast.Expr) and \
+           isinstance(root.body[0].value, ast.Name) and root.body[0].value.id == name:
+            return True
+    except SyntaxError:
+        pass
+
+    return False
+
+
 def grab_macro(elt, macros):
     assert(elt.tagName in ['macro', 'xacro:macro'])
     remove_previous_comments(elt)
@@ -472,6 +492,8 @@ def grab_macro(elt, macros):
     name = elt.getAttribute('name')
     if name == 'call':
         warning("deprecated use of macro name 'call'; xacro:call became a new keyword")
+    if not is_valid_name(name):
+        warning('Macro names should be valid python identifiers: ' + name)
 
     # append current filestack to previous list of definitions
     _, defs = macros.get(name, (None, []))
@@ -500,7 +522,8 @@ def grab_property(elt, table):
     remove_previous_comments(elt)
 
     name = elt.getAttribute('name')
-    value = None
+    if not is_valid_name(name):
+        raise XacroException('Property names must be valid python identifiers: ' + name)
 
     if elt.hasAttribute('value'):
         value = elt.getAttribute('value')
@@ -508,13 +531,7 @@ def grab_property(elt, table):
         name = '**' + name
         value = elt  # debug
 
-    bad = string.whitespace + "${}"
-    if any(ch in name for ch in bad):
-        warning('Property names may not have whitespace, ' +
-                '"{", "}", or "$" : "' + name + '"')
-    else:
-        table[name] = value
-
+    table[name] = value
     replace_node(elt, by=None)
 
 

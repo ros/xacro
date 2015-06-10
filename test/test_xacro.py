@@ -150,6 +150,21 @@ class TestMatchXML(unittest.TestCase):
                                     '''<a><b/></a>''', [xml.dom.Node.COMMENT_NODE]))
 
 
+class TestXacroFunctions(unittest.TestCase):
+    def test_is_valid_name(self):
+        self.assertTrue(xacro.is_valid_name("_valid_name_123"))
+        self.assertFalse(xacro.is_valid_name('pass'))     # syntactically correct keyword
+        self.assertFalse(xacro.is_valid_name('foo '))     # trailing whitespace
+        self.assertFalse(xacro.is_valid_name(' foo'))     # leading whitespace
+        self.assertFalse(xacro.is_valid_name('1234'))     # number
+        self.assertFalse(xacro.is_valid_name('1234abc'))  # number and letters
+        self.assertFalse(xacro.is_valid_name(''))         # empty string
+        self.assertFalse(xacro.is_valid_name('   '))      # whitespace only
+        self.assertFalse(xacro.is_valid_name('foo bar'))  # several tokens
+        self.assertFalse(xacro.is_valid_name('no-dashed-names-for-you'))
+        self.assertFalse(xacro.is_valid_name('invalid.too'))  # dot separates fields
+
+
 # base class providing some convenience functions
 class TestXacroBase(unittest.TestCase):
     def __init__(self, *args, **kwargs):
@@ -202,6 +217,21 @@ class TestXacro(TestXacroCommentsIgnored):
     def __init__(self, *args, **kwargs):
         super(TestXacroCommentsIgnored, self).__init__(*args, **kwargs)
         self.ignore_nodes = []
+
+    def test_invalid_macro_name(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+        <xacro:macro name="deprecated-name"><foo/></xacro:macro>
+        <deprecated-name/>
+        </a>'''
+        res = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro"><foo/></a>'''
+        with capture_stderr(self.quick_xacro, src) as (result, output):
+            self.assert_matches(result, res)
+            self.assertTrue(output)
+
+    def test_invalid_property_name(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+        <xacro:property name="invalid.name"/></a>'''
+        self.assertRaises(xacro.XacroException, self.quick_xacro, src)
 
     def test_dynamic_macro_names(self):
         src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
