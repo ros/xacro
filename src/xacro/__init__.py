@@ -789,11 +789,11 @@ def eval_all(node, macros, symbols):
                 remove_previous_comments(node)
                 replace_node(node, by=None)
 
-            elif node.tagName == 'xacro:rename' \
+            elif node.tagName == 'xacro:element' \
                     and check_deprecated_tag(node.tagName):
                 name = node.getAttribute('xacro:name')
                 if name is None:
-                    raise XacroException("xacro:rename: 'xacro:name' attribute missing")
+                    raise XacroException("xacro:element: 'xacro:name' attribute missing")
                 else:
                     node.removeAttribute('xacro:name')
 
