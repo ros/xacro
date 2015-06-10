@@ -269,9 +269,9 @@ class TestXacro(TestXacroCommentsIgnored):
                           '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
                           <xacro:undefined><foo/><bar/></xacro:undefined></a>''')
 
-    def test_xacro_rename(self):
+    def test_xacro_element(self):
         src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <xacro:macro name="foo" params="name"><xacro:rename xacro:name="${name}"/></xacro:macro>
+  <xacro:macro name="foo" params="name"><xacro:element xacro:name="${name}"/></xacro:macro>
   <xacro:foo name="A"/>
   <xacro:foo name="B"/>
 </a>'''

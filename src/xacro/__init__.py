@@ -789,11 +789,11 @@ def eval_all(node, macros, symbols):
                 remove_previous_comments(node)
                 replace_node(node, by=None)
 
-            elif node.tagName == 'xacro:rename' \
+            elif node.tagName == 'xacro:element' \
                     and check_deprecated_tag(node.tagName):
                 name = node.getAttribute('xacro:name')
                 if name is None:
-                    raise XacroException("xacro:rename: 'xacro:name' attribute missing")
+                    raise XacroException("xacro:element: 'xacro:name' attribute missing")
                 else:
                     node.removeAttribute('xacro:name')
 
@@ -854,6 +854,9 @@ def process_cli_args(argv, require_input=True):
     filtered_args = [a for a in argv if REMAP not in a]  # filter-out REMAP args
     (options, pos_args) = parser.parse_args(filtered_args)
 
+    if options.in_order and options.just_includes:
+        parser.error("options --inorder and --includes are mutually exclusive")
+
     if len(pos_args) != 1:
         if require_input:
             parser.error("expected exactly one input file as argument")
@@ -907,7 +910,9 @@ def process_doc(doc,
     # if not yet defined: initialize filestack
     if not filestack: restore_filestack([None])
 
-    if just_deps or just_includes:
+    # inorder processing requires to process the whole document for deps too
+    # because filenames might be specified via properties or macro parameters
+    if (just_deps or just_includes) and not in_order:
         process_includes(doc.documentElement)
         return
 
@@ -988,7 +993,7 @@ def main():
             sys.exit(2)  # gracefully exit with error condition
 
     if opts.just_deps:
-        out.write(" ".join(all_includes))
+        out.write(" ".join(set(all_includes)))
         print()
         return
     if opts.just_includes:
