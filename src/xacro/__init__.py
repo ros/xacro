@@ -854,6 +854,9 @@ def process_cli_args(argv, require_input=True):
     filtered_args = [a for a in argv if REMAP not in a]  # filter-out REMAP args
     (options, pos_args) = parser.parse_args(filtered_args)
 
+    if options.in_order and options.just_includes:
+        parser.error("options --inorder and --includes are mutually exclusive")
+
     if len(pos_args) != 1:
         if require_input:
             parser.error("expected exactly one input file as argument")
@@ -907,7 +910,9 @@ def process_doc(doc,
     # if not yet defined: initialize filestack
     if not filestack: restore_filestack([None])
 
-    if just_deps or just_includes:
+    # inorder processing requires to process the whole document for deps too
+    # because filenames might be specified via properties or macro parameters
+    if (just_deps or just_includes) and not in_order:
         process_includes(doc.documentElement)
         return
 
