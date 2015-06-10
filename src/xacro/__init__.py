@@ -993,7 +993,7 @@ def main():
             sys.exit(2)  # gracefully exit with error condition
 
     if opts.just_deps:
-        out.write(" ".join(all_includes))
+        out.write(" ".join(set(all_includes)))
         print()
         return
     if opts.just_includes:
