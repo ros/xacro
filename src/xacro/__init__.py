@@ -35,18 +35,16 @@ from __future__ import print_function, division
 import glob
 import os
 import re
-import string
 import sys
-import xml
 import ast
 import math
 
-from keyword import iskeyword
 from roslaunch import substitution_args
 from rosgraph.names import load_mappings, REMAP
 from optparse import OptionParser
 from copy import deepcopy
 from .color import warning, error, message
+from .xmlutils import *
 
 try:
     _basestr = basestring
@@ -175,43 +173,6 @@ def eval_extension(s):
         raise XacroException("Undefined substitution argument", exc=e)
 
 
-# Better pretty printing of xml
-# Taken from http://ronrothman.com/public/leftbraned/xml-dom-minidom-toprettyxml-and-silly-whitespace/
-def fixed_writexml(self, writer, indent="", addindent="", newl=""):
-    # indent = current indentation
-    # addindent = indentation to add to higher levels
-    # newl = newline string
-    writer.write(indent + "<" + self.tagName)
-
-    attrs = self._get_attributes()
-    a_names = list(attrs.keys())
-    a_names.sort()
-
-    for a_name in a_names:
-        writer.write(" %s=\"" % a_name)
-        xml.dom.minidom._write_data(writer, attrs[a_name].value)
-        writer.write("\"")
-    if self.childNodes:
-        if len(self.childNodes) == 1 \
-           and self.childNodes[0].nodeType == xml.dom.minidom.Node.TEXT_NODE:
-            writer.write(">")
-            self.childNodes[0].writexml(writer, "", "", "")
-            writer.write("</%s>%s" % (self.tagName, newl))
-            return
-        writer.write(">%s" % newl)
-        for node in self.childNodes:
-            # skip whitespace-only text nodes
-            if node.nodeType == xml.dom.minidom.Node.TEXT_NODE and \
-                    (not node.data or node.data.isspace()):
-                continue
-            node.writexml(writer, indent + addindent, addindent, newl)
-        writer.write("%s</%s>%s" % (indent, self.tagName, newl))
-    else:
-        writer.write("/>%s" % newl)
-# replace minidom's function with ours
-xml.dom.minidom.Element.writexml = fixed_writexml
-
-
 class Table(object):
     def __init__(self, parent=None):
         self.parent = parent
@@ -326,42 +287,6 @@ class QuickLexer(object):
         return result
 
 
-def first_child_element(elt):
-    c = elt.firstChild
-    while c and c.nodeType != xml.dom.Node.ELEMENT_NODE:
-        c = c.nextSibling
-    return c
-
-
-def next_sibling_element(node):
-    c = node.nextSibling
-    while c and c.nodeType != xml.dom.Node.ELEMENT_NODE:
-        c = c.nextSibling
-    return c
-
-
-def replace_node(node, by, content_only=False):
-    parent = node.parentNode
-
-    if by is not None:
-        if not isinstance(by, list):
-            by = [by]
-
-        # insert new content before node
-        for doc in by:
-            if content_only:
-                c = doc.firstChild
-                while c:
-                    n = c.nextSibling
-                    parent.insertBefore(c, node)
-                    c = n
-            else:
-                parent.insertBefore(doc, node)
-
-    # remove node
-    parent.removeChild(node)
-
-
 all_includes = []
 
 include_no_matches_msg = """Include tag's filename spec \"{}\" matched no files."""
@@ -389,10 +314,9 @@ def is_include(elt):
     return True
 
 
-def get_include_files(elt, symbols):
+def get_include_files(filename_spec, symbols):
     try:
-        filename_spec = eval_text(elt.getAttribute('filename'), symbols)
-        filename_spec = abs_filename_spec(filename_spec)
+        filename_spec = abs_filename_spec(eval_text(filename_spec, symbols))
     except XacroException as e:
         if e.exc and isinstance(e.exc, NameError) and symbols is None:
             raise XacroException('variable filename is supported with --inorder option only')
@@ -430,7 +354,7 @@ def import_xml_namespaces(parent, attributes):
 
 def process_include(elt, macros, symbols, func):
     included = []
-    namespace_spec = elt.getAttribute('ns')
+    filename_spec, namespace_spec = check_attrs(elt, ['filename'], ['ns'])
     if namespace_spec:
         try:
             namespace_spec = eval_text(namespace_spec, symbols)
@@ -441,7 +365,7 @@ def process_include(elt, macros, symbols, func):
         except TypeError:
             raise XacroException('namespaces are supported with --inorder option only')
 
-    for filename in get_include_files(elt, symbols):
+    for filename in get_include_files(filename_spec, symbols):
         # extend filestack
         oldstack = push_file(filename)
         include = parse(None, filename).documentElement
@@ -495,7 +419,7 @@ def grab_macro(elt, macros):
     assert(elt.tagName in ['macro', 'xacro:macro'])
     remove_previous_comments(elt)
 
-    name = elt.getAttribute('name')
+    name, _ = check_attrs(elt, ['name'], ['params'])
     if name == 'call':
         warning("deprecated use of macro name 'call'; xacro:call became a new keyword")
     if not is_valid_name(name):
@@ -527,13 +451,11 @@ def grab_property(elt, table):
     assert(elt.tagName in ['property', 'xacro:property'])
     remove_previous_comments(elt)
 
-    name = elt.getAttribute('name')
+    name, value = check_attrs(elt, ['name'], ['value'])
     if not is_valid_name(name):
         raise XacroException('Property names must be valid python identifiers: ' + name)
 
-    if elt.hasAttribute('value'):
-        value = elt.getAttribute('value')
-    else:
+    if value is None:
         name = '**' + name
         value = elt  # debug
 
@@ -595,7 +517,7 @@ def eval_text(text, symbols):
 
 
 def handle_dynamic_macro_call(node, macros, symbols):
-    name = node.getAttribute('macro')
+    name, = reqd_attrs(node, ['macro'])
     if not name:
         raise XacroException("xacro:call is missing the 'macro' attribute")
     name = str(eval_text(name, symbols))
@@ -750,7 +672,7 @@ def eval_all(node, macros, symbols):
         if node.nodeType == xml.dom.Node.ELEMENT_NODE:
             if node.tagName in ['insert_block', 'xacro:insert_block'] \
                     and check_deprecated_tag(node.tagName):
-                name = node.getAttribute('name')
+                name, = check_attrs(node, ['name'], [])
 
                 if ("**" + name) in symbols:
                     # Multi-block
@@ -779,11 +701,8 @@ def eval_all(node, macros, symbols):
 
             elif node.tagName in ['arg', 'xacro:arg'] \
                     and check_deprecated_tag(node.tagName):
-                name = node.getAttribute('name')
-                if not name:
-                    raise XacroException("Argument name missing")
-                default = node.getAttribute('default')
-                if default and name not in substitution_args_context['arg']:
+                name, default = check_attrs(node, ['name', 'default'], [])
+                if name not in substitution_args_context['arg']:
                     substitution_args_context['arg'][name] = eval_text(default, symbols)
 
                 remove_previous_comments(node)
@@ -791,19 +710,18 @@ def eval_all(node, macros, symbols):
 
             elif node.tagName == 'xacro:element' \
                     and check_deprecated_tag(node.tagName):
-                name = node.getAttribute('xacro:name')
-                if name is None:
-                    raise XacroException("xacro:element: 'xacro:name' attribute missing")
-                else:
-                    node.removeAttribute('xacro:name')
+                name = eval_text(*reqd_attrs(node, ['xacro:name']), symbols=symbols)
+                if not name:
+                    raise XacroException("xacro:element: empty name")
 
-                node.nodeName = node.tagName = eval_text(name, symbols)
+                node.removeAttribute('xacro:name')
+                node.nodeName = node.tagName = name
                 continue  # re-process the node with new tagName
 
             elif node.tagName in ['if', 'xacro:if', 'unless', 'xacro:unless'] \
                     and check_deprecated_tag(node.tagName):
                 remove_previous_comments(node)
-                cond = node.getAttribute('value')
+                cond, = check_attrs(node, ['value'], [])
                 keep = get_boolean_value(eval_text(cond, symbols), cond)
                 if node.tagName in ['unless', 'xacro:unless']:
                     keep = not keep

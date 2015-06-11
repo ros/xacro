@@ -261,7 +261,7 @@ class TestXacro(TestXacroCommentsIgnored):
         self.assertRaises(xacro.XacroException,
                           self.quick_xacro,
                           '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
-                          <xacro:call name="foo"/></a>''')
+                          <xacro:call macro="foo"/></a>''')
 
     def test_macro_undefined(self):
         self.assertRaises(xacro.XacroException,
