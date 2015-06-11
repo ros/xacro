@@ -798,10 +798,10 @@ def parse(inp, filename=None):
     if inp is None:
         try:
             inp = f = open(filename)
-        except IOError:
+        except IOError as e:
             # do not report currently processed file as "in file ..."
             filestack.pop()
-            raise
+            raise XacroException(e.strerror + ": " + e.filename)
 
     try:
         if isinstance(inp, _basestr):
