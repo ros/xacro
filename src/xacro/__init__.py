@@ -618,7 +618,7 @@ def handle_macro_call(node, name, macros, symbols):
         if param[0] == '*': continue
         value = m.defaultmap.get(param, None)
         if value is not None:
-            scoped[param] = value
+            scoped[param] = eval_text(value, symbols)
             params.remove(param)
 
     if params:

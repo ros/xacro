@@ -1026,6 +1026,21 @@ class TestXacroInorder(TestXacro):
             self.assert_matches(self.quick_xacro(src, cli=['type:=%s' % i]),
                                 res.format(tag=i))
 
+    def test_macro_default_param_evaluation_order(self):
+        src='''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+<xacro:macro name="foo" params="arg:=${2*foo}">
+    <xacro:property name="foo" value="-"/>
+    <f val="${arg}"/>
+</xacro:macro>
+<xacro:property name="foo" value="${3*7}"/>
+<xacro:foo/>
+<xacro:property name="foo" value="*"/>
+<xacro:foo/>
+</a>'''
+        res='''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+<f val="42"/><f val="**"/></a>'''
+        self.assert_matches(self.quick_xacro(src), res)
+
 
 if __name__ == '__main__':
     unittest.main()
