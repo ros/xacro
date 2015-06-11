@@ -773,8 +773,10 @@ def process_cli_args(argv, require_input=True):
     parser = OptionParser(usage="usage: %prog [options] <input>")
     parser.add_option("-o", dest="output", metavar="FILE",
                       help="write output to FILE instead of stdout")
+    parser.add_option("--oldorder", action="store_false", dest="in_order",
+                      help="use traditional processing order [deprecated default]")
     parser.add_option("--inorder", action="store_true", dest="in_order",
-                      help="evaluate document in read order")
+                      help="use processing in read order")
     parser.add_option("--deps", action="store_true", dest="just_deps",
                       help="print file dependencies")
     parser.add_option("--includes", action="store_true", dest="just_includes",
