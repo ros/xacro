@@ -189,6 +189,8 @@ class Table(object):
         self.table = {}
         self.unevaluated = set()  # set of unevaluated variables
         self.recursive = []  # list of currently resolved vars (to resolve recursive definitions)
+        # the following variables are for debugging / checking only
+        self.depth = self.parent.depth + 1 if self.parent else 0
 
     @staticmethod
     def _eval_literal(value):
@@ -216,8 +218,13 @@ class Table(object):
             self.table[key] = self._eval_literal(eval_text(self.table[key], self))
             self.unevaluated.remove(key)
             self.recursive.remove(key)
+
         # return evaluated result
-        return self.table[key]
+        value = self.table[key]
+        if (verbosity > 2 and self.parent is None) or verbosity > 3:
+            print("{indent}use {key}: {value} ({loc})".format(
+                indent=self.depth*' ', key=key, value=value, loc=filestack[-1]), file=sys.stderr)
+        return value
 
     def __getitem__(self, key):
         if key in self.table:
@@ -236,6 +243,9 @@ class Table(object):
         elif key in self.unevaluated:
             # all other types cannot be evaluated
             self.unevaluated.remove(key)
+        if (verbosity > 2 and self.parent is None) or verbosity > 3:
+            print("{indent}set {key}: {value} ({loc})".format(
+                indent=self.depth*' ', key=key, value=value, loc=filestack[-1]), file=sys.stderr)
 
     def __contains__(self, key):
         return \
