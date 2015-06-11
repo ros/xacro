@@ -408,25 +408,23 @@ class TestXacro(TestXacroCommentsIgnored):
 </a>''')
 
     def test_multiple_blocks(self):
-        self.assert_matches(
-                self.quick_xacro('''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
-<xacro:macro name="foo" params="*block1 *block2">
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+<xacro:macro name="foo" params="*block{A} *block{B}">
+  <xacro:insert_block name="block1" />
   <xacro:insert_block name="block2" />
-  <first>
-    <xacro:insert_block name="block1" />
-  </first>
 </xacro:macro>
 <xacro:foo>
-  <first_block />
-  <second_block />
+  <block1/>
+  <block2/>
 </xacro:foo>
-</a>'''),
-                '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <second_block />
-  <first>
-    <first_block />
-  </first>
-</a>''')
+</a>'''
+        res = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+<block{A}/>
+<block{B}/>
+</a>'''
+        # test both, reversal and non-reversal of block order
+        for d in [dict(A='1', B='2'), dict(A='2', B='1')]:
+            self.assert_matches(self.quick_xacro(src.format(**d)), res.format(**d))
 
     def test_integer_stays_integer(self):
         self.assert_matches(
