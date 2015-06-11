@@ -278,6 +278,17 @@ class TestXacro(TestXacroCommentsIgnored):
         res = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro"><A/><B/></a>'''
         self.assert_matches(self.quick_xacro(src), res)
 
+    def test_xacro_attribute(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="foo" params="name value">
+  <tag><xacro:attribute name="${name}" value="${value}"/></tag>
+  </xacro:macro>
+  <xacro:foo name="A" value="foo"/>
+  <xacro:foo name="B" value="bar"/>
+</a>'''
+        res = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro"><tag A="foo"/><tag B="bar"/></a>'''
+        self.assert_matches(self.quick_xacro(src), res)
+
     def test_inorder_processing(self):
         src = '''<xml xmlns:xacro="http://www.ros.org/wiki/xacro">
   <xacro:property name="foo" value="1.0"/>
