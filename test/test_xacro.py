@@ -472,6 +472,13 @@ class TestXacro(TestXacroCommentsIgnored):
                           self.quick_xacro, '''<a xmlns:xacro="http://www.ros.org/xacro">
                              <xacro:include filename="include-nada.xml" /></a>''')
 
+    def test_include_deprecated(self):
+        # <include> tags with some non-trivial content should not issue the deprecation warning
+        src = '''<a><include filename="nada"><tag/></include></a>'''
+        with capture_stderr(self.quick_xacro, src) as (result, output):
+            self.assert_matches(result, src)
+            self.assertEqual(output, '')
+
     def test_include_from_variable(self):
         doc = '''<a xmlns:xacro="http://www.ros.org/xacro">
         <xacro:property name="file" value="include1.xml"/>
