@@ -9,16 +9,20 @@ def is_tty(stream): # taken from catkin_tools/common.py
     return hasattr(stream, 'isatty') and stream.isatty()
 
 
+def colorize(msg, color, file=sys.stderr, alt_text=None):
+    if color and is_tty(file):
+        return '\033[%dm%s\033[0m' % (_ansi[color], msg)
+    elif alt_text:
+        return '%s%s' % (alt_text, msg)
+    else:
+        return msg
+
+
 def message(msg, *args, **kwargs):
     file  = kwargs.get('file', sys.stderr)
     alt_text = kwargs.get('alt_text', None)
     color = kwargs.get('color', None)
-
-    if color and is_tty(file):
-        msg = '\033[%dm%s\033[0m' % (_ansi[color], msg)
-    elif alt_text:
-        msg = '%s%s' % (alt_text, msg)
-    print(msg, *args, file=file)
+    print(colorize(msg, color, file, alt_text), *args, file=file)
 
 
 def warning(*args, **kwargs):

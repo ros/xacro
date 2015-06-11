@@ -43,7 +43,7 @@ from roslaunch import substitution_args
 from rosgraph.names import load_mappings, REMAP
 from optparse import OptionParser
 from copy import deepcopy
-from .color import warning, error, message
+from .color import warning, error, message, colorize
 from .xmlutils import *
 
 try:
@@ -792,9 +792,14 @@ def eval_all(node, macros, symbols):
 
         node = next
 
+class ColoredOptionParser(OptionParser):
+    def error(self, message):
+        msg = colorize(message, 'red')
+        OptionParser.error(self, msg)
+
 
 def process_cli_args(argv, require_input=True):
-    parser = OptionParser(usage="usage: %prog [options] <input>")
+    parser = ColoredOptionParser(usage="usage: %prog [options] <input>")
     parser.add_option("-o", dest="output", metavar="FILE",
                       help="write output to FILE instead of stdout")
     parser.add_option("--oldorder", action="store_false", dest="in_order",
