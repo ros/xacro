@@ -132,17 +132,19 @@ class XacroException(Exception):
                          [self.message, self.exc, self.suffix] if item])
 
 
+verbosity = 1
 # deprecate non-namespaced use of xacro tags (issues #41, #59, #60)
 def deprecated_tag(_issued=[False]):
     if _issued[0]:
         return
     _issued[0] = True
 
-    warning("deprecated: xacro tags should be prepended with 'xacro' xml namespace.")
-    message("""Use the following script to fix incorrect usage:
-    find . -iname "*.xacro" | xargs sed -i 's#<\([/]\\?\)\(if\|unless\|include\|arg\|property\|macro\|insert_block\)#<\\1xacro:\\2#g'""")
-    print_location(filestack)
-    print(file=sys.stderr)
+    if verbosity > 0:
+        warning("deprecated: xacro tags should be prepended with 'xacro' xml namespace.")
+        message("""Use the following script to fix incorrect usage:
+        find . -iname "*.xacro" | xargs sed -i 's#<\([/]\\?\)\(if\|unless\|include\|arg\|property\|macro\|insert_block\)#<\\1xacro:\\2#g'""")
+        print_location(filestack)
+        print(file=sys.stderr)
 
 
 # require xacro namespace?
@@ -794,15 +796,19 @@ def process_cli_args(argv, require_input=True):
     parser.add_option("--includes", action="store_true", dest="just_includes",
                       help="only process includes")
     parser.add_option("--xacro-ns", action="store_false", default=True, dest="xacro_ns",
-                      help="require xacro namespace prefix for tags "
-                           "(no deprecation msg)")
-    parser.add_option("--debug", action="store_true", dest="debug",
-                      help="print stack trace on exceptions")
+                      help="require xacro namespace prefix for xacro tags")
+
+    # verbosity options
+    parser.add_option("-q", action="store_const", dest="verbosity", const=0,
+                      help="quiet operation suppressing warnings")
+    parser.add_option("-v", action="count", dest="verbosity",
+                      help="increase verbosity")
 
     # process substitution args
     mappings = load_mappings(argv)
 
-    parser.set_defaults(in_order=False, just_deps=False, just_includes=False)
+    parser.set_defaults(in_order=False, just_deps=False, just_includes=False, 
+                        verbosity=verbosity)
     filtered_args = [a for a in argv if REMAP not in a]  # filter-out REMAP args
     (options, pos_args) = parser.parse_args(filtered_args)
 
@@ -919,6 +925,9 @@ def print_location(filestack, err=None, file=sys.stderr):
 
 def main():
     opts, input_file = process_cli_args(sys.argv[1:])
+    global verbosity
+    verbosity = opts.verbosity
+
     try:
         restore_filestack([input_file])
         doc = parse(None, input_file)
@@ -927,18 +936,20 @@ def main():
 
     except xml.parsers.expat.ExpatError as e:
         error("XML parsing error: %s" % str(e), alt_text=None)
-        print_location(filestack, e)
-        print(file=sys.stderr) # add empty separator line before error
-        print("Check that:", file=sys.stderr)
-        print(" - Your XML is well-formed", file=sys.stderr)
-        print(" - You have the xacro xmlns declaration:",
-              "xmlns:xacro=\"http://www.ros.org/wiki/xacro\"", file=sys.stderr)
+        if verbosity > 0:
+            print_location(filestack, e)
+            print(file=sys.stderr) # add empty separator line before error
+            print("Check that:", file=sys.stderr)
+            print(" - Your XML is well-formed", file=sys.stderr)
+            print(" - You have the xacro xmlns declaration:",
+                  "xmlns:xacro=\"http://www.ros.org/wiki/xacro\"", file=sys.stderr)
         sys.exit(2)  # indicate failure, but don't print stack trace on XML errors
 
     except Exception as e:
         error(str(e))
-        print_location(filestack, e)
-        if opts.debug:
+        if verbosity > 0:
+            print_location(filestack, e)
+        if verbosity > 1:
             print(file=sys.stderr)  # add empty separator line before error
             raise  # create stack trace
         else:
