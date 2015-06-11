@@ -164,6 +164,14 @@ def check_deprecated_tag(tag_name):
         return allow_non_prefixed_tags
 
 
+class Macro(object):
+    def __init__(self):
+        self.body = None  # original xml.dom.Node
+        self.params = []  # parsed parameter names
+        self.defaultmap = {}  # default parameter values
+        self.history = []  # definition history
+
+
 def eval_extension(s):
     if s == '$(cwd)':
         return os.getcwd()
@@ -425,17 +433,32 @@ def grab_macro(elt, macros):
     assert(elt.tagName in ['macro', 'xacro:macro'])
     remove_previous_comments(elt)
 
-    name, _ = check_attrs(elt, ['name'], ['params'])
+    name, params = check_attrs(elt, ['name'], ['params'])
     if name == 'call':
         warning("deprecated use of macro name 'call'; xacro:call became a new keyword")
     if not is_valid_name(name):
         warning('Macro names should be valid python identifiers: ' + name)
 
-    # append current filestack to previous list of definitions
-    _, defs = macros.get(name, (None, []))
-    defs.append(filestack)
+    # fetch existing or create new macro definition
+    macro = macros.get(name, Macro())
+    # append current filestack to history
+    macro.history.append(filestack)
+    macro.body = elt
 
-    macros[name] = (elt, defs)
+    # parse params and their defaults
+    macro.params = params = params.split() if params else []
+    macro.defaultmap = defaultmap = {}
+    for i, param in enumerate(params):
+        splitParam = param.split(':=')
+
+        if len(splitParam) == 2:
+            defaultmap[splitParam[0]] = splitParam[1]  # parameter with default
+            params[i] = splitParam[0]  # only keep the name
+
+        elif len(splitParam) != 1:
+            raise XacroException("Invalid parameter definition '%s' for macro '%s'".format(param, name))
+
+    macros[name] = macro
     replace_node(elt, by=None)
 
 
@@ -558,39 +581,26 @@ def handle_macro_call(node, name, macros, symbols):
         #  using eval allows to employ python's resolving mechanism
         #  to also resolve macros in namespaces, e.g. ns1.ns2.macro
         m = m or eval(name, dict(__builtins__={}), macros)
-        body = m[0].cloneNode(deep=True)
+        body = m.body.cloneNode(deep=True)
     except (NameError, TypeError):  # that wasn't a known macro
         # TODO If deprecation runs out, this test should be moved up front
         if node.tagName == 'xacro:call':
             return handle_dynamic_macro_call(node, macros, symbols)
         return False
 
-    params = body.getAttribute('params').split()
+    # Evaluate attribute and block parameters in node
+    eval_all(node, macros, symbols)  # for calling eval_all
 
-    # TODO should be moved to grab_macro, storing defaultMap as field in macro
-    # Parse default values for any parameters
-    defaultmap = {}
-    for param in params[:]:
-        splitParam = param.split(':=')
-
-        if len(splitParam) == 2:
-            defaultmap[splitParam[0]] = splitParam[1]
-            params.remove(param)
-            params.append(splitParam[0])
-
-        elif len(splitParam) != 1:
-            raise XacroException("Invalid parameter definition", macro=m)
-
-    # Expands the macro
+    # Expand the macro
     scoped = Table(symbols)  # new local name space for macro evaluation
+    params = m.params[:]  # deep copy macro's params list
     for name, value in node.attributes.items():
         if name not in params:
             raise XacroException("Invalid parameter \"%s\"" % str(name), macro=m)
         params.remove(name)
-        scoped[name] = eval_text(value, symbols)
+        scoped[name] = value
 
-    # Pulls out the block arguments, in order
-    eval_all(node, macros, symbols)  # for calling eval_all
+    # Fetch block parameters, in order
     block = first_child_element(node)
     for param in params[:]:
         if param[0] == '*':
@@ -605,8 +615,10 @@ def handle_macro_call(node, name, macros, symbols):
 
     # Try to load defaults for any remaining non-block parameters
     for param in params[:]:
-        if param[0] != '*' and param in defaultmap:
-            scoped[param] = defaultmap[param]
+        if param[0] == '*': continue
+        value = m.defaultmap.get(param, None)
+        if value is not None:
+            scoped[param] = value
             params.remove(param)
 
     if params:
@@ -892,9 +904,9 @@ def open_output(output_filename):
 def print_location(filestack, err=None, file=sys.stderr):
     macros = getattr(err, 'macros', []) if err else []
     msg = 'when instantiating macro:'
-    for m, defs in macros:
-        name = m.getAttribute('name')
-        location = '(%s)' % defs[-1][-1]
+    for m in macros:
+        name = m.body.getAttribute('name')
+        location = '(%s)' % m.history[-1][-1]
         print(msg, name, location, file=file)
         msg = 'instantiated from:'
 
