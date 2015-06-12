@@ -178,7 +178,7 @@ class TestXacroBase(unittest.TestCase):
     def quick_xacro(self, xml, cli=None, **kwargs):
         args = {}
         if cli:
-            opts, _ = xacro.process_cli_args(cli, require_input=False)
+            opts, _ = xacro.cli.process_args(cli, require_input=False)
             args.update(vars(opts))  # initialize with cli args
         args.update(dict(in_order = self.in_order))  # set in_order option from test class
         args.update(kwargs)  # explicit function args have highest priority
