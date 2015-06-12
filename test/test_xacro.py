@@ -1041,6 +1041,21 @@ class TestXacroInorder(TestXacro):
 <f val="42"/><f val="**"/></a>'''
         self.assert_matches(self.quick_xacro(src), res)
 
+    def test_check_order_warning(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+<xacro:property name="bar" value="unused"/>
+<xacro:property name="foo" value="unused"/>
+<xacro:macro name="foo" params="arg:=${foo}">
+    <a val="${arg}"/>
+</xacro:macro>
+<xacro:foo/>
+<xacro:property name="bar" value="dummy"/>
+<xacro:property name="foo" value="21"/></a>'''
+        with capture_stderr(self.quick_xacro, src, do_check_order=True) as (result, output):
+            self.assertTrue("Document is incompatible to --inorder processing." in output)
+            self.assertTrue("foo" in output)  # foo should be reported
+            self.assertTrue("bar" not in output)  # bar shouldn't be reported
+
 
 if __name__ == '__main__':
     unittest.main()

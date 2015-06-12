@@ -183,6 +183,7 @@ def eval_extension(s):
         raise XacroException("Undefined substitution argument", exc=e)
 
 
+do_check_order=False
 class Table(object):
     def __init__(self, parent=None):
         self.parent = parent
@@ -191,6 +192,10 @@ class Table(object):
         self.recursive = []  # list of currently resolved vars (to resolve recursive definitions)
         # the following variables are for debugging / checking only
         self.depth = self.parent.depth + 1 if self.parent else 0
+        if do_check_order:
+            # this is for smooth transition from deprecated to --inorder processing
+            self.used = set() # set of used properties
+            self.redefined = dict() # set of properties redefined after usage
 
     @staticmethod
     def _eval_literal(value):
@@ -224,6 +229,8 @@ class Table(object):
         if (verbosity > 2 and self.parent is None) or verbosity > 3:
             print("{indent}use {key}: {value} ({loc})".format(
                 indent=self.depth*' ', key=key, value=value, loc=filestack[-1]), file=sys.stderr)
+        if do_check_order:
+            self.used.add(key)
         return value
 
     def __getitem__(self, key):
@@ -235,6 +242,9 @@ class Table(object):
             raise KeyError(key)
 
     def __setitem__(self, key, value):
+        if do_check_order and key in self.used and key not in self.redefined:
+            self.redefined[key] = filestack[-1]
+
         value = self._eval_literal(value)
         self.table[key] = value
         if isinstance(value, _basestr):
@@ -825,7 +835,11 @@ def parse(inp, filename=None):
 
 def process_doc(doc,
                 in_order=False, just_deps=False, just_includes=False,
-                mappings=None, xacro_ns=True, **unused_kwargs):
+                mappings=None, xacro_ns=True, **kwargs):
+    global verbosity, do_check_order
+    verbosity = kwargs.get('verbosity', verbosity)
+    do_check_order = kwargs.get('do_check_order', do_check_order)
+
     # set substitution args
     if mappings is not None:
         substitution_args_context['arg'] = mappings
@@ -854,6 +868,12 @@ def process_doc(doc,
 
     # reset substitution args
     substitution_args_context['arg'] = {}
+
+    if do_check_order and symbols.redefined:
+        warning("Document is incompatible to --inorder processing.")
+        warning("The following properties were redefined after usage:")
+        for k, v in symbols.redefined.iteritems():
+            message(k, "redefined in", v, color='yellow')
 
 
 def open_output(output_filename):
@@ -893,8 +913,6 @@ def print_location(filestack, err=None, file=sys.stderr):
 
 def main():
     opts, input_file = process_args(sys.argv[1:])
-    global verbosity
-    verbosity = opts.verbosity
 
     try:
         restore_filestack([input_file])

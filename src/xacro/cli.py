@@ -68,6 +68,9 @@ def process_args(argv, require_input=True):
                       help="use traditional processing order [deprecated default]")
     parser.add_option("--inorder", action="store_true", dest="in_order",
                       help="use processing in read order")
+    parser.add_option("--check-order", action="store_true", dest="do_check_order",
+                      help="check document for inorder processing", default=False)
+
     parser.add_option("--deps", action="store_true", dest="just_deps",
                       help="print file dependencies")
     parser.add_option("--includes", action="store_true", dest="just_includes",
@@ -99,6 +102,9 @@ def process_args(argv, require_input=True):
 
     if options.in_order and options.just_includes:
         parser.error("options --inorder and --includes are mutually exclusive")
+
+    if options.do_check_order:
+        options.in_order = True  # check-order implies inorder
 
     if len(pos_args) != 1:
         if require_input:
