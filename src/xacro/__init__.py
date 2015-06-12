@@ -913,6 +913,10 @@ def print_location(filestack, err=None, file=sys.stderr):
 
 def main():
     opts, input_file = process_args(sys.argv[1:])
+    if opts.in_order == False:
+        warning("Traditional processing is deprecated. Switch to --inorder processing!")
+        message("To check for compatibility of your document, use option --check-order.", color='yellow')
+        message("For more infos, see http://wiki.ros.org/xacro#Processing_Order", color='yellow')
 
     try:
         restore_filestack([input_file])
