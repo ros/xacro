@@ -38,10 +38,11 @@ import re
 import sys
 import ast
 import math
+import textwrap
 
 from roslaunch import substitution_args
 from rosgraph.names import load_mappings, REMAP
-from optparse import OptionParser
+from optparse import OptionParser, IndentedHelpFormatter
 from copy import deepcopy
 from .color import warning, error, message, colorize
 from .xmlutils import *
@@ -798,8 +799,27 @@ class ColoredOptionParser(OptionParser):
         OptionParser.error(self, msg)
 
 
+_original_wrap = textwrap.wrap
+def wrap_with_newlines(text, width, **kwargs):
+    result = []
+    for paragraph in text.split('\n'):
+        result.extend(_original_wrap(paragraph, width, **kwargs))
+    return result
+
+class IndentedHelpFormatterWithNL(IndentedHelpFormatter):
+    def __init__(self, *args, **kwargs):
+        IndentedHelpFormatter.__init__(self, *args, **kwargs)
+
+    def format_option(self, text):
+        textwrap.wrap, old = wrap_with_newlines, textwrap.wrap
+        result = IndentedHelpFormatter.format_option(self, text)
+        textwrap.wrap = old
+        return result
+
+
 def process_cli_args(argv, require_input=True):
-    parser = ColoredOptionParser(usage="usage: %prog [options] <input>")
+    parser = ColoredOptionParser(usage="usage: %prog [options] <input>",
+                                 formatter=IndentedHelpFormatterWithNL())
     parser.add_option("-o", dest="output", metavar="FILE",
                       help="write output to FILE instead of stdout")
     parser.add_option("--oldorder", action="store_false", dest="in_order",
@@ -818,6 +838,14 @@ def process_cli_args(argv, require_input=True):
                       help="quiet operation suppressing warnings")
     parser.add_option("-v", action="count", dest="verbosity",
                       help="increase verbosity")
+    parser.add_option("--verbosity", metavar='level', dest="verbosity", type='int',
+                      help=textwrap.dedent("""\
+                      set verbosity level
+                      0: quiet, suppressing warnings
+                      1: default, showing warnings and error locations
+                      2: show stack trace
+                      3: log property definitions and usage on top level
+                      4: log property definitions and usage on all levels"""))
 
     # process substitution args
     mappings = load_mappings(argv)
