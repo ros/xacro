@@ -349,6 +349,23 @@ class TestXacro(TestXacroCommentsIgnored):
   <the_foo result="42" />
 </a>''')
 
+    def test_property_scope_parent(self):
+        self.assert_matches(self.quick_xacro('''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="foo"><xacro:property name="foo" value="42" scope="parent"/></xacro:macro>
+  <xacro:foo/><a foo="${foo}"/></a>'''),
+        '''<a xmlns:xacro="http://www.ros.org/wiki/xacro"><a foo="42"/></a>''')
+
+    def test_property_scope_global(self):
+        self.assert_matches(self.quick_xacro('''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="foo">
+    <xacro:macro name="bar">
+      <xacro:property name="foo" value="42" scope="global"/>
+    </xacro:macro>
+    <xacro:bar/>
+  </xacro:macro>
+  <xacro:foo/><a foo="${foo}"/></a>'''),
+        '''<a xmlns:xacro="http://www.ros.org/wiki/xacro"><a foo="42"/></a>''')
+
     def test_math_ignores_spaces(self):
         self.assert_matches(
                 self.quick_xacro('''<a><f v="${0.9 / 2 - 0.2}" /></a>'''),

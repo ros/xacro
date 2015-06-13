@@ -239,6 +239,12 @@ class Table(object):
             s += str(self.parent)
         return s
 
+    def root(self):
+        p = self
+        while p.parent:
+            p = p.parent
+        return p
+
 class NameSpace(object):
     # dot access (namespace.property) is forwarded to getitem()
     def __getattr__(self, item):
@@ -451,13 +457,20 @@ def grab_property(elt, table):
     assert(elt.tagName in ['property', 'xacro:property'])
     remove_previous_comments(elt)
 
-    name, value = check_attrs(elt, ['name'], ['value'])
+    name, value, scope = check_attrs(elt, ['name'], ['value', 'scope'])
     if not is_valid_name(name):
         raise XacroException('Property names must be valid python identifiers: ' + name)
 
     if value is None:
         name = '**' + name
         value = elt  # debug
+
+    if scope and scope == 'global': table = table.root()
+    if scope and scope == 'parent':
+        if table.parent:
+            table = table.parent
+        else:
+            warning("%s: no parent scope at global scope " % name)
 
     table[name] = value
     replace_node(elt, by=None)
