@@ -100,8 +100,7 @@ Changelog for package xacro
   could cause a race condition when creating the dir
   - improved error message on output creation failure
 * removed rospy dependency
-  - Importing rospy caused build order issues when ros_comm is 
-    part of the workspace
+  - Importing rospy caused build order issues with ros_comm in workspace
 * Filtering out REMAP command-line arguments is done manually now.
 * update authors/maintainers and copyright statements
 * deprecate non-namespaced xacro tags
