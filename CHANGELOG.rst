@@ -2,6 +2,138 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* deprecate --oldorder processing
+* added --check-order option to do a simple check for --inorder compatibility
+  - Most probable incompatibility is redefining a property after its usage.
+  - tested and reported with file location of (first) redefinition after usage.
+* moved command line processing to cli.py
+* explain verbosity levels in usage string
+* colorize errors during cli parsing
+* log definition and usage of properties
+* replaced debug option by verbosity options -q, -v
+* fixed evaluation time of default macro params
+* introduced Macro object to increase code readability
+* parse a macro's parameter list once at declaration time (instead of 
+  every instantiation)
+* extended test_multiple_blocks() to check for both normal and reversed order
+* added unittest to increase code coverage
+* do not issue deprecation warning for <include> tags that are non-xacro
+* added option --oldorder
+* allow to store properties to parent or global scope
+* added <xacro:attribute>
+* cleaned up error message about missing files
+* moved xml-specific functions to xmlutils.py
+  new generic functions opt_attrs(), reqd_attrs(), and check_attrs()
+  to fetch optional and required attributes and warn about unknown ones
+  in a uniform fashion
+* unittest to allow empty <arg> defaults
+* Merge pull request #94 from ubi-agni/minor-fixes
+* minor fixes
+* remove duplicates in --deps output
+* fixed dependency checking for --inorder mode (which requires full processing)
+* fixed doc of xacro' cmake macros
+* renamed "xacro:rename" to "xacro:element"
+* allow namespacing for xacro:include's
+* allow renaming of element names using xacro:rename
+* unittest cleanup
+* check property and macro names to be valid python identifiers
+* allow namespacing of xacro:include's
+* properties and macros in an included file will go into their own,
+  separate namespace, if the XML attribute `ns` is provided.
+  Access is by standard python syntax: namespace.name
+* allow renaming of element names
+  <xacro:rename xacro:name="<new element name>"/>
+* moved unittests requiring --inorder processing to class TestXacroInorder
+* added unittest test_dynamic_macro_undefined()
+* improved error message when variable include filename is used 
+  without --inorder
+* stripped down unittest test_inorder_processing()
+* improved processing
+* adapted pr2 gold standard removing most comments again
+  this partially reverts 59605fb1521583dc63efdea13f4c45128499bd20
+* remove all XML comments directly before xacro elements
+  (These are considered xacro-related only and should be removed in the final doc.)
+  Leaving an empty line between xacro-unrelated and xacro-related comments
+  allows to include the former.
+* unittest: test_ignore_xacro_comments()
+* improved processing
+  - recursive (instead of iterative) eval_all()
+  - reusable process_include()
+  - replace_node() function to replace xacro tag by some other content
+  - avoid reprocessing of nodes
+  - avoid deep copy where possible (speedup)
+* fix evaluation (#83)
+* yaml support
+* check for consistency of xml namespaces on xacro:include
+* replaced strip()=='' by more efficient isspace()
+* allow transitive definition of substition args
+* fixed evaluation of literals in property definitions
+  - literals with preceding whitespace will be silently stripped (#83)
+  - more complex evaluation test (perturbing spaces added)
+* fixed xacro namespaces in pr2 files to get rid of new inconsistency warning
+* warning message on inconsistent namespace redefinition for includes
+* yaml support
+  ${load_yaml('file.yaml')} to load dict from yaml file
+* Merge pull request #85 from ubi-agni/error-reporting
+  improved error reporting
+* nicer formatting of multiple "when evaluating expression" lines
+* improved formatting of error messages
+  use XacroException to wrap and augment other exceptions
+  to achieve a clearer error formatting
+* better error message for missing substitution args
+* use colorized warnings where possible
+* included macro stack in error-reporting
+* maintain filestack to facilitate error reporting at any time
+* Merge pull request #82 from ubi-agni/unittests
+  improved unittesting
+* allow to capture (and check) stderr in unit tests
+* improved unittests to test both, classic and in-order processing
+* Merge pull request #81 from ubi-agni/jade-devel
+  Thank you for your time and contributions. Improving cosmetics is important.
+* PEP8 cleanup
+* cmake: only copy files to devel space if new
+* Merge pull request #80 from ubi-agni/jade-devel
+* improved error-handling opening the output file
+  - running multiple xacro process in parallel, all writing into a new dir
+  could cause a race condition when creating the dir
+  - improved error message on output creation failure
+* removed rospy dependency
+  - Importing rospy caused build order issues when ros_comm is 
+    part of the workspace
+* Filtering out REMAP command-line arguments is done manually now.
+* update authors/maintainers and copyright statements
+* deprecate non-namespaced xacro tags
+* added missing print_location_msg() for file that actually failed parsing
+* improved deprecation warnings
+* New cli option `--xacro-ns` allows to enforce the new policy
+  requiring the xacro namespace prefix (and suppressing deprecation warnings).
+  However, non-prefixed tags will not be modified by xacro anymore
+  (as requested by #41, #59, #60).
+  Partially reverted cb73cfd8c678adfda2172accef398189ea2338a1, handling
+  <arg> tags in the same fashion as other tags, i.e. issue a warning if
+  used without prefix and ignoring it with cli argument `--xacro-ns`.
+* fixed pr2 xacro files to use 'xacro:' prefixed tags only
+* fixed unittests in test_xacro.py to use 'xacro:' prefixed tags only
+* deprecation message for missing xacro namespace prefix in xml tags
+* moved colored warning messages into color.py (for reuseability)
+* added missing print_location_msg() for file that actually failed parsing
+* improved xacro's cmake macros
+* prepend ${PACKAGE_NAME} to all generated cmake targets
+  Otherwise multiple packages employing xacro's cmake macros will use the
+  same conflicting target name.
+  This is only an issue with catkin_make, which defines a single global
+  cmake namespace. The new catkin tools (or catkin_make_isolated) build
+  each package separately.
+* basic unittest for xacro's cmake macros
+* improved xacro's cmake macros
+  - xacro_add_xacro_file() automatically determines output file from input (removing .xacro suffix).
+  If that fails, a fatal error is raised.
+  - added xacro_install() to allow installation into both, devel and install space.
+  - replaced conveniency function xacro_add_files()
+* Contributors: Robert Haschke
+
 1.10.2 (2015-05-23)
 -------------------
 
