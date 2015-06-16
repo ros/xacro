@@ -2,8 +2,8 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.10.3 (2015-06-16)
+-------------------
 * deprecate --oldorder processing
 * added --check-order option to do a simple check for --inorder compatibility
   - Most probable incompatibility is redefining a property after its usage.
