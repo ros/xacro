@@ -2,6 +2,16 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* removed test_DEPRECATED_should_replace_before_macroexpand()
+  duplicates test_should_replace_before_macroexpand()
+* fixed evaluation order of macro arguments and body
+  Macro arguments need to be evaluated and assigned to properties before
+  body is evaluated. Otherwise, the evaluated value will be converted to
+  str, i.e. loosing original type.
+* Contributors: Robert Haschke
+
 1.10.3 (2015-06-16)
 -------------------
 * deprecate --oldorder processing
