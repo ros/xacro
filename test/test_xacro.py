@@ -339,6 +339,12 @@ class TestXacro(TestXacroCommentsIgnored):
                 '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
 <in_the_outer><in_the_inner><woot /></in_the_inner></in_the_outer></a>''')
 
+    def test_evaluate_macro_params_before_body(self):
+        self.assert_matches(self.quick_xacro('''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="foo" params="lst">${lst[-1]}</xacro:macro>
+  <foo lst="${[1,2,3]}"/></a>'''),
+        '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">3</a>''')
+
     def test_property_replacement(self):
         self.assert_matches(
                 self.quick_xacro('''<a xmlns:xacro="http://www.ros.org/wiki/xacro">

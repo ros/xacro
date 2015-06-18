@@ -610,9 +610,6 @@ def handle_macro_call(node, name, macros, symbols):
             return handle_dynamic_macro_call(node, macros, symbols)
         return False
 
-    # Evaluate attribute and block parameters in node
-    eval_all(node, macros, symbols)  # for calling eval_all
-
     # Expand the macro
     scoped = Table(symbols)  # new local name space for macro evaluation
     params = m.params[:]  # deep copy macro's params list
@@ -620,7 +617,11 @@ def handle_macro_call(node, name, macros, symbols):
         if name not in params:
             raise XacroException("Invalid parameter \"%s\"" % str(name), macro=m)
         params.remove(name)
-        scoped[name] = value
+        scoped[name] = eval_text(value, symbols)
+        node.setAttribute(name, "")  # avoid second evaluation in eval_all()
+
+    # Evaluate block parameters in node
+    eval_all(node, macros, symbols)
 
     # Fetch block parameters, in order
     block = first_child_element(node)
