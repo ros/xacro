@@ -2,8 +2,8 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.10.4 (2015-06-18)
+-------------------
 * removed test_DEPRECATED_should_replace_before_macroexpand()
   duplicates test_should_replace_before_macroexpand()
 * fixed evaluation order of macro arguments and body
