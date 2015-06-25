@@ -1049,6 +1049,16 @@ class TestXacroInorder(TestXacro):
             self.assertTrue("foo" in output)  # foo should be reported
             self.assertTrue("bar" not in output)  # bar shouldn't be reported
 
+    def test_macro_name_with_colon(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+        <xacro:macro name="xacro:my_macro"><foo/></xacro:macro>
+        <xacro:my_macro/>
+        </a>'''
+        res = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro"><foo/></a>'''
+        with capture_stderr(self.quick_xacro, src) as (result, output):
+            self.assert_matches(result, res)
+            self.assertTrue(output)
+
 
 if __name__ == '__main__':
     unittest.main()
