@@ -610,7 +610,7 @@ def handle_macro_call(node, name, macros, symbols):
         #  to also resolve macros in namespaces, e.g. ns1.ns2.macro
         m = m or eval(name, dict(__builtins__={}), macros)
         body = m.body.cloneNode(deep=True)
-    except (NameError, TypeError):  # that wasn't a known macro
+    except:  # that wasn't a known macro
         # TODO If deprecation runs out, this test should be moved up front
         if node.tagName == 'xacro:call':
             return handle_dynamic_macro_call(node, macros, symbols)

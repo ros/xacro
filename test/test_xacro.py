@@ -228,6 +228,10 @@ class TestXacro(TestXacroCommentsIgnored):
             self.assert_matches(result, res)
             self.assertTrue(output)
 
+    def test_special_element_names(self):
+        src = '''<a><in/></a>'''
+        self.assert_matches(self.quick_xacro(src), src)
+
     def test_invalid_property_name(self):
         src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
         <xacro:property name="invalid.name"/></a>'''
