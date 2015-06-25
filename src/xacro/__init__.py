@@ -459,7 +459,13 @@ def grab_macro(elt, macros):
     if name == 'call':
         warning("deprecated use of macro name 'call'; xacro:call became a new keyword")
     if not is_valid_name(name):
+        # if the macro name starts with 'xacro:', remove it to avoid
+        # lookup misses during later invocations, to copy the behavior from
+        # the previous ROS distribution (Indigo)
         warning('Macro names should be valid python identifiers: ' + name)
+        if name.startswith("xacro:"):
+            warning("  Removing the 'xacro:' from the macro name")
+            name = name.replace("xacro:", "")
 
     # fetch existing or create new macro definition
     macro = macros.get(name, Macro())
