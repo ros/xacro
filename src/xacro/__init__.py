@@ -40,6 +40,7 @@ import ast
 import math
 
 from roslaunch import substitution_args
+from rospkg.common import ResourceNotFound
 from copy import deepcopy
 from .color import warning, error, message
 from .xmlutils import *
@@ -181,6 +182,8 @@ def eval_extension(s):
         return substitution_args.resolve_args(s, context=substitution_args_context, resolve_anon=False)
     except substitution_args.ArgException as e:
         raise XacroException("Undefined substitution argument", exc=e)
+    except ResourceNotFound as e:
+        raise XacroException("resource not found:", exc=e)
 
 
 do_check_order=False
