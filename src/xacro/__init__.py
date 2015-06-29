@@ -673,7 +673,15 @@ def handle_macro_call(node, macros, symbols):
 
     # Try to load defaults for any remaining non-block parameters
     for param in params[:]:
+        # block parameters are not supported for defaults
         if param[0] == '*': continue
+
+        # adopt existing property from outer scope
+        if param in symbols:
+            params.remove(param)
+            continue
+
+        # get default
         value = m.defaultmap.get(param, None)
         if value is not None:
             scoped._setitem(param, eval_text(value, symbols), unevaluated=False)
