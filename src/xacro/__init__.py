@@ -593,6 +593,24 @@ def eval_text(text, symbols):
         return ''.join(map(str, results))
 
 
+_forward_matcher = re.compile(r"^forward\((.*)\)$")
+def eval_default_arg(s, symbols, macro):
+    m = _forward_matcher.match(s)
+    if not m:
+        return eval_text(s, symbols)
+    args = m.group(1).split(',',1)
+    if len(args) not in [1, 2]:
+        raise XacroException("forward(property [,default]) requires one or two arguments")
+    name = args[0]
+    try:
+        return symbols[name]
+    except KeyError:
+        if len(args) == 2:
+            return eval_text(args[1], symbols)  # return default
+        else:
+            raise XacroException("Undefined property to forward: " + name, macro=macro)
+
+
 def handle_dynamic_macro_call(node, macros, symbols):
     name, = reqd_attrs(node, ['macro'])
     if not name:
@@ -676,15 +694,10 @@ def handle_macro_call(node, macros, symbols):
         # block parameters are not supported for defaults
         if param[0] == '*': continue
 
-        # adopt existing property from outer scope
-        if param in symbols:
-            params.remove(param)
-            continue
-
         # get default
         value = m.defaultmap.get(param, None)
         if value is not None:
-            scoped._setitem(param, eval_text(value, symbols), unevaluated=False)
+            scoped._setitem(param, eval_default_arg(value, symbols, m), unevaluated=False)
             params.remove(param)
 
     if params:
