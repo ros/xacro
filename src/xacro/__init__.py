@@ -40,6 +40,7 @@ import ast
 import math
 
 from roslaunch import substitution_args
+from rospkg.common import ResourceNotFound
 from copy import deepcopy
 from .color import warning, error, message
 from .xmlutils import *
@@ -181,6 +182,8 @@ def eval_extension(s):
         return substitution_args.resolve_args(s, context=substitution_args_context, resolve_anon=False)
     except substitution_args.ArgException as e:
         raise XacroException("Undefined substitution argument", exc=e)
+    except ResourceNotFound as e:
+        raise XacroException("resource not found:", exc=e)
 
 
 do_check_order=False
@@ -458,14 +461,8 @@ def grab_macro(elt, macros):
     name, params = check_attrs(elt, ['name'], ['params'])
     if name == 'call':
         warning("deprecated use of macro name 'call'; xacro:call became a new keyword")
-    if not is_valid_name(name):
-        # if the macro name starts with 'xacro:', remove it to avoid
-        # lookup misses during later invocations, to copy the behavior from
-        # the previous ROS distribution (Indigo)
-        warning('Macro names should be valid python identifiers: ' + name)
-        if name.startswith("xacro:"):
-            warning("  Removing the 'xacro:' from the macro name")
-            name = name.replace("xacro:", "")
+    if name.find('.') != -1:
+        warning("macro names must not contain '.': %s" % name)
 
     # fetch existing or create new macro definition
     macro = macros.get(name, Macro())
@@ -590,31 +587,47 @@ def handle_dynamic_macro_call(node, macros, symbols):
     node.removeAttribute('macro')
     node.tagName = name
     # forward to handle_macro_call
-    result = handle_macro_call(node, name, macros, symbols)
+    result = handle_macro_call(node, macros, symbols)
     if not result:  # we expect the call to succeed
         raise XacroException("unknown macro name '%s' in xacro:call" % name)
     return True
 
-def handle_macro_call(node, name, macros, symbols):
-    if name.startswith('xacro:'):
-        name = name.replace('xacro:', '')
+def resolve_macro(fullname, macros):
+    # split name into namespaces and real name
+    namespaces = fullname.split('.')
+    name = namespaces.pop(-1)
+    # move xacro: prefix from first namespace to name
+    if namespaces and namespaces[0].startswith('xacro:'):
+        namespaces[0] = namespaces[0].replace('xacro:', '')
+        name = 'xacro:' + name
 
-    try:
-        m = None
-        m = macros[name]  # try simple macro resolution from macros dict
-    except KeyError:
-        pass
+    def _resolve(namespaces, name, macros):
+        # traverse namespaces to actual macros dict
+        for ns in namespaces:
+            macros = macros[ns]
+        try:
+            return macros[name]
+        except KeyError:
+            # try without xacro: prefix as well
+            if name.startswith('xacro:'):
+                return _resolve([], name.replace('xacro:',''), macros)
 
+    # try fullname and (namespaces, name) in this order
+    m = _resolve([], fullname, macros)
+    if m: return m
+    elif namespaces: return _resolve(namespaces, name, macros)\
+
+
+def handle_macro_call(node, macros, symbols):
     try:
-        #  using eval allows to employ python's resolving mechanism
-        #  to also resolve macros in namespaces, e.g. ns1.ns2.macro
-        m = m or eval(name, dict(__builtins__={}), macros)
+        m = resolve_macro(node.tagName, macros)
         body = m.body.cloneNode(deep=True)
-    except (NameError, TypeError):  # that wasn't a known macro
+
+    except (KeyError, TypeError, AttributeError):
         # TODO If deprecation runs out, this test should be moved up front
         if node.tagName == 'xacro:call':
             return handle_dynamic_macro_call(node, macros, symbols)
-        return False
+        return False  # no macro
 
     # Expand the macro
     scoped = Table(symbols)  # new local name space for macro evaluation
@@ -793,7 +806,7 @@ def eval_all(node, macros, symbols):
                 else:
                     replace_node(node, by=None)
 
-            elif handle_macro_call(node, node.tagName, macros, symbols):
+            elif handle_macro_call(node, macros, symbols):
                 pass  # handle_macro_call does all the work of expanding the macro
 
             else:
