@@ -982,6 +982,18 @@ class TestXacro(TestXacroCommentsIgnored):
   <a prop="0.2"/>
 </a>''')
 
+    def test_property_forwarding(self):
+        src='''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+        <xacro:property name="var" value="42"/>
+        <xacro:macro name="foo" params="arg:=forward(%s%s)">${arg}</xacro:macro>
+        <xacro:foo/>
+        </a>'''
+        res='''<a xmlns:xacro="http://www.ros.org/wiki/xacro">%s</a>'''
+        self.assert_matches(self.quick_xacro(src % ('var', '')), res % '42')
+        self.assert_matches(self.quick_xacro(src % ('var', ',6')), res % '42')
+        self.assert_matches(self.quick_xacro(src % ('undefined', ',${2*(1+2)}')), res % '6')
+        self.assertRaises(xacro.XacroException, self.quick_xacro, src % ('undefined', ''))
+
 
 # test class for in-order processing
 class TestXacroInorder(TestXacro):
@@ -1058,7 +1070,6 @@ class TestXacroInorder(TestXacro):
         with capture_stderr(self.quick_xacro, src) as (result, output):
             self.assert_matches(result, res)
             self.assertTrue(output)
-
 
 if __name__ == '__main__':
     unittest.main()
