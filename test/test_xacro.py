@@ -1004,6 +1004,13 @@ class TestXacro(TestXacroCommentsIgnored):
         res = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro"><foo/></a>'''
         self.assert_matches(self.quick_xacro(src), res)
 
+    def test_overwrite_globals(self):
+        src='''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+        <xacro:property name="pi"  value="3.14"/></a>'''
+        with capture_stderr(self.quick_xacro, src) as (result, output):
+            self.assert_matches(result, '<a xmlns:xacro="http://www.ros.org/wiki/xacro"/>')
+            self.assertTrue(output)
+
 
 # test class for in-order processing
 class TestXacroInorder(TestXacro):

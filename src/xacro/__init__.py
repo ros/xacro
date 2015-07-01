@@ -248,6 +248,10 @@ class Table(object):
         if do_check_order and key in self.used and key not in self.redefined:
             self.redefined[key] = filestack[-1]
 
+        if key in global_symbols:
+            warning("redefining global property: %s" % key)
+            print_location(filestack)
+
         value = self._eval_literal(value)
         self.table[key] = value
         if isinstance(value, _basestr):
