@@ -451,6 +451,26 @@ def is_valid_name(name):
     return False
 
 
+_forward_matcher = re.compile(r"^forward\((.*)\)$")
+def parse_default_arg(s):
+    """
+    parse a default argument spec for macro parameters
+    particularly handle forward(variable,default)
+    :param s: argument spec string
+    :return: pair of (variable, default), where any one may be None
+    """
+    m = _forward_matcher.match(s)
+    if not m:  # simple default value
+        return (None, s)
+    args = m.group(1).split(',',1)
+    if len(args) == 1:
+        return (args[0], None)
+    elif len(args) == 2:
+        return (args[0], args[1])
+    else:
+        raise XacroException("forward(property [,default]) requires one or two arguments")
+
+
 def grab_macro(elt, macros):
     assert(elt.tagName in ['macro', 'xacro:macro'])
     remove_previous_comments(elt)
@@ -480,7 +500,7 @@ def grab_macro(elt, macros):
         splitParam = param.split(':=')
 
         if len(splitParam) == 2:
-            defaultmap[splitParam[0]] = splitParam[1]  # parameter with default
+            defaultmap[splitParam[0]] = parse_default_arg(splitParam[1])  # parameter with default
             params[i] = splitParam[0]  # only keep the name
 
         elif len(splitParam) != 1:
@@ -580,22 +600,16 @@ def eval_text(text, symbols):
         return ''.join(map(str, results))
 
 
-_forward_matcher = re.compile(r"^forward\((.*)\)$")
-def eval_default_arg(s, symbols, macro):
-    m = _forward_matcher.match(s)
-    if not m:
-        return eval_text(s, symbols)
-    args = m.group(1).split(',',1)
-    if len(args) not in [1, 2]:
-        raise XacroException("forward(property [,default]) requires one or two arguments")
-    name = args[0]
+def eval_default_arg(forward_variable, default, symbols, macro):
+    if forward_variable is None:
+        return eval_text(default, symbols)
     try:
-        return symbols[name]
+        return symbols[forward_variable]
     except KeyError:
-        if len(args) == 2:
-            return args[1]  # return default
+        if default is not None:
+            return eval_text(default, symbols)
         else:
-            raise XacroException("Undefined property to forward: " + name, macro=macro)
+            raise XacroException("Undefined property to forward: " + forward_variable, macro=macro)
 
 
 def handle_dynamic_macro_call(node, macros, symbols):
@@ -666,9 +680,9 @@ def handle_macro_call(node, name, macros, symbols):
         if param[0] == '*': continue
 
         # get default
-        value = m.defaultmap.get(param, None)
-        if value is not None:
-            scoped[param] = eval_default_arg(value, symbols, m)
+        name, default = m.defaultmap.get(param, (None,None))
+        if name is not None or default is not None:
+            scoped[param] = eval_default_arg(name, default, symbols, m)
             params.remove(param)
 
     if params:
