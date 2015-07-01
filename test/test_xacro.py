@@ -996,6 +996,14 @@ class TestXacro(TestXacroCommentsIgnored):
   <a prop="0.2"/>
 </a>''')
 
+    def test_macro_name_with_colon(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+        <xacro:macro name="xacro:my_macro"><foo/></xacro:macro>
+        <xacro:my_macro/>
+        </a>'''
+        res = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro"><foo/></a>'''
+        self.assert_matches(self.quick_xacro(src), res)
+
 
 # test class for in-order processing
 class TestXacroInorder(TestXacro):
@@ -1062,14 +1070,6 @@ class TestXacroInorder(TestXacro):
             self.assertTrue("Document is incompatible to --inorder processing." in output)
             self.assertTrue("foo" in output)  # foo should be reported
             self.assertTrue("bar" not in output)  # bar shouldn't be reported
-
-    def test_macro_name_with_colon(self):
-        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
-        <xacro:macro name="xacro:my_macro"><foo/></xacro:macro>
-        <xacro:my_macro/>
-        </a>'''
-        res = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro"><foo/></a>'''
-        self.assert_matches(self.quick_xacro(src), res)
 
 
 if __name__ == '__main__':
