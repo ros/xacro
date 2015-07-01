@@ -756,12 +756,12 @@ class TestXacro(TestXacroCommentsIgnored):
   <xacro:property name="b" value="2.1"/>
   <xacro:property name="c" value="${a}"/>
   <xacro:property name="d" value="${b}"/>
-  <xacro:property name="e" value="${c*d}"/>
-  <answer e="${e}"/>
+  <xacro:property name="f" value="${c*d}"/>
+  <answer f="${f}"/>
 </robot>'''), 
                 '''\
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <answer e="88.2"/>
+  <answer f="88.2"/>
 </robot>''')
 
     def test_from_issue(self):
@@ -1003,6 +1003,13 @@ class TestXacro(TestXacroCommentsIgnored):
         </a>'''
         res = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro"><foo/></a>'''
         self.assert_matches(self.quick_xacro(src), res)
+
+    def test_overwrite_globals(self):
+        src='''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+        <xacro:property name="pi"  value="3.14"/></a>'''
+        with capture_stderr(self.quick_xacro, src) as (result, output):
+            self.assert_matches(result, '<a xmlns:xacro="http://www.ros.org/wiki/xacro"/>')
+            self.assertTrue(output)
 
 
 # test class for in-order processing
