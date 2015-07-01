@@ -756,12 +756,12 @@ class TestXacro(TestXacroCommentsIgnored):
   <xacro:property name="b" value="2.1"/>
   <xacro:property name="c" value="${a}"/>
   <xacro:property name="d" value="${b}"/>
-  <xacro:property name="e" value="${c*d}"/>
-  <answer e="${e}"/>
+  <xacro:property name="f" value="${c*d}"/>
+  <answer f="${f}"/>
 </robot>'''), 
                 '''\
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <answer e="88.2"/>
+  <answer f="88.2"/>
 </robot>''')
 
     def test_from_issue(self):
