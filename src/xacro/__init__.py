@@ -461,24 +461,31 @@ def is_valid_name(name):
     return False
 
 
-_forward_matcher = re.compile(r"^forward\((.*)\)$")
-def parse_default_arg(s):
+def parse_default_arg(param):
     """
     parse a default argument spec for macro parameters
     particularly handle forward(variable,default)
     :param s: argument spec string
-    :return: pair of (variable, default), where any one may be None
+    :return: pair of name, value
+             where value is either None (no default arg specified at all)
+                or value is a pair (name, default)
+                indicating to forward name or fallback to default
+                One of them (name or default) might be None.
     """
-    m = _forward_matcher.match(s)
-    if not m:  # simple default value
-        return (None, s)
-    args = m.group(1).split(',',1)
-    if len(args) == 1:
-        return (args[0], None)
-    elif len(args) == 2:
-        return (args[0], args[1])
+    param = param.split(':=',1)
+    if len(param) == 1:
+        return param[0], None  # no default arg at all
+    name, default = param[0], param[1]
+
+    if not (default.startswith('$|') or default == '$'):
+        return name, (None, default)  # simple default value
+
+    # remove initial $| or $
+    default = default[2:] if default.startswith('$|') else default[1:]
+    if not default:  # no fallback default
+        return name, (name, None)
     else:
-        raise XacroException("forward(property [,default]) requires one or two arguments")
+        return name, (name, default)
 
 
 def grab_macro(elt, macros):
@@ -501,14 +508,10 @@ def grab_macro(elt, macros):
     macro.params = params = params.split() if params else []
     macro.defaultmap = defaultmap = {}
     for i, param in enumerate(params):
-        splitParam = param.split(':=')
-
-        if len(splitParam) == 2:
-            defaultmap[splitParam[0]] = parse_default_arg(splitParam[1])  # parameter with default
-            params[i] = splitParam[0]  # only keep the name
-
-        elif len(splitParam) != 1:
-            raise XacroException("Invalid parameter definition '%s' for macro '%s'".format(param, name))
+        param, value = parse_default_arg(param)
+        if value is not None:
+            defaultmap[param] = value  # parameter with default
+            params[i] = param  # only keep the name
 
     macros[name] = macro
     replace_node(elt, by=None)
