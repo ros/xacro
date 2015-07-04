@@ -244,7 +244,7 @@ class Table(object):
         else:
             raise KeyError(key)
 
-    def __setitem__(self, key, value):
+    def _setitem(self, key, value, unevaluated):
         if do_check_order and key in self.used and key not in self.redefined:
             self.redefined[key] = filestack[-1]
 
@@ -254,8 +254,8 @@ class Table(object):
 
         value = self._eval_literal(value)
         self.table[key] = value
-        if isinstance(value, _basestr):
-            # strings need to be evaluated again at first access
+        if unevaluated and isinstance(value, _basestr):
+            # literal evaluation failed: re-evaluate lazily at first access
             self.unevaluated.add(key)
         elif key in self.unevaluated:
             # all other types cannot be evaluated
@@ -263,6 +263,9 @@ class Table(object):
         if (verbosity > 2 and self.parent is None) or verbosity > 3:
             print("{indent}set {key}: {value} ({loc})".format(
                 indent=self.depth*' ', key=key, value=value, loc=filestack[-1]), file=sys.stderr)
+
+    def __setitem__(self, key, value):
+        self._setitem(key, value, unevaluated=True)
 
     def __contains__(self, key):
         return \
@@ -517,23 +520,23 @@ def grab_property(elt, table):
         name = '**' + name
         value = elt  # debug
 
-    if scope in ['global', 'parent']:
-        # ensure to evaluate within current context
-        # with (default) lazy evaluation, local vars will be gone at evaluation time
-        try:
-            value = eval_text(value, table)
-        except TypeError:
-            pass
-
     if scope and scope == 'global':
-        table = table.root()
-    if scope and scope == 'parent':
+        target_table = table.root()
+        unevaluated = False
+    elif scope and scope == 'parent':
         if table.parent:
-            table = table.parent
+            target_table = table.parent
         else:
             warning("%s: no parent scope at global scope " % name)
+        unevaluated = False
+    else:
+        target_table = table
+        unevaluated = True
 
-    table[name] = value
+    if not unevaluated and isinstance(value, _basestr):
+        value = eval_text(value, table)
+
+    target_table._setitem(name, value, unevaluated=unevaluated)
     replace_node(elt, by=None)
 
 
@@ -649,8 +652,8 @@ def handle_macro_call(node, macros, symbols):
         if name not in params:
             raise XacroException("Invalid parameter \"%s\"" % str(name), macro=m)
         params.remove(name)
-        scoped[name] = eval_text(value, symbols)
-        node.setAttribute(name, "")  # avoid second evaluation in eval_all()
+        scoped._setitem(name, eval_text(value, symbols), unevaluated=False)
+        node.setAttribute(name, "")  # suppress second evaluation in eval_all()
 
     # Evaluate block parameters in node
     eval_all(node, macros, symbols)
@@ -673,7 +676,7 @@ def handle_macro_call(node, macros, symbols):
         if param[0] == '*': continue
         value = m.defaultmap.get(param, None)
         if value is not None:
-            scoped[param] = eval_text(value, symbols)
+            scoped._setitem(param, eval_text(value, symbols), unevaluated=False)
             params.remove(param)
 
     if params:
