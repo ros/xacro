@@ -517,7 +517,16 @@ def grab_property(elt, table):
         name = '**' + name
         value = elt  # debug
 
-    if scope and scope == 'global': table = table.root()
+    if scope in ['global', 'parent']:
+        # ensure to evaluate within current context
+        # with (default) lazy evaluation, local vars will be gone at evaluation time
+        try:
+            value = eval_text(value, table)
+        except TypeError:
+            pass
+
+    if scope and scope == 'global':
+        table = table.root()
     if scope and scope == 'parent':
         if table.parent:
             table = table.parent
