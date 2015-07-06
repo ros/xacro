@@ -358,19 +358,21 @@ class TestXacro(TestXacroCommentsIgnored):
 
     def test_property_scope_parent(self):
         self.assert_matches(self.quick_xacro('''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <xacro:macro name="foo"><xacro:property name="foo" value="42" scope="parent"/></xacro:macro>
-  <xacro:foo/><a foo="${foo}"/></a>'''),
+  <xacro:macro name="foo" params="factor">
+  <xacro:property name="foo" value="${21*factor}" scope="parent"/>
+  </xacro:macro>
+  <xacro:foo factor="2"/><a foo="${foo}"/></a>'''),
         '''<a xmlns:xacro="http://www.ros.org/wiki/xacro"><a foo="42"/></a>''')
 
     def test_property_scope_global(self):
         self.assert_matches(self.quick_xacro('''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <xacro:macro name="foo">
+  <xacro:macro name="foo" params="factor">
     <xacro:macro name="bar">
-      <xacro:property name="foo" value="42" scope="global"/>
+      <xacro:property name="foo" value="${21*factor}" scope="global"/>
     </xacro:macro>
     <xacro:bar/>
   </xacro:macro>
-  <xacro:foo/><a foo="${foo}"/></a>'''),
+  <xacro:foo factor="2"/><a foo="${foo}"/></a>'''),
         '''<a xmlns:xacro="http://www.ros.org/wiki/xacro"><a foo="42"/></a>''')
 
     def test_math_ignores_spaces(self):
@@ -1005,12 +1007,22 @@ class TestXacro(TestXacroCommentsIgnored):
         self.assert_matches(self.quick_xacro(src), res)
 
     def test_overwrite_globals(self):
-        src='''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
         <xacro:property name="pi"  value="3.14"/></a>'''
         with capture_stderr(self.quick_xacro, src) as (result, output):
             self.assert_matches(result, '<a xmlns:xacro="http://www.ros.org/wiki/xacro"/>')
             self.assertTrue(output)
 
+    def test_no_double_evaluation(self):
+        src = '''
+<a xmlns:xacro="http://www.ros.org/xacro">
+  <xacro:macro name="foo" params="a b:=${a} c:=$${a}"> a=${a} b=${b} c=${c} </xacro:macro>
+  <xacro:property name="a" value="1"/>
+  <xacro:property name="d" value="$${a}"/>
+  <d d="${d}"><foo a="2"/></d>
+</a>'''
+        res = '''<a xmlns:xacro="http://www.ros.org/xacro"><d d="${a}"> a=2 b=1 c=${a} </d></a>'''
+        self.assert_matches(self.quick_xacro(src), res)
 
 # test class for in-order processing
 class TestXacroInorder(TestXacro):
