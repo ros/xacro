@@ -477,11 +477,11 @@ def parse_default_arg(param):
         return param[0], None  # no default arg at all
     name, default = param[0], param[1]
 
-    if not (default.startswith('$|') or default == '$'):
+    if not (default.startswith('^|') or default == '^'):
         return name, (None, default)  # simple default value
 
     # remove initial $| or $
-    default = default[2:] if default.startswith('$|') else default[1:]
+    default = default[2:] if default.startswith('^|') else default[1:]
     if not default:  # no fallback default
         return name, (name, None)
     else:

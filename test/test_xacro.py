@@ -1027,7 +1027,7 @@ class TestXacro(TestXacroCommentsIgnored):
     def test_property_forwarding(self):
         src='''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
         <xacro:property name="arg" value="42"/>
-        <xacro:macro name="foo" params="arg:=$%s">${arg}</xacro:macro>
+        <xacro:macro name="foo" params="arg:=^%s">${arg}</xacro:macro>
         <xacro:foo/>
         </a>'''
         res='''<a xmlns:xacro="http://www.ros.org/wiki/xacro">%s</a>'''
