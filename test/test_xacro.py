@@ -1024,6 +1024,18 @@ class TestXacro(TestXacroCommentsIgnored):
         res = '''<a xmlns:xacro="http://www.ros.org/xacro"><d d="${a}"> a=2 b=1 c=${a} </d></a>'''
         self.assert_matches(self.quick_xacro(src), res)
 
+    def test_property_forwarding(self):
+        src='''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+        <xacro:property name="arg" value="42"/>
+        <xacro:macro name="foo" params="arg:=^%s">${arg}</xacro:macro>
+        <xacro:foo/>
+        </a>'''
+        res='''<a xmlns:xacro="http://www.ros.org/wiki/xacro">%s</a>'''
+        self.assert_matches(self.quick_xacro(src % ''), res % '42')
+        self.assert_matches(self.quick_xacro(src % '|'), res % '42')
+        self.assert_matches(self.quick_xacro(src % '|6'), res % '42')
+
+
 # test class for in-order processing
 class TestXacroInorder(TestXacro):
     def __init__(self, *args, **kwargs):
