@@ -461,31 +461,28 @@ def is_valid_name(name):
     return False
 
 
-def parse_default_arg(param):
+re_macro_arg = re.compile(r'''\s*([^\s:=]+?):?=(\^\|?)?((?:(?:'[^']*')?[^\s'"]*?)*)(?:\s+|$)(.*)''')
+#                           space   param    :=   ^|   <--      default      -->   space    rest
+def parse_macro_arg(s):
     """
-    parse a default argument spec for macro parameters
-    particularly handle forward(variable,default)
-    :param s: argument spec string
-    :return: pair of name, value
-             where value is either None (no default arg specified at all)
-                or value is a pair (name, default)
-                indicating to forward name or fallback to default
-                One of them (name or default) might be None.
+    parse the first param spec from a macro parameter string s
+    accepting the following syntax: <param>[:=|=][^|]<default>
+    :param s: param spec string
+    :return: param, (forward, default), rest-of-string
+             forward will be either param or None (depending on whether ^ was specified)
+             default will be the default string or None
+             If there is no default spec at all, the middle pair will be replaced by None
     """
-    param = param.split(':=',1)
-    if len(param) == 1:
-        return param[0], None  # no default arg at all
-    name, default = param[0], param[1]
-
-    if not (default.startswith('^|') or default == '^'):
-        return name, (None, default)  # simple default value
-
-    # remove initial $| or $
-    default = default[2:] if default.startswith('^|') else default[1:]
-    if not default:  # no fallback default
-        return name, (name, None)
+    m = re_macro_arg.match(s)
+    if m:
+        # there is a default value specified for param
+        param, forward, default, rest = m.groups()
+        if not default: default = None
+        return param, (param if forward else None, default), rest
     else:
-        return name, (name, default)
+        # there is no default specified at all
+        result = s.lstrip(' ').split(' ', 1)
+        return result[0], None, result[1] if len(result) > 1 else ''
 
 
 def grab_macro(elt, macros):
@@ -505,13 +502,13 @@ def grab_macro(elt, macros):
     macro.body = elt
 
     # parse params and their defaults
-    macro.params = params = params.split() if params else []
-    macro.defaultmap = defaultmap = {}
-    for i, param in enumerate(params):
-        param, value = parse_default_arg(param)
+    macro.params = []
+    macro.defaultmap = {}
+    while params:
+        param, value, params = parse_macro_arg(params)
+        macro.params.append(param)
         if value is not None:
-            defaultmap[param] = value  # parameter with default
-            params[i] = param  # only keep the name
+            macro.defaultmap[param] = value  # parameter with default
 
     macros[name] = macro
     replace_node(elt, by=None)

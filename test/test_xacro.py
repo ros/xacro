@@ -189,6 +189,31 @@ class TestXacroFunctions(unittest.TestCase):
         self.assertEqual(xacro.resolve_macro('xacro:ns1.prefixed', macros), 'prefixed1')
         self.assertEqual(xacro.resolve_macro('xacro:ns1.ns2.prefixed', macros), 'prefixed2')
 
+    def test_parse_macro_arg(self):
+        def check(s, param, forward, default, rest):
+            p, v, r = xacro.parse_macro_arg(s)
+            self.assertEqual(p, param, msg="'{0}' != '{1}' parsing {2}".format(p, param, s))
+            if forward or default:
+                self.assertTrue(v is not None)
+                self.assertEqual(v[0], forward, msg="'{0}' != '{1}' parsing {2}".format(v[0], forward, s))
+                self.assertEqual(v[1], default, msg="'{0}' != '{1}' parsing {2}".format(v[1], default, s))
+            else:
+                self.assertTrue(v is None)
+            self.assertEqual(r, rest, msg="'{0}' != '{1}' parsing {2}".format(r, rest, s))
+
+        for forward in ['', '^', '^|']:
+            defaults = ['', "f('some string','some other')", "f('a b')"]
+            if forward == '^': defaults = ['']
+            for default in defaults:
+                seps = ['=', ':='] if forward or default else ['']
+                for sep in seps:
+                    for rest in ['', ' ', ' bar', ' bar=42']:
+                        s = 'foo{0}{1}{2}{3}'.format(sep, forward, default, rest)
+                        check(s, 'foo', 'foo' if forward else None,
+                              default if default else None,
+                              rest.lstrip(' '))
+        check('  foo bar=341', 'foo', None, None, 'bar=341')
+
 # base class providing some convenience functions
 class TestXacroBase(unittest.TestCase):
     def __init__(self, *args, **kwargs):
