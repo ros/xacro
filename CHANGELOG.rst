@@ -2,8 +2,8 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.10.5 (2015-08-12)
+-------------------
 * fix #108: evaluate property blocks recursively too
 * improved macro parameter parsing
 * use a regular expression to parse a param spec with forwarding and default 
