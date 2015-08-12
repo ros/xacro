@@ -2,6 +2,45 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* fix #108: evaluate property blocks recursively too
+* improved macro parameter parsing
+* use a regular expression to parse a param spec with forwarding and default 
+* allow for spaces in default string (within single quotes)
+* forwarding macro arguments from outer scope
+* switched to `^|` syntax
+* use more compact `$|` syntax
+* moved parsing of argument defaults to grab_macro()
+* explicit forwarding of properties to macro scope
+* replace silent/implicit forwarding of properties from outer scope to
+  macro scope by an explicit "call" to a `forward(<name>[,<default>])` function.
+* implicit forwarding of outer-scope properties to macro args (#100)
+* property evaluation fixes
+* suppress double evaluation of properties
+* adapted unittest to cover the fixed issue
+* fixed evaluation order for properties exported to parent or global scope
+* Merge pull request #103 from ubi-agni/overwrite-check
+  issue warning when attempting to overwrite existing global property
+* fixed unittest: avoid overwrite warning
+* warn when overwriting any globally defined variable
+* Merge pull request #102 from ubi-agni/completion
+  bash completion
+* Merge pull request #99 from ubi-agni/jade-devel
+  reworked macro resolution
+* moved test_macro_name_with_colon() to class TestXacro
+  should be tested both, in oldorder and inorder mode
+* bash completion
+* improved error message for failed $(find)
+* reworked macro resolution
+  python-eval-based macro resolution (introduced to enable namespaces)
+  heavily restricted the set of possible macro names (only valid python
+  identifiers were allowed)
+  Particularly, xacro: prefixed macro names were forbidden.
+* initial attempt to fix #97
+* add failing test case with colon in the macro name
+* Contributors: Robert Haschke
+
 1.10.4 (2015-06-18)
 -------------------
 * removed test_DEPRECATED_should_replace_before_macroexpand()
