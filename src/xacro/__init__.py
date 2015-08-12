@@ -595,7 +595,10 @@ def eval_all(node, macros, symbols):
                     raise XacroException("Undefined block \"%s\"" % name)
 
                 # cloning block allows to insert the same block multiple times
-                replace_node(node, by=block.cloneNode(deep=True), content_only=content_only)
+                block = block.cloneNode(deep=True)
+                # recursively evaluate block
+                eval_all(block, macros, symbols)
+                replace_node(node, by=block, content_only=content_only)
 
             elif is_include(node):
                 process_include(node, symbols, lambda doc: eval_all(doc, macros, symbols))
