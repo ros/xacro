@@ -475,15 +475,17 @@ class TestXacro(TestXacroCommentsIgnored):
     def test_insert_block_property(self):
         self.assert_matches(
                 self.quick_xacro('''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+<xacro:macro name="bar">bar</xacro:macro>
+<xacro:property name="val" value="2" />
 <xacro:property name="some_block">
-  <some_block />
+  <some_block attr="${val}"><xacro:bar/></some_block>
 </xacro:property>
 <foo>
   <xacro:insert_block name="some_block" />
 </foo>
 </a>'''),
                 '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
-<foo><some_block /></foo>
+<foo><some_block attr="2">bar</some_block></foo>
 </a>''')
 
     def test_include(self):
