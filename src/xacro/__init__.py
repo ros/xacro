@@ -38,6 +38,7 @@ import re
 import sys
 import ast
 import math
+import rospkg
 
 from roslaunch import substitution_args
 from rospkg.common import ResourceNotFound
@@ -89,13 +90,16 @@ def abs_filename_spec(filename_spec):
     return filename_spec
 
 
-def load_yaml(filename):
+def load_yaml(filename, package=None):
     try:
         import yaml
     except:
         raise XacroException("yaml support not available; install python-yaml")
 
-    filename = abs_filename_spec(filename)
+    if(package is None):
+        filename = abs_filename_spec(filename)
+    else:
+        filename = rospkg.RosPack().get_path(package) + "/" + filename
     f = open(filename)
     oldstack = push_file(filename)
     try:
