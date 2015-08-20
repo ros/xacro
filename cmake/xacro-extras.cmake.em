@@ -84,8 +84,8 @@ function(xacro_add_xacro_file input)
 
   ## Call out to xacro to determine dependencies
   message(STATUS "xacro: determining deps for: " ${input} " ...")
-  execute_process(COMMAND ${_xacro_py} --deps ${input} ${_XACRO_REMAP}
-    WORKING_DIRECTORY $(CMAKE_CURRENT_SOURCE_DIR)
+  execute_process(COMMAND ${_xacro_py} ${_XACRO_INORDER} --deps ${input} ${_XACRO_REMAP}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     ERROR_VARIABLE _xacro_err
     OUTPUT_VARIABLE _xacro_deps_result
     OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -140,7 +140,7 @@ function(xacro_install target)
   ## rule to create devel space tgts
   add_custom_target(${PROJECT_NAME}_${target}_to_devel_space_ DEPENDS ${tgts})
   # add to main target _xacro_generated_to_devel_space_
-  add_dependencies(${PROJECT_NAME}_xacro_generated_to_devel_space_ 
+  add_dependencies(${PROJECT_NAME}_xacro_generated_to_devel_space_
                    ${PROJECT_NAME}_${target}_to_devel_space_)
 
 
