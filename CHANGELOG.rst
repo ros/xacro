@@ -2,8 +2,8 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.10.6 (2015-09-01)
+-------------------
 * use correct catkin environment for cmake dependency checking
 * fixed dependency definition for cmake usage
 * Contributors: Robert Haschke
