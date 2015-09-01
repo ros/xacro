@@ -84,7 +84,7 @@ function(xacro_add_xacro_file input)
 
   ## Call out to xacro to determine dependencies
   message(STATUS "xacro: determining deps for: " ${input} " ...")
-  execute_process(COMMAND ${_xacro_py} ${_XACRO_INORDER} --deps ${input} ${_XACRO_REMAP}
+  execute_process(COMMAND ${CATKIN_ENV} ${_xacro_py} ${_XACRO_INORDER} --deps ${input} ${_XACRO_REMAP}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     ERROR_VARIABLE _xacro_err
     OUTPUT_VARIABLE _xacro_deps_result
