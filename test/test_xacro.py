@@ -1062,6 +1062,15 @@ class TestXacro(TestXacroCommentsIgnored):
         self.assert_matches(self.quick_xacro(src % '|'), res % '42')
         self.assert_matches(self.quick_xacro(src % '|6'), res % '42')
 
+    def test_extension_in_expression(self):
+        src='''<a xmlns:xacro="http://www.ros.org/wiki/xacro">${2*'$(arg var)'}</a>'''
+        res='''<a xmlns:xacro="http://www.ros.org/wiki/xacro">%s</a>'''
+        self.assert_matches(self.quick_xacro(src, ['var:=xacro']), res % (2*'xacro'))
+
+    def test_expression_in_extension(self):
+        src='''<a xmlns:xacro="http://www.ros.org/wiki/xacro">$(arg ${'v'+'ar'})</a>'''
+        res='''<a xmlns:xacro="http://www.ros.org/wiki/xacro">%s</a>'''
+        self.assert_matches(self.quick_xacro(src, ['var:=xacro']), res % 'xacro')
 
 # test class for in-order processing
 class TestXacroInorder(TestXacro):

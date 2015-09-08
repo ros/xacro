@@ -584,14 +584,14 @@ LEXER = QuickLexer(DOLLAR_DOLLAR_BRACE=r"\$\$+\{",
 def eval_text(text, symbols):
     def handle_expr(s):
         try:
-            return eval(s, global_symbols, symbols)
+            return eval(eval_text(s, symbols), global_symbols, symbols)
         except Exception as e:
             # re-raise as XacroException to add more context
             raise XacroException(exc=e,
                 suffix=os.linesep + "when evaluating expression '%s'" % s)
 
     def handle_extension(s):
-        return eval_extension("$(%s)" % s)
+        return eval_extension("$(%s)" % eval_text(s, symbols))
 
     results = []
     lex = QuickLexer(LEXER)
