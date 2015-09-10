@@ -356,7 +356,7 @@ def is_include(elt):
             return False
         else:
             # throw a deprecated warning
-            deprecated_tag()
+            return check_deprecated_tag(elt.tagName)
     return True
 
 
