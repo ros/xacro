@@ -984,15 +984,17 @@ class TestXacro(TestXacroCommentsIgnored):
   <a list="[0, 2, 2]" tuple="(0, 2, 2)" dict="{'a': 0, 'c': 2, 'b': 2}"/>
 </a>''')
 
-    def test_ros_arg_param(self):
+    def test_enforce_xacro_ns(self):
         self.assert_matches(
                 self.quick_xacro('''\
 <a xmlns:xacro="http://www.ros.org/wiki/xacro">
   <arg name="foo" value="bar"/>
+  <include filename="foo"/>
 </a>''', xacro_ns=False),
 '''\
 <a xmlns:xacro="http://www.ros.org/wiki/xacro">
   <arg name="foo" value="bar"/>
+  <include filename="foo"/>
 </a>''')
 
     def test_issue_68_numeric_arg(self):
