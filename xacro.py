@@ -51,10 +51,12 @@ os.chdir(cur_dir)
 # Remove this dir from path
 sys.path = filter(lambda a: a not in [this_dir, this_dir_cwd], sys.path)
 
-import xacro
-
-# Restore the path
-sys.path = backup_path
-
 if __name__ == '__main__':
-    xacro.main()
+    if '--inorder' in sys.argv:
+        import xacro_jade
+        sys.path = backup_path # Restore the path
+        xacro_jade.main()
+    else:
+        import xacro
+        sys.path = backup_path # Restore the path
+        xacro.main()
