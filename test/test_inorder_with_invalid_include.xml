@@ -1,0 +1,6 @@
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="has_stuff" default="false"/>
+  <xacro:if value="$(arg has_stuff)">
+    <xacro:include file="$(find nonexistent_package)/stuff.urdf" />
+  </xacro:if>
+</a>
