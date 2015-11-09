@@ -2,8 +2,8 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.9.5 (2015-11-09)
+------------------
 * optionally include latest improvements in xacro-jade into xacro-indigo
 * Contributors: Morgan Quigley
 
