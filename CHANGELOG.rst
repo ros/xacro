@@ -2,6 +2,11 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* optionally include latest improvements in xacro-jade into xacro-indigo
+* Contributors: Morgan Quigley
+
 1.9.4 (2015-04-01)
 ------------------
 * Using xacro for launch files with <arg> tags would cause the <args> tags to get
