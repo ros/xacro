@@ -165,8 +165,8 @@ class TestXacroFunctions(unittest.TestCase):
         self.assertFalse(xacro.is_valid_name('invalid.too'))  # dot separates fields
 
     def test_resolve_macro(self):
-        # define three nested macro dicts with the same content
-        content = {'simple': 'simple', 'xacro:prefixed': 'prefixed'}
+        # define three nested macro dicts with the same macro names (keys)
+        content = {'xacro:simple': 'simple'}
         ns2 = dict({k: v+'2' for k,v in content.iteritems()})
         ns1 = dict({k: v+'1' for k,v in content.iteritems()})
         ns1.update(ns2=ns2)
@@ -180,14 +180,6 @@ class TestXacroFunctions(unittest.TestCase):
         self.assertEqual(xacro.resolve_macro('xacro:simple', macros), 'simple')
         self.assertEqual(xacro.resolve_macro('xacro:ns1.simple', macros), 'simple1')
         self.assertEqual(xacro.resolve_macro('xacro:ns1.ns2.simple', macros), 'simple2')
-
-        self.assertEqual(xacro.resolve_macro('prefixed', macros), None)
-        self.assertEqual(xacro.resolve_macro('ns1.prefixed', macros), None)
-        self.assertEqual(xacro.resolve_macro('ns1.ns2.prefixed', macros), None)
-
-        self.assertEqual(xacro.resolve_macro('xacro:prefixed', macros), 'prefixed')
-        self.assertEqual(xacro.resolve_macro('xacro:ns1.prefixed', macros), 'prefixed1')
-        self.assertEqual(xacro.resolve_macro('xacro:ns1.ns2.prefixed', macros), 'prefixed2')
 
     def test_parse_macro_arg(self):
         def check(s, param, forward, default, rest):
