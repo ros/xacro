@@ -494,6 +494,9 @@ def grab_macro(elt, macros):
         warning("deprecated use of macro name 'call'; xacro:call became a new keyword")
     if name.find('.') != -1:
         warning("macro names must not contain '.': %s" % name)
+    # always have 'xacro:' namespace in macro name
+    if not name.startswith('xacro:'):
+        name = 'xacro:' + name
 
     # fetch existing or create new macro definition
     macro = macros.get(name, Macro())
@@ -656,9 +659,9 @@ def resolve_macro(fullname, macros):
         try:
             return macros[name]
         except KeyError:
-            # try without xacro: prefix as well
-            if name.startswith('xacro:'):
-                return _resolve([], name.replace('xacro:',''), macros)
+            # try with xacro: prefix as well
+            if allow_non_prefixed_tags and not name.startswith('xacro:'):
+                return _resolve([], 'xacro:' + name, macros)
 
     # try fullname and (namespaces, name) in this order
     m = _resolve([], fullname, macros)
@@ -720,6 +723,7 @@ def handle_macro_call(node, macros, symbols):
     try:
         eval_all(body, macros, scoped)
     except Exception as e:
+        # fill in macro call history for nice error reporting
         if hasattr(e, 'macros'):
             e.macros.append(m)
         else:
