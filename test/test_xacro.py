@@ -181,18 +181,18 @@ class TestXacroFunctions(unittest.TestCase):
         self.assertEqual(xacro.resolve_macro('xacro:ns1.simple', macros), 'simple1')
         self.assertEqual(xacro.resolve_macro('xacro:ns1.ns2.simple', macros), 'simple2')
 
-    def test_parse_macro_arg(self):
-        def check(s, param, forward, default, rest):
-            p, v, r = xacro.parse_macro_arg(s)
-            self.assertEqual(p, param, msg="'{0}' != '{1}' parsing {2}".format(p, param, s))
-            if forward or default:
-                self.assertTrue(v is not None)
-                self.assertEqual(v[0], forward, msg="'{0}' != '{1}' parsing {2}".format(v[0], forward, s))
-                self.assertEqual(v[1], default, msg="'{0}' != '{1}' parsing {2}".format(v[1], default, s))
-            else:
-                self.assertTrue(v is None)
-            self.assertEqual(r, rest, msg="'{0}' != '{1}' parsing {2}".format(r, rest, s))
+    def check_macro_arg(self, s, param, forward, default, rest):
+        p, v, r = xacro.parse_macro_arg(s)
+        self.assertEqual(p, param, msg="'{0}' != '{1}' parsing {2}".format(p, param, s))
+        if forward or default:
+            self.assertTrue(v is not None)
+            self.assertEqual(v[0], forward, msg="'{0}' != '{1}' parsing {2}".format(v[0], forward, s))
+            self.assertEqual(v[1], default, msg="'{0}' != '{1}' parsing {2}".format(v[1], default, s))
+        else:
+            self.assertTrue(v is None)
+        self.assertEqual(r, rest, msg="'{0}' != '{1}' parsing {2}".format(r, rest, s))
 
+    def test_parse_macro_arg(self):
         for forward in ['', '^', '^|']:
             defaults = ['', "f('some string','some other')", "f('a b')"]
             if forward == '^': defaults = ['']
@@ -201,10 +201,12 @@ class TestXacroFunctions(unittest.TestCase):
                 for sep in seps:
                     for rest in ['', ' ', ' bar', ' bar=42']:
                         s = 'foo{0}{1}{2}{3}'.format(sep, forward, default, rest)
-                        check(s, 'foo', 'foo' if forward else None,
-                              default if default else None,
-                              rest.lstrip(' '))
-        check('  foo bar=341', 'foo', None, None, 'bar=341')
+                        self.check_macro_arg(s, 'foo', 'foo' if forward else None,
+                                             default if default else None,
+                                             rest.lstrip())
+    def test_parse_macro_whitespace(self):
+        for ws in ['  ', ' \t ', ' \n ']:
+            self.check_macro_arg(ws + 'foo' + ws + 'bar=42' + ws, 'foo', None, None, 'bar=42' + ws)
 
 # base class providing some convenience functions
 class TestXacroBase(unittest.TestCase):
