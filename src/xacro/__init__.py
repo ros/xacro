@@ -481,7 +481,7 @@ def parse_macro_arg(s):
         return param, (param if forward else None, default), rest
     else:
         # there is no default specified at all
-        result = s.lstrip(' ').split(' ', 1)
+        result = s.lstrip().split(None, 1)
         return result[0], None, result[1] if len(result) > 1 else ''
 
 
