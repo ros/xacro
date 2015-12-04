@@ -988,6 +988,15 @@ def print_location(filestack, err=None, file=sys.stderr):
         print(msg, f, file=file)
         msg = 'included from:'
 
+def process_file(input_file_name, **kwargs):
+    """main processing pipeline"""
+    # initialize file stack for error-reporting
+    restore_filestack([input_file_name])
+    # parse the document into a xml.dom tree
+    doc = parse(None, input_file_name)
+    # perform macro replacement
+    process_doc(doc, **kwargs)
+    return doc
 
 def main():
     opts, input_file_name = process_args(sys.argv[1:])
@@ -997,15 +1006,12 @@ def main():
         message("For more infos, see http://wiki.ros.org/xacro#Processing_Order", color='yellow')
 
     try:
-        # initialize filestack for error-reporting
-        restore_filestack([input_file_name])
-        # parse the document into a xml.dom tree
-        doc = parse(None, input_file_name)
-        # perform macro replacement
-        process_doc(doc, **vars(opts))
+        # open and process file
+        doc = process_file(input_file_name, **vars(opts))
         # open the output file
         out = open_output(opts.output)
 
+    ## error handling
     except xml.parsers.expat.ExpatError as e:
         error("XML parsing error: %s" % str(e), alt_text=None)
         if verbosity > 0:
