@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+# -*- coding: utf-8 -*-
 
 from __future__ import print_function
 
@@ -1134,6 +1135,9 @@ class TestXacroInorder(TestXacro):
             self.assertTrue("foo" in output)  # foo should be reported
             self.assertTrue("bar" not in output)  # bar shouldn't be reported
 
+    def test_extended_character_parsing(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">🍔 </a>'''
+        self.assert_matches(self.quick_xacro(src), src)
 
 if __name__ == '__main__':
     unittest.main()
