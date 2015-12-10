@@ -45,10 +45,13 @@ from .xmlutils import *
 from .cli import process_args
 
 
-try:
+try: # python 2
     _basestr = basestring
-except NameError:
-    _basestr = unicode
+    encoding = { 'encoding': 'utf-8' }
+except NameError: # python 3
+    _basestr = str
+    unicode = str
+    encoding = {}
 
 # Dictionary of substitution args
 substitution_args_context = {}
@@ -1069,7 +1072,7 @@ def main():
         return
 
     # write output
-    out.write(doc.toprettyxml(indent='  ').encode('utf8'))
+    out.write(doc.toprettyxml(indent='  ', **encoding))
     print()
     # only close output file, but not stdout
     if opts.output:
