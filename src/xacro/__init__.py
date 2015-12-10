@@ -47,10 +47,11 @@ from .xmlutils import *
 from .cli import process_args
 
 
-try:
+try: # python 2
     _basestr = basestring
-except NameError:
-    _basestr = unicode
+except NameError: # python 3
+    _basestr = str
+    unicode = str
 
 # Dictionary of substitution args
 substitution_args_context = {}
