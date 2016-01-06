@@ -66,7 +66,7 @@ def process_args(argv, require_input=True):
                       help="write output to FILE instead of stdout")
     parser.add_option("--oldorder", action="store_false", dest="in_order",
                       help="use traditional processing order [deprecated default]")
-    parser.add_option("--inorder", action="store_true", dest="in_order",
+    parser.add_option("--inorder", "-i", action="store_true", dest="in_order",
                       help="use processing in read order")
     parser.add_option("--check-order", action="store_true", dest="do_check_order",
                       help="check document for inorder processing", default=False)
