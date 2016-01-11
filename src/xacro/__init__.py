@@ -47,10 +47,11 @@ from .xmlutils import *
 from .cli import process_args
 
 
-try:
+try: # python 2
     _basestr = basestring
-except NameError:
+except NameError: # python 3
     _basestr = str
+    unicode = str
 
 # Dictionary of substitution args
 substitution_args_context = {}
@@ -129,7 +130,7 @@ class XacroException(Exception):
         self.macros = [] if macro is None else [macro]
 
     def __str__(self):
-        return ' '.join([str(item) for item in
+        return ' '.join([unicode(item) for item in
                          [self.message, self.exc, self.suffix] if item])
 
 
@@ -273,10 +274,10 @@ class Table(object):
             (self.parent and key in self.parent)
 
     def __str__(self):
-        s = str(self.table)
+        s = unicode(self.table)
         if isinstance(self.parent, Table):
             s += "\n  parent: "
-            s += str(self.parent)
+            s += unicode(self.parent)
         return s
 
     def root(self):
@@ -613,7 +614,7 @@ def eval_text(text, symbols):
         return results[0]
     # otherwise join elements to a string
     else:
-        return ''.join(map(str, results))
+        return ''.join(map(unicode, results))
 
 
 def eval_default_arg(forward_variable, default, symbols, macro):
@@ -632,7 +633,7 @@ def handle_dynamic_macro_call(node, macros, symbols):
     name, = reqd_attrs(node, ['macro'])
     if not name:
         raise XacroException("xacro:call is missing the 'macro' attribute")
-    name = str(eval_text(name, symbols))
+    name = unicode(eval_text(name, symbols))
 
     # remove 'macro' attribute and rename tag with resolved macro name
     node.removeAttribute('macro')
@@ -685,7 +686,7 @@ def handle_macro_call(node, macros, symbols):
     params = m.params[:]  # deep copy macro's params list
     for name, value in node.attributes.items():
         if name not in params:
-            raise XacroException("Invalid parameter \"%s\"" % str(name), macro=m)
+            raise XacroException("Invalid parameter \"%s\"" % unicode(name), macro=m)
         params.remove(name)
         scoped._setitem(name, eval_text(value, symbols), unevaluated=False)
         node.setAttribute(name, "")  # suppress second evaluation in eval_all()
@@ -785,7 +786,7 @@ def eval_all(node, macros, symbols):
     """Recursively evaluate node, expanding macros, replacing properties, and evaluating expressions"""
     # evaluate the attributes
     for name, value in node.attributes.items():
-        result = str(eval_text(value, symbols))
+        result = unicode(eval_text(value, symbols))
         node.setAttribute(name, result)
 
     node = node.firstChild
@@ -876,7 +877,7 @@ def eval_all(node, macros, symbols):
 
         # TODO: Also evaluate content of COMMENT_NODEs?
         elif node.nodeType == xml.dom.Node.TEXT_NODE:
-            node.data = str(eval_text(node.data, symbols))
+            node.data = unicode(eval_text(node.data, symbols))
 
         node = next
 
@@ -1024,7 +1025,7 @@ def main():
 
     # error handling
     except xml.parsers.expat.ExpatError as e:
-        error("XML parsing error: %s" % str(e), alt_text=None)
+        error("XML parsing error: %s" % unicode(e), alt_text=None)
         if verbosity > 0:
             print_location(filestack, e)
             print(file=sys.stderr) # add empty separator line before error
@@ -1035,7 +1036,7 @@ def main():
         sys.exit(2)  # indicate failure, but don't print stack trace on XML errors
 
     except Exception as e:
-        error(str(e))
+        error(unicode(e))
         if verbosity > 0:
             print_location(filestack, e)
         if verbosity > 1:
@@ -1051,7 +1052,7 @@ def main():
         return
 
     # write output
-    out.write(doc.toprettyxml(indent='  '))
+    out.write(doc.toprettyxml(indent='  ').encode('utf8'))
     print()
     # only close output file, but not stdout
     if opts.output:
