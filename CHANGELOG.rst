@@ -2,8 +2,8 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.11.0 (2016-03-25)
+-------------------
 * added short option -i as alternative to --inorder
 * refactored main to fix #122, #107
 * added xacro indicator to error message to fix #123
