@@ -777,7 +777,7 @@ def remove_previous_comments(node):
         else:
             # insert empty text node to stop removing of comments in future calls
             # actually this moves the singleton instance to the new location
-            if next: node.parentNode.insertBefore(_empty_text_node, next)
+            if next and _empty_text_node != next: node.parentNode.insertBefore(_empty_text_node, next)
             return
 
 
@@ -1035,7 +1035,9 @@ def main():
         sys.exit(2)  # indicate failure, but don't print stack trace on XML errors
 
     except Exception as e:
-        error(str(e))
+        msg = error(str(e))
+        if not msg: msg = repr(e)
+        error(msg)
         if verbosity > 0:
             print_location(filestack, e)
         if verbosity > 1:
