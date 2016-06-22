@@ -2,8 +2,8 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.11.1 (2016-06-22)
+-------------------
 * workaround for xml.dom.minidom issue
 * ensure non-empty error string
 * Contributors: Robert Haschke
