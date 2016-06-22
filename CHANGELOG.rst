@@ -2,8 +2,8 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.10.7 (2016-06-22)
+-------------------
 * workaround for xml.dom.minidom issue
 * ensure non-empty error string
 * added short option -i as alternative to --inorder
