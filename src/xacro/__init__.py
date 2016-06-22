@@ -1035,7 +1035,9 @@ def main():
         sys.exit(2)  # indicate failure, but don't print stack trace on XML errors
 
     except Exception as e:
-        error(str(e))
+        msg = error(str(e))
+        if not msg: msg = repr(e)
+        error(msg)
         if verbosity > 0:
             print_location(filestack, e)
         if verbosity > 1:
