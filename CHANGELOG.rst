@@ -2,6 +2,12 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* workaround for xml.dom.minidom issue
+* ensure non-empty error string
+* Contributors: Robert Haschke
+
 1.11.0 (2016-03-25)
 -------------------
 * added short option -i as alternative to --inorder
