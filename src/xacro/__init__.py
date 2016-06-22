@@ -777,7 +777,7 @@ def remove_previous_comments(node):
         else:
             # insert empty text node to stop removing of comments in future calls
             # actually this moves the singleton instance to the new location
-            if next: node.parentNode.insertBefore(_empty_text_node, next)
+            if next and _empty_text_node != next: node.parentNode.insertBefore(_empty_text_node, next)
             return
 
 
