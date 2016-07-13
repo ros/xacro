@@ -902,7 +902,7 @@ def parse(inp, filename=None):
     try:
         if isinstance(inp, _basestr):
             return xml.dom.minidom.parseString(inp)
-        elif isinstance(inp, file):
+        elif hasattr(inp, 'read'):
             return xml.dom.minidom.parse(inp)
         return inp
 
