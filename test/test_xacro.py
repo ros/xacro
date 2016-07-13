@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+# -*- coding: utf-8 -*-
 
 from __future__ import print_function
 
@@ -1134,6 +1135,66 @@ class TestXacroInorder(TestXacro):
             self.assertTrue("foo" in output)  # foo should be reported
             self.assertTrue("bar" not in output)  # bar shouldn't be reported
 
+    def test_unicode_literal_parsing(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">🍔 </a>'''
+        self.assert_matches(self.quick_xacro(src), src)
+
+    def test_unicode_property(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+<xacro:property name="burger" value="🍔"/>
+${burger}</a>'''
+        res = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">🍔</a>'''
+        self.assert_matches(self.quick_xacro(src), res)
+
+    def test_unicode_property_attribute(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+<xacro:property name="burger" value="🍔"/>
+<b c="${burger}"/></a>'''
+        res = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro"><b c="🍔"/></a>'''
+        self.assert_matches(self.quick_xacro(src), res)
+
+    def test_unicode_property_block(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+<xacro:property name="burger">
+🍔
+</xacro:property>
+<xacro:insert_block name="burger"/></a>'''
+        res = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">🍔</a>'''
+        self.assert_matches(self.quick_xacro(src), res)
+
+    def test_unicode_conditional(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+<xacro:property name="burger" value="🍔"/>
+<xacro:if value="${burger == u'🍔'}">
+🍟
+</xacro:if>
+</a>'''
+        res = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">🍟</a>'''
+        self.assert_matches(self.quick_xacro(src), res)
+
+    def test_unicode_macro(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+<xacro:macro name="burger" params="how_many">
+${u'🍔' * how_many}
+</xacro:macro>
+<xacro:burger how_many="4"/>
+</a>'''
+        res = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+🍔🍔🍔🍔</a>'''
+        self.assert_matches(self.quick_xacro(src), res)
+
+    def test_unicode_file(self):
+        # run the full xacro processing pipeline on a file with
+        # unicode characters in it and make sure the output is correct
+        test_dir= os.path.abspath(os.path.dirname(__file__))
+        input_path = os.path.join(test_dir, 'emoji.xacro')
+        tmp_dir_name = tempfile.mkdtemp() # create directory we can trash
+        output_path = os.path.join(tmp_dir_name, "out.xml")
+        self.run_xacro(input_path, '-o', output_path)
+        output_file_created = os.path.isfile(output_path)
+        self.assert_matches(xml.dom.minidom.parse(output_path),
+            '''<robot xmlns:xacro="http://ros.org/wiki/xacro">🍔</robot>''')
+        shutil.rmtree(tmp_dir_name) # clean up after ourselves
 
 if __name__ == '__main__':
     unittest.main()
