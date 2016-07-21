@@ -34,6 +34,7 @@ from __future__ import print_function
 
 import getopt
 import glob
+import logging
 import os
 import re
 import string
@@ -342,6 +343,7 @@ def grab_properties(doc):
                                  '"{", "}", or "$" : "' + name + '"')
             else:
                 table[name] = value
+                logging.debug('name={}, val={}'.format(name, table[name]))
 
             elt.parentNode.removeChild(elt)
             elt = None
@@ -645,11 +647,12 @@ def open_output(output_filename):
 
 def main():
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "ho:", ['deps', 'includes'])
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "ho:", ['debug', 'deps', 'includes'])
     except getopt.GetoptError as err:
         print(str(err))
         print_usage(2)
 
+    debug_mode = False
     just_deps = False
     just_includes = False
 
@@ -659,6 +662,8 @@ def main():
             print_usage(0)
         elif o == '-o':
             output_filename = a
+        elif o == '--debug':
+            debug_mode = True
         elif o == '--deps':
             just_deps = True
         elif o == '--includes':
@@ -671,6 +676,12 @@ def main():
     # Process substitution args
     set_substitution_args_context(load_mappings(sys.argv))
 
+    if debug_mode:
+        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+    else:
+        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+    logging.debug('Input xacro file full path={}'.format(args[0]))
     f = open(args[0])
     doc = None
     try:

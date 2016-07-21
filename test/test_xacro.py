@@ -678,3 +678,12 @@ class TestXacro(unittest.TestCase):
   </joint>
 </robot>'''))
 
+    def test_debugmode(self):
+        '''
+        Debug mode of xacro.py only prints some info and may not really be test-able, so
+        in this test we just test if debug mode does not cause any error.
+        '''
+        test_dir = os.path.abspath(os.path.dirname(__file__))
+        xacro_path = os.path.join(test_dir, '..', 'xacro.py')
+        broken_file_path = os.path.join(test_dir, 'broken.xacro')  # Whatever input is fine. 
+        self.assertEqual(subprocess.call([xacro_path, broken_file_path, '--debug']), 1)
