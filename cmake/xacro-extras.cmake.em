@@ -36,7 +36,7 @@ add_custom_target(${PROJECT_NAME}_xacro_generated_to_devel_space_ ALL)
 ##                 TARGET xacro_target INSTALL DESTINATION xml)
 function(xacro_add_xacro_file input)
   # parse arguments
-  set(options INORDER)
+  set(options INORDER URDF_EXTENSION)
   set(oneValueArgs OUTPUT)
   set(multiValueArgs REMAP)
   cmake_parse_arguments(_XACRO "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -60,6 +60,11 @@ function(xacro_add_xacro_file input)
     endif()
   endif()
   # message(STATUS "output: ${output}")
+
+  # append .urdf suffix if required
+  if(_XACRO_URDF_EXTENSION)
+    set(output "${output}.urdf")
+  endif()
 
   # transform _XACRO_INORDER's BOOL value
   if(_XACRO_INORDER)
@@ -157,7 +162,7 @@ endfunction(xacro_install)
 ## in devel and install space.
 function(xacro_add_files)
   # parse arguments
-  set(options INORDER INSTALL)
+  set(options INORDER INSTALL URDF_EXTENSION)
   set(oneValueArgs OUTPUT TARGET DESTINATION)
   set(multiValueArgs REMAP)
   cmake_parse_arguments(_XACRO "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -175,6 +180,13 @@ function(xacro_add_files)
     set(_XACRO_REMAP REMAP ${_XACRO_REMAP})
   endif()
 
+  # transform _XACRO_URDF_EXTENSION's BOOL value
+  if(_XACRO_URDF_EXTENSION)
+    set(_XACRO_URDF_EXTENSION "URDF_EXTENSION")
+  else()
+    unset(_XACRO_URDF_EXTENSION)
+  endif()
+
   # have INSTALL option, but no TARGET: fallback to default target
   if(_XACRO_INSTALL AND NOT _XACRO_TARGET)
     # message(STATUS "xacro: no TARGET specified, using default")
@@ -183,7 +195,7 @@ function(xacro_add_files)
 
   foreach(input ${_XACRO_UNPARSED_ARGUMENTS})
     # call to main function
-    xacro_add_xacro_file(${input} ${_XACRO_OUTPUT} ${_XACRO_INORDER} ${_XACRO_REMAP})
+    xacro_add_xacro_file(${input} ${_XACRO_OUTPUT} ${_XACRO_INORDER} ${_XACRO_URDF_EXTENSION} ${_XACRO_REMAP})
     list(APPEND outputs ${XACRO_OUTPUT_FILE})
   endforeach()
 
