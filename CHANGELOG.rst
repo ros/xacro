@@ -2,6 +2,12 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Convert exception to string in a python2/3 compatible way.
+* Use python2/3 independent check for file type.
+* Contributors: Hans Gaiser, Maarten de Vries
+
 1.11.1 (2016-06-22)
 -------------------
 * workaround for xml.dom.minidom issue
