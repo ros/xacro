@@ -2,8 +2,8 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.11.2 (2017-02-27)
+-------------------
 * Convert exception to string in a python2/3 compatible way.
 * Use python2/3 independent check for file type.
 * Contributors: Hans Gaiser, Maarten de Vries
