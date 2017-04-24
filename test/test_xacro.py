@@ -643,6 +643,21 @@ class TestXacro(TestXacroCommentsIgnored):
     <b />
 </robot>''')
 
+    def test_boolean_if_statement(self):
+        self.assert_matches(
+                self.quick_xacro('''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="condT" value="${True}"/>
+  <xacro:property name="condF" value="${False}"/>
+  <xacro:if value="${condF}"><a /></xacro:if>
+  <xacro:if value="${condT}"><b /></xacro:if>
+  <xacro:if value="${True}"><c /></xacro:if>
+</robot>'''),
+                '''\
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <b /><c />
+</robot>''')
+
     def test_consecutive_if(self):
         self.assert_matches(self.quick_xacro('''
 <a xmlns:xacro="http://www.ros.org/wiki/xacro">
