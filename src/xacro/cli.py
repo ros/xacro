@@ -105,6 +105,8 @@ def process_args(argv, require_input=True):
                         verbosity=1)
     (options, pos_args) = parser.parse_args(filtered_args)
 
+    # --inorder is incompatible to --includes: --inorder processing starts evaluation
+    # while --includes should return the unmodified document
     if options.in_order and options.just_includes:
         parser.error("options --inorder and --includes are mutually exclusive")
 
