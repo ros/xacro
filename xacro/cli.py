@@ -32,7 +32,7 @@
 
 import textwrap
 from optparse import OptionParser, IndentedHelpFormatter
-from rosgraph.names import load_mappings, REMAP
+#from rosgraph.names import load_mappings, REMAP
 from .color import colorize
 
 class ColoredOptionParser(OptionParser):
@@ -93,11 +93,11 @@ def process_args(argv, require_input=True):
                       4: log property definitions and usage on all levels"""))
 
     # process substitution args
-    mappings = load_mappings(argv)
+    mappings = {} # load_mappings(argv)  # TODO: support substitution args
 
     parser.set_defaults(in_order=False, just_deps=False, just_includes=False,
                         verbosity=1)
-    filtered_args = [a for a in argv if REMAP not in a]  # filter-out REMAP args
+    filtered_args = argv # [a for a in argv if REMAP not in a]  # filter-out REMAP args
     (options, pos_args) = parser.parse_args(filtered_args)
 
     if options.in_order and options.just_includes:

@@ -38,8 +38,8 @@ import re
 import sys
 import ast
 import math
+import tempfile
 
-from roslaunch import substitution_args
 from rospkg.common import ResourceNotFound
 from copy import deepcopy
 from .color import warning, error, message
@@ -178,12 +178,14 @@ class Macro(object):
 def eval_extension(s):
     if s == '$(cwd)':
         return os.getcwd()
-    try:
-        return substitution_args.resolve_args(s, context=substitution_args_context, resolve_anon=False)
-    except substitution_args.ArgException as e:
-        raise XacroException("Undefined substitution argument", exc=e)
-    except ResourceNotFound as e:
-        raise XacroException("resource not found:", exc=e)
+    raise XacroException("Substitution arguments are not yet supported")
+
+    # try:
+    #     return substitution_args.resolve_args(s, context=substitution_args_context, resolve_anon=False)
+    # except substitution_args.ArgException as e:
+    #     raise XacroException("Undefined substitution argument", exc=e)
+    # except ResourceNotFound as e:
+    #     raise XacroException("resource not found:", exc=e)
 
 
 do_check_order=False
@@ -1008,6 +1010,26 @@ def process_file(input_file_name, **kwargs):
         doc.insertBefore(comment, first)
 
     return doc
+
+def to_urdf(xacro_path, urdf_path=None):
+    """Convert the given xacro file to URDF file.
+
+    * xacro_path -- the path to the xacro file
+    * urdf_path -- the path to the urdf file
+
+    """
+    # If no URDF path is given, use a temporary file
+    if urdf_path is None:
+        urdf_path = tempfile.mktemp(prefix="%s_" % os.path.basename(xacro_path))
+
+    # open and process file
+    doc = process_file(xacro_path)
+    # open the output file
+    out = open_output(urdf_path)
+    out.write(doc.toprettyxml(indent='  '))
+    
+    return urdf_path  # Return path to the urdf file
+
 
 def main():
     opts, input_file_name = process_args(sys.argv[1:])
