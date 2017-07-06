@@ -40,11 +40,12 @@ import ast
 import math
 import tempfile
 
-from rospkg.common import ResourceNotFound
 from copy import deepcopy
 from .color import warning, error, message
 from .xmlutils import *
 from .cli import process_args
+
+from ament_index_python.packages import get_package_share_directory
 
 
 try:
@@ -178,14 +179,11 @@ class Macro(object):
 def eval_extension(s):
     if s == '$(cwd)':
         return os.getcwd()
-    raise XacroException("Substitution arguments are not yet supported")
-
-    # try:
-    #     return substitution_args.resolve_args(s, context=substitution_args_context, resolve_anon=False)
-    # except substitution_args.ArgException as e:
-    #     raise XacroException("Undefined substitution argument", exc=e)
-    # except ResourceNotFound as e:
-    #     raise XacroException("resource not found:", exc=e)
+    elif s.startswith('$(find '):
+        package = s.replace('$(find ', '').replace(')', '')
+        return get_package_share_directory(package)
+    
+    raise XacroException("Unsupported substitution argument: %s" % s)
 
 
 do_check_order=False
