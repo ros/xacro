@@ -554,15 +554,18 @@ def grab_property(elt, table):
         name = '**' + name
         value = elt  # debug
 
+    replace_node(elt, by=None)
+
     if scope and scope == 'global':
         target_table = table.root()
         unevaluated = False
     elif scope and scope == 'parent':
         if table.parent:
             target_table = table.parent
+            unevaluated = False
         else:
             warning("%s: no parent scope at global scope " % name)
-        unevaluated = False
+            return # cannot store the value, no reason to evaluate it
     else:
         target_table = table
         unevaluated = True
@@ -571,7 +574,6 @@ def grab_property(elt, table):
         value = eval_text(value, table)
 
     target_table._setitem(name, value, unevaluated=unevaluated)
-    replace_node(elt, by=None)
 
 
 # Fill the table of the properties
