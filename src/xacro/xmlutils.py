@@ -118,7 +118,7 @@ def check_attrs(tag, required, optional):
     result = reqd_attrs(tag, required)
     result.extend(opt_attrs(tag, optional))
     allowed = required + optional
-    extra = [a for a in tag.attributes.keys() if a not in allowed]
+    extra = [a for a in tag.attributes.keys() if a not in allowed and not a.startswith("xmlns:")]
     if extra:
         warning("%s: unknown attribute(s): %s" % (tag.nodeName, ', '.join(extra)))
     return result
