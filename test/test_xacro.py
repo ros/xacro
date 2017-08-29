@@ -12,7 +12,10 @@ import tempfile
 import shutil
 import subprocess
 import re
-from cStringIO import StringIO
+try:
+    from cStringIO import StringIO # Python 2.x
+except ImportError:
+    from io import StringIO # Python 3.x
 from contextlib import contextmanager
 
 
@@ -167,8 +170,8 @@ class TestXacroFunctions(unittest.TestCase):
     def test_resolve_macro(self):
         # define three nested macro dicts with the same macro names (keys)
         content = {'xacro:simple': 'simple'}
-        ns2 = dict({k: v+'2' for k,v in content.iteritems()})
-        ns1 = dict({k: v+'1' for k,v in content.iteritems()})
+        ns2 = dict({k: v+'2' for k,v in content.items()})
+        ns1 = dict({k: v+'1' for k,v in content.items()})
         ns1.update(ns2=ns2)
         macros = dict(content)
         macros.update(ns1=ns1)
