@@ -50,7 +50,7 @@ os.chdir(this_dir)
 this_dir_cwd = os.getcwd()
 os.chdir(cur_dir)
 # Remove this dir from path
-sys.path = filter(lambda a: a not in [this_dir, this_dir_cwd], sys.path)
+sys.path = [a for a in sys.path if a not in [this_dir, this_dir_cwd]]
 
 import xacro
 from xacro.color import warning

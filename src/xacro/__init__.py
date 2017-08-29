@@ -950,7 +950,7 @@ def process_doc(doc,
     if do_check_order and symbols.redefined:
         warning("Document is incompatible to --inorder processing.")
         warning("The following properties were redefined after usage:")
-        for k, v in symbols.redefined.iteritems():
+        for k, v in symbols.redefined.items():
             message(k, "redefined in", v, color='yellow')
 
 
