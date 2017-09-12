@@ -30,7 +30,6 @@
 # Authors: Stuart Glaser, William Woodall, Robert Haschke
 # Maintainer: Morgan Quigley <morgan@osrfoundation.org>
 
-import xml
 import xml.dom.minidom
 from .color import warning
 
