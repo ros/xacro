@@ -978,7 +978,7 @@ class TestXacro(TestXacroCommentsIgnored):
   <a list="${list}" tuple="${tuple}" dict="${dic}"/>
 </a>'''),
 '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <a list="[0, 2, 2]" tuple="(0, 2, 2)" dict="{'a': 0, 'c': 2, 'b': 2}"/>
+  <a list="[0, 2, 2]" tuple="(0, 2, 2)" dict="''' +str({'a': 0, 'c': 2, 'b': 2}) + '''"/>
 </a>''')
 
     def test_enforce_xacro_ns(self):
