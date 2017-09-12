@@ -12,6 +12,7 @@ import tempfile
 import shutil
 import subprocess
 import re
+import ast
 try:
     from cStringIO import StringIO # Python 2.x
 except ImportError:
@@ -21,6 +22,34 @@ from contextlib import contextmanager
 
 # regex to match whitespace
 whitespace = re.compile(r'\s+')
+
+def text_values_match(a, b):
+    # generic comparison
+    if whitespace.sub(' ', a).strip() == whitespace.sub(' ', b).strip():
+        return True
+
+    try: # special handling of dicts: ignore order
+        a_dict = ast.literal_eval(a)
+        b_dict = ast.literal_eval(b)
+        if (isinstance(a_dict, dict) and isinstance(b_dict, dict) and a_dict == b_dict):
+            return True
+    except:  # Attribute values aren't dicts
+        pass
+
+    # on failure, try to split a and b at whitespace and compare snippets
+    def match_splits(a_, b_):
+        if len(a_) != len(b_): return False
+        for a, b in zip(a_, b_):
+            if a == b: continue
+            try:  # compare numeric values only up to some accuracy
+                if abs(float(a) - float(b)) > 1.0e-9:
+                    return False
+            except ValueError:  # values aren't numeric and not identical
+                return False
+        return True
+
+    return match_splits(a.split(), b.split())
+
 
 def all_attributes_match(a, b):
     if len(a.attributes) != len(b.attributes):
@@ -35,23 +64,17 @@ def all_attributes_match(a, b):
         if a[0] != b[0]:
             print("Different attribute names: %s and %s" % (a[0], b[0]))
             return False
-        try:
-            if abs(float(a[1]) - float(b[1])) > 1.0e-9:
-                print("Different attribute values: %s and %s" % (a[1], b[1]))
-                return False
-        except ValueError:  # Attribute values aren't numeric
-            if a[1] != b[1]:
-                print("Different attribute values: %s and %s" % (a[1], b[1]))
-                return False
-
+        if not text_values_match(a[1], b[1]):
+            print("Different attribute values: %s and %s" % (a[1], b[1]))
+            return False
     return True
 
+
 def text_matches(a, b):
-    a_norm = whitespace.sub(' ', a)
-    b_norm = whitespace.sub(' ', b)
-    if a_norm.strip() == b_norm.strip(): return True
+    if text_values_match(a, b): return True
     print("Different text values: '%s' and '%s'" % (a, b))
     return False
+
 
 def nodes_match(a, b, ignore_nodes):
     if not a and not b:
@@ -140,6 +163,16 @@ class TestMatchXML(unittest.TestCase):
         self.assertTrue(text_matches("", " \t\n\r"))
     def test_normalize_whitespace_trim(self):
         self.assertTrue(text_matches(" foo bar ", "foo \t\n\r bar"))
+
+    def test_match_similar_numbers(self):
+        self.assertTrue(text_matches("0.123456789", "0.123456788"))
+    def test_mismatch_different_numbers(self):
+        self.assertFalse(text_matches("0.123456789", "0.1234567879"))
+
+    def test_match_unordered_dicts(self):
+        self.assertTrue(text_matches("{'a': 1, 'b': 2, 'c': 3}", "{'c': 3, 'b': 2, 'a': 1}"))
+    def test_mismatch_different_dicts(self):
+        self.assertFalse(text_matches("{'a': 1, 'b': 2, 'c': 3}", "{'c': 3, 'b': 2, 'a': 0}"))
 
     def test_empty_node_vs_whitespace(self):
         self.assertTrue(xml_matches('''<foo/>''', '''<foo> \t\n\r </foo>'''))
