@@ -203,17 +203,13 @@ class Table(object):
     @staticmethod
     def _eval_literal(value):
         if isinstance(value, _basestr):
-            try:
-                # try to evaluate as literal, e.g. number, boolean, etc.
-                # this is needed to handle numbers in property definitions as numbers, not strings
-                evaluated = ast.literal_eval(value.strip())
-                # However, (simple) list, tuple, dict expressions will be evaluated as such too,
-                # which would break expected behaviour. Thus we only accept the evaluation otherwise.
-                if not isinstance(evaluated, (list, dict, tuple)):
-                    return evaluated
-            except:
-                pass
-
+            # try to evaluate as number literal or boolean
+            # this is needed to handle numbers in property definitions as numbers, not strings
+            for f in [int, float, lambda x: get_boolean_value(x, None)]: # order of types is important!
+                try:
+                    return f(value)
+                except:
+                    pass
         return value
 
     def _resolve_(self, key):
@@ -750,9 +746,9 @@ def get_boolean_value(value, condition):
     """
     try:
         if isinstance(value, _basestr):
-            if value == 'true': return True
-            elif value == 'false': return False
-            else: return ast.literal_eval(value)
+            if value == 'true' or value == 'True': return True
+            elif value == 'false' or value == 'False': return False
+            else: return bool(int(value))
         else:
             return bool(value)
     except:
