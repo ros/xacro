@@ -12,7 +12,10 @@ import tempfile
 import shutil
 import subprocess
 import re
-from cStringIO import StringIO
+try:
+    from cStringIO import StringIO # Python 2.x
+except ImportError:
+    from io import StringIO # Python 3.x
 from contextlib import contextmanager
 
 
@@ -167,8 +170,8 @@ class TestXacroFunctions(unittest.TestCase):
     def test_resolve_macro(self):
         # define three nested macro dicts with the same macro names (keys)
         content = {'xacro:simple': 'simple'}
-        ns2 = dict({k: v+'2' for k,v in content.iteritems()})
-        ns1 = dict({k: v+'1' for k,v in content.iteritems()})
+        ns2 = dict({k: v+'2' for k,v in content.items()})
+        ns1 = dict({k: v+'1' for k,v in content.items()})
         ns1.update(ns2=ns2)
         macros = dict(content)
         macros.update(ns1=ns1)
@@ -975,7 +978,7 @@ class TestXacro(TestXacroCommentsIgnored):
   <a list="${list}" tuple="${tuple}" dict="${dic}"/>
 </a>'''),
 '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <a list="[0, 2, 2]" tuple="(0, 2, 2)" dict="{'a': 0, 'c': 2, 'b': 2}"/>
+  <a list="[0, 2, 2]" tuple="(0, 2, 2)" dict="''' +str({'a': 0, 'c': 2, 'b': 2}) + '''"/>
 </a>''')
 
     def test_enforce_xacro_ns(self):
