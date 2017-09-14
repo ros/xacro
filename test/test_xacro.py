@@ -26,22 +26,22 @@ def all_attributes_match(a, b):
     if len(a.attributes) != len(b.attributes):
         print("Different number of attributes")
         return False
-    a_atts = [(a.attributes.item(i).name, a.attributes.item(i).value) for i in range(len(a.attributes))]
-    b_atts = [(b.attributes.item(i).name, b.attributes.item(i).value) for i in range(len(b.attributes))]
+    a_atts = a.attributes.items()
+    b_atts = b.attributes.items()
     a_atts.sort()
     b_atts.sort()
 
-    for i in range(len(a_atts)):
-        if a_atts[i][0] != b_atts[i][0]:
-            print("Different attribute names: %s and %s" % (a_atts[i][0], b_atts[i][0]))
+    for a, b in zip(a_atts, b_atts):
+        if a[0] != b[0]:
+            print("Different attribute names: %s and %s" % (a[0], b[0]))
             return False
         try:
-            if abs(float(a_atts[i][1]) - float(b_atts[i][1])) > 1.0e-9:
-                print("Different attribute values: %s and %s" % (a_atts[i][1], b_atts[i][1]))
+            if abs(float(a[1]) - float(b[1])) > 1.0e-9:
+                print("Different attribute values: %s and %s" % (a[1], b[1]))
                 return False
         except ValueError:  # Attribute values aren't numeric
-            if a_atts[i][1] != b_atts[i][1]:
-                print("Different attribute values: %s and %s" % (a_atts[i][1], b_atts[i][1]))
+            if a[1] != b[1]:
+                print("Different attribute values: %s and %s" % (a[1], b[1]))
                 return False
 
     return True
