@@ -1,8 +1,9 @@
 dist: trusty
-sudo: required
+sudo: enabled
 language: python
 python:
-  - "2.7_with_system_site_packages"
+  - "2.7"
+
 # command to install dependencies
 install:
   - pip install nose coverage pep8
@@ -12,12 +13,13 @@ install:
   - sudo apt-get update
   - sudo apt-get install ros-indigo-catkin ros-indigo-roslaunch ros-indigo-rostest ros-indigo-roslint
   - source /opt/ros/indigo/setup.bash
-  - export ROS_PACKAGE_PATH=`pwd`:$ROS_PACKAGE_PATH
+
 # command to run tests
 script:
+  - export PYTHONPATH=`pwd`/src:$PYTHONPATH
   - mkdir build
   - cd build
-  - cmake ..
+  - cmake -DCMAKE_BUILD_TYPE=Release -DSETUPTOOLS_DEB_LAYOUT=OFF ..
   - make
   - make run_tests
   - catkin_test_results --all ./
