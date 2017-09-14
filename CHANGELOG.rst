@@ -2,6 +2,9 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.12.0 (2017-03-25)
+-------------------
+
 1.11.2 (2017-02-27)
 -------------------
 * Convert exception to string in a python2/3 compatible way.
