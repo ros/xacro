@@ -600,13 +600,14 @@ def eval_text(text, symbols):
     lex = QuickLexer(LEXER)
     lex.lex(text)
     while lex.peek():
-        if lex.peek()[0] == lex.EXPR:
+        id = lex.peek()[0]
+        if id == lex.EXPR:
             results.append(handle_expr(lex.next()[1][2:-1]))
-        elif lex.peek()[0] == lex.EXTENSION:
+        elif id == lex.EXTENSION:
             results.append(handle_extension(lex.next()[1][2:-1]))
-        elif lex.peek()[0] == lex.TEXT:
+        elif id == lex.TEXT:
             results.append(lex.next()[1])
-        elif lex.peek()[0] == lex.DOLLAR_DOLLAR_BRACE:
+        elif id == lex.DOLLAR_DOLLAR_BRACE:
             results.append(lex.next()[1][1:])
     # return single element as is, i.e. typed
     if len(results) == 1:
