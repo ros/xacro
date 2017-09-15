@@ -203,17 +203,13 @@ class Table(object):
     @staticmethod
     def _eval_literal(value):
         if isinstance(value, _basestr):
-            try:
-                # try to evaluate as literal, e.g. number, boolean, etc.
-                # this is needed to handle numbers in property definitions as numbers, not strings
-                evaluated = ast.literal_eval(value.strip())
-                # However, (simple) list, tuple, dict expressions will be evaluated as such too,
-                # which would break expected behaviour. Thus we only accept the evaluation otherwise.
-                if not isinstance(evaluated, (list, dict, tuple)):
-                    return evaluated
-            except:
-                pass
-
+            # try to evaluate as number literal or boolean
+            # this is needed to handle numbers in property definitions as numbers, not strings
+            for f in [int, float, lambda x: get_boolean_value(x, None)]: # order of types is important!
+                try:
+                    return f(value)
+                except:
+                    pass
         return value
 
     def _resolve_(self, key):
@@ -577,10 +573,10 @@ def grab_properties(elt, table):
         elt = next
 
 
-LEXER = QuickLexer(DOLLAR_DOLLAR_BRACE=r"\$\$+\{",
-                   EXPR=r"\$\{[^\}]*\}",
-                   EXTENSION=r"\$\([^\)]*\)",
-                   TEXT=r"([^\$]|\$[^{(]|\$$)+")
+LEXER = QuickLexer(DOLLAR_DOLLAR_BRACE=r"^\$\$+(\{|\()", # multiple $ in a row, followed by { or (
+                   EXPR=r"^\$\{[^\}]*\}",       # stuff starting with ${
+                   EXTENSION=r"^\$\([^\)]*\)",  # stuff starting with $(
+                   TEXT=r"[^$]+|\$[^{($]+|\$$") # any text w/o $  or  $ following any chars except {($  or  single $
 
 
 # evaluate text and return typed value
@@ -600,13 +596,14 @@ def eval_text(text, symbols):
     lex = QuickLexer(LEXER)
     lex.lex(text)
     while lex.peek():
-        if lex.peek()[0] == lex.EXPR:
+        id = lex.peek()[0]
+        if id == lex.EXPR:
             results.append(handle_expr(lex.next()[1][2:-1]))
-        elif lex.peek()[0] == lex.EXTENSION:
+        elif id == lex.EXTENSION:
             results.append(handle_extension(lex.next()[1][2:-1]))
-        elif lex.peek()[0] == lex.TEXT:
+        elif id == lex.TEXT:
             results.append(lex.next()[1])
-        elif lex.peek()[0] == lex.DOLLAR_DOLLAR_BRACE:
+        elif id == lex.DOLLAR_DOLLAR_BRACE:
             results.append(lex.next()[1][1:])
     # return single element as is, i.e. typed
     if len(results) == 1:
@@ -750,9 +747,9 @@ def get_boolean_value(value, condition):
     """
     try:
         if isinstance(value, _basestr):
-            if value == 'true': return True
-            elif value == 'false': return False
-            else: return ast.literal_eval(value)
+            if value == 'true' or value == 'True': return True
+            elif value == 'false' or value == 'False': return False
+            else: return bool(int(value))
         else:
             return bool(value)
     except:
@@ -950,7 +947,7 @@ def process_doc(doc,
     if do_check_order and symbols.redefined:
         warning("Document is incompatible to --inorder processing.")
         warning("The following properties were redefined after usage:")
-        for k, v in symbols.redefined.iteritems():
+        for k, v in symbols.redefined.items():
             message(k, "redefined in", v, color='yellow')
 
 
