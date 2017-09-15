@@ -573,6 +573,9 @@ def grab_properties(elt, table):
         elt = next
 
 
+# TODO: The order of arguments here is relevant!
+# However, python 3.0 - 3.5 doesn't preserve order of keyword arguments
+# This is only fixed with https://www.python.org/dev/peps/pep-0468 in 3.6
 LEXER = QuickLexer(DOLLAR_DOLLAR_BRACE=r"\$\$+\{",
                    EXPR=r"\$\{[^\}]*\}",
                    EXTENSION=r"\$\([^\)]*\)",
