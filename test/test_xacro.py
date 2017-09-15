@@ -447,13 +447,13 @@ class TestXacro(TestXacroCommentsIgnored):
 
     def test_escaping_dollar_braces(self):
         self.assert_matches(
-                self.quick_xacro('''<a b="$${foo}" c="$$${foo}" />'''),
-                '''<a b="${foo}" c="$${foo}" />''')
+                self.quick_xacro('''<a b="$${foo}" c="$$${foo}" d="text $${foo}" e="text $$${foo}" f="$$(pwd)" />'''),
+                '''<a b="${foo}" c="$${foo}" d="text ${foo}" e="text $${foo}" f="$(pwd)" />''')
 
     def test_just_a_dollar_sign(self):
         self.assert_matches(
-                self.quick_xacro('''<a b="$" />'''),
-                '''<a b="$" />''')
+                self.quick_xacro('''<a b="$" c="text $" d="text $ text"/>'''),
+                '''<a b="$" c="text $" d="text $ text"/>''')
 
     def test_multiple_insert_blocks(self):
         self.assert_matches(
