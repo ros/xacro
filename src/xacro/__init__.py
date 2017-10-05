@@ -103,6 +103,8 @@ def load_yaml(filename):
     finally:
         f.close()
         restore_filestack(oldstack)
+        global all_includes
+        all_includes.append(filename)
 
 
 # global symbols dictionary
