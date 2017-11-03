@@ -38,6 +38,7 @@ import re
 import sys
 import ast
 import math
+import imp
 
 from roslaunch import substitution_args
 from rospkg.common import ResourceNotFound
@@ -58,6 +59,9 @@ substitution_args_context = {}
 
 # Stack of currently processed files
 filestack = []
+
+# List of imported user modules
+modules = []
 
 def push_file(filename):
     """
@@ -861,8 +865,16 @@ def eval_all(node, macros, symbols):
                 else:
                     replace_node(node, by=None)
 
+            elif node.tagName == 'xacro:python':
+                path, module = [eval_text(a, symbols) for a in reqd_attrs(node, ['file', 'module'])]
+                modules.append(imp.load_source(module, path))
+                replace_node(node, by=None)
+
             elif handle_macro_call(node, macros, symbols):
                 pass  # handle_macro_call does all the work of expanding the macro
+
+            elif handle_python_call(node, symbols):
+                pass
 
             else:
                 # these are the non-xacro tags
@@ -876,6 +888,29 @@ def eval_all(node, macros, symbols):
             node.data = str(eval_text(node.data, symbols))
 
         node = next
+
+def handle_python_call(node, symbols):
+    macro_name = node.tagName.split(":")[-1]
+
+    function = None
+    for m in modules:
+        if hasattr(m, macro_name):
+            function = getattr(m, macro_name)
+
+    if not function:
+        return False
+
+    kwargs = {}
+    for name, value in node.attributes.items():
+        kwargs[name] = eval_text(value, symbols)
+
+    substitution = function(**kwargs)
+    parsed = xml.dom.minidom.parseString(substitution)
+
+    remove_previous_comments(node)
+    replace_node(node, by=parsed, content_only=True)
+
+    return True
 
 
 def parse(inp, filename=None):
