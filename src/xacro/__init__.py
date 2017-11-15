@@ -531,9 +531,20 @@ def grab_property(elt, table):
     assert(elt.tagName in ['property', 'xacro:property'])
     remove_previous_comments(elt)
 
-    name, value, scope = check_attrs(elt, ['name'], ['value', 'scope'])
+    name, value, default, scope = check_attrs(elt, ['name'], ['value', 'default', 'scope'])
     if not is_valid_name(name):
         raise XacroException('Property names must be valid python identifiers: ' + name)
+    if value is not None and default is not None:
+        raise XacroException('Property cannot define both a default and a value: ' + name)
+
+    if default is not None:
+        if scope is not None:
+            warning("%s: default property value can only be defined on local scope" % name)
+        if name not in table:
+            value = default
+        else:
+            replace_node(elt, by=None)
+            return
 
     if value is None:
         name = '**' + name
@@ -566,6 +577,8 @@ def grab_properties(elt, table):
         next = next_sibling_element(elt)
         if elt.tagName in ['property', 'xacro:property'] \
                 and check_deprecated_tag(elt.tagName):
+            if "default" in elt.attributes.keys():
+                raise XacroException('default property value supported with --inorder option only')
             grab_property(elt, table)
         else:
             grab_properties(elt, table)
