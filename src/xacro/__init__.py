@@ -132,7 +132,7 @@ class XacroException(Exception):
 
     def __str__(self):
         items = [super(XacroException, self).__str__(), self.exc, self.suffix]
-        return ' '.join([str(e) for e in items if e])
+        return ' '.join([str(e) for e in items if e not in ['', 'None']])
 
 
 verbosity = 1
@@ -1039,7 +1039,7 @@ def main():
         sys.exit(2)  # indicate failure, but don't print stack trace on XML errors
 
     except Exception as e:
-        msg = error(str(e))
+        msg = str(e)
         if not msg: msg = repr(e)
         error(msg)
         if verbosity > 0:
