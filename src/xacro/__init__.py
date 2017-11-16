@@ -109,7 +109,7 @@ def load_yaml(filename):
 # taking simple security measures to forbid access to __builtins__
 # only the very few symbols explicitly listed are allowed
 # for discussion, see: http://nedbatchelder.com/blog/201206/eval_really_is_dangerous.html
-global_symbols = {'__builtins__': {k: __builtins__[k] for k in ['list', 'dict', 'map', 'str', 'float', 'int']}}
+global_symbols = {'__builtins__': {k: __builtins__[k] for k in ['list', 'dict', 'map', 'str', 'float', 'int', 'True', 'False']}}
 # also define all math symbols and functions
 global_symbols.update(math.__dict__)
 # allow to import dicts from yaml
@@ -539,15 +539,18 @@ def grab_property(elt, table):
         name = '**' + name
         value = elt  # debug
 
+    replace_node(elt, by=None)
+
     if scope and scope == 'global':
         target_table = table.root()
         unevaluated = False
     elif scope and scope == 'parent':
         if table.parent:
             target_table = table.parent
+            unevaluated = False
         else:
             warning("%s: no parent scope at global scope " % name)
-        unevaluated = False
+            return # cannot store the value, no reason to evaluate it
     else:
         target_table = table
         unevaluated = True
@@ -556,7 +559,6 @@ def grab_property(elt, table):
         value = eval_text(value, table)
 
     target_table._setitem(name, value, unevaluated=unevaluated)
-    replace_node(elt, by=None)
 
 
 # Fill the table of the properties
@@ -1008,7 +1010,7 @@ def process_file(input_file_name, **kwargs):
 
 def main():
     opts, input_file_name = process_args(sys.argv[1:])
-    if opts.in_order == False:
+    if opts.in_order == False and not opts.just_includes:
         warning("xacro: Traditional processing is deprecated. Switch to --inorder processing!")
         message("To check for compatibility of your document, use option --check-order.", color='yellow')
         message("For more infos, see http://wiki.ros.org/xacro#Processing_Order", color='yellow')
