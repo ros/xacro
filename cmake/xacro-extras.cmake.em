@@ -12,7 +12,7 @@ add_custom_target(${PROJECT_NAME}_xacro_generated_to_devel_space_ ALL)
 
 
 ## xacro_add_xacro_file(<input> [<output>] [INORDER] [REMAP <arg> <arg> ...]
-##                      [OUTPUT <variable>])
+##                      [OUTPUT <variable>] DEPENDS <arg> <arg>)
 ##
 ## Creates a command run xacro on <input> like so:
 ## xacro [--inorder] -o <output> <input> [<remap args>]
@@ -38,7 +38,7 @@ function(xacro_add_xacro_file input)
   # parse arguments
   set(options INORDER)
   set(oneValueArgs OUTPUT)
-  set(multiValueArgs REMAP)
+  set(multiValueArgs REMAP DEPENDS)
   cmake_parse_arguments(_XACRO "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
   ## process arguments
@@ -99,7 +99,7 @@ ${_xacro_err}")
   ## command to actually call xacro
   add_custom_command(OUTPUT ${output}
     COMMAND ${CATKIN_ENV} ${_xacro_py} ${_XACRO_INORDER} -o ${abs_output} ${input} ${_XACRO_REMAP}
-    DEPENDS ${input} ${_xacro_deps_result}
+    DEPENDS ${input} ${_xacro_deps_result} ${_XACRO_DEPENDS}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMENT "xacro: generating ${output} from ${input}"
     )
@@ -149,7 +149,7 @@ function(xacro_install target)
 endfunction(xacro_install)
 
 
-## xacro_add_files(<file> [<file> ...] [INORDER] [REMAP <arg> <arg> ...]
+## xacro_add_files(<file> [<file> ...] [INORDER] [REMAP <arg> <arg> ...] [DEPENDS <arg> <arg>] 
 ##                 [TARGET <target>] [INSTALL [DESTINATION <path>]])
 ##
 ## create make <target> to generate xacro files
@@ -159,7 +159,7 @@ function(xacro_add_files)
   # parse arguments
   set(options INORDER INSTALL)
   set(oneValueArgs OUTPUT TARGET DESTINATION)
-  set(multiValueArgs REMAP)
+  set(multiValueArgs REMAP DEPENDS)
   cmake_parse_arguments(_XACRO "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
   ## process arguments
@@ -174,6 +174,10 @@ function(xacro_add_files)
   if(_XACRO_REMAP)
     set(_XACRO_REMAP REMAP ${_XACRO_REMAP})
   endif()
+  # prepare DEPENDS args (prepending DEPENDS)
+  if(_XACRO_DEPENDS)
+    set(_XACRO_DEPENDS DEPENDS ${_XACRO_DEPENDS})
+  endif()
 
   # have INSTALL option, but no TARGET: fallback to default target
   if(_XACRO_INSTALL AND NOT _XACRO_TARGET)
@@ -183,7 +187,7 @@ function(xacro_add_files)
 
   foreach(input ${_XACRO_UNPARSED_ARGUMENTS})
     # call to main function
-    xacro_add_xacro_file(${input} ${_XACRO_OUTPUT} ${_XACRO_INORDER} ${_XACRO_REMAP})
+    xacro_add_xacro_file(${input} ${_XACRO_OUTPUT} ${_XACRO_INORDER} ${_XACRO_REMAP} ${_XACRO_DEPENDS})
     list(APPEND outputs ${XACRO_OUTPUT_FILE})
   endforeach()
 
