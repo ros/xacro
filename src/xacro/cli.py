@@ -32,8 +32,7 @@
 
 import textwrap
 from optparse import OptionParser, IndentedHelpFormatter
-from rosgraph.names import load_mappings, REMAP
-from .color import colorize
+from .color import colorize, warning
 
 class ColoredOptionParser(OptionParser):
     def error(self, message):
@@ -93,11 +92,17 @@ def process_args(argv, require_input=True):
                       4: log property definitions and usage on all levels"""))
 
     # process substitution args
-    mappings = load_mappings(argv)
+    try:
+        from rosgraph.names import load_mappings, REMAP
+        mappings = load_mappings(argv)
+        filtered_args = [a for a in argv if REMAP not in a]  # filter-out REMAP args
+    except ImportError as e:
+        warning(e)
+        mappings = {}
+        filtered_args = argv
 
     parser.set_defaults(in_order=False, just_deps=False, just_includes=False,
                         verbosity=1)
-    filtered_args = [a for a in argv if REMAP not in a]  # filter-out REMAP args
     (options, pos_args) = parser.parse_args(filtered_args)
 
     if options.in_order and options.just_includes:
