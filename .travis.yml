@@ -8,13 +8,19 @@ python:
 
 # command to install dependencies
 install:
-  - pip install nose coverage pep8
+  - pip install nose coverage pep8 flake8
   - pip install rospkg PyYAML argparse catkin_pkg rosdep rosdistro
   - sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu trusty main" > /etc/apt/sources.list.d/ros-latest.list'
   - wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
   - sudo apt-get update
   - sudo apt-get install ros-indigo-catkin ros-indigo-roslaunch ros-indigo-rostest ros-indigo-roslint
   - source /opt/ros/indigo/setup.bash
+
+before_script:
+  # stop the build if there are Python syntax errors or undefined names
+  - flake8 . --count --select=E901,E999,F821,F822,F823 --show-source --statistics
+  # exit-zero treats all errors as warnings.  The GitHub editor is 127 chars wide
+  - flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
 # command to run tests
 script:
