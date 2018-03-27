@@ -86,13 +86,14 @@ function(xacro_add_xacro_file input)
   message(STATUS "xacro: determining deps for: " ${input} " ...")
   execute_process(COMMAND ${CATKIN_ENV} ${_xacro_py} ${_XACRO_INORDER} --deps ${input} ${_XACRO_REMAP}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    RESULT_VARIABLE _xacro_result
     ERROR_VARIABLE _xacro_err
     OUTPUT_VARIABLE _xacro_deps_result
     OUTPUT_STRIP_TRAILING_WHITESPACE)
-  if(_xacro_err)
+  if(_xacro_result)
     message(WARNING "failed to determine deps for: ${input}
 ${_xacro_err}")
-  endif(_xacro_err)
+  endif(_xacro_result)
 
   separate_arguments(_xacro_deps_result)
 
