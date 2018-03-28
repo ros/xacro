@@ -2,6 +2,21 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* extend list of allowed python builtins: min, max, round
+* `#173 <https://github.com/ros/xacro/issues/173>`_: allow default values for properties
+* `#172 <https://github.com/ros/xacro/issues/172>`_: fix formatting of XacroException
+* `#182 <https://github.com/ros/xacro/issues/182>`_: suppress xacro warnings when determining dependencies
+* `#171 <https://github.com/ros/xacro/issues/171>`_: fix dependency handling (--deps option)
+  * allow to specify extra dependencies for xacro_add_xacro_file(s)
+  * consider yaml files loaded with load_yaml
+* fixes for `#148 <https://github.com/ros/xacro/issues/148>`_ and `#149 <https://github.com/ros/xacro/issues/149>`_
+* fix `#156 <https://github.com/ros/xacro/issues/156>`_: avoid access to undefined variable target_table
+* fix `#148 <https://github.com/ros/xacro/issues/148>`_: silently ignore extra attributes that are namespace specifiers
+* allow True/False literals in python expressions
+* Contributors: Robert Haschke, Morgan Quigley, Steven Peters
+
 1.11.2 (2017-02-27)
 -------------------
 * Convert exception to string in a python2/3 compatible way.
