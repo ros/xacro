@@ -7,6 +7,7 @@
     Xacro is an XML macro language. With xacro, you can construct shorter and more readable XML files by using macros that expand to larger XML expressions.
   </description>
 
+  <maintainer email="rhaschke@techfak.uni-bielefeld.de">Robert Haschke</maintainer>
   <maintainer email="morgan@osrfoundation.org">Morgan Quigley</maintainer>
 
   <license>BSD</license>
