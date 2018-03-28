@@ -2,8 +2,8 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.11.3 (2018-03-28)
+-------------------
 * extend list of allowed python builtins: min, max, round
 * `#173 <https://github.com/ros/xacro/issues/173>`_: allow default values for properties
 * `#172 <https://github.com/ros/xacro/issues/172>`_: fix formatting of XacroException
