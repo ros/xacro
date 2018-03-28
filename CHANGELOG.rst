@@ -2,8 +2,8 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.12.1 (2018-03-28)
+-------------------
 * `#183 <https://github.com/ros/xacro/issues/183>`_: unicode support for python2 and python3
 * `#178 <https://github.com/ros/xacro/issues/178>`_: extend list of allowed python builtins: min, max, round
 * `#182 <https://github.com/ros/xacro/issues/182>`_: suppress xacro warnings when determining dependencies
