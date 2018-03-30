@@ -5,10 +5,10 @@ include(CMakeParseArguments)
 find_package(xacro REQUIRED)
 
 ## manual usage of eval
-xacro_add_xacro_file(../include1.xml manual1.xml INORDER)
+xacro_add_xacro_file(../include1.xml manual1.xml)
 list(APPEND xacro_outputs ${XACRO_OUTPUT_FILE})
 
-xacro_add_xacro_file(../include2.xml manual2.xml INORDER OUTPUT MY_OUTPUT_VAR)
+xacro_add_xacro_file(../include2.xml manual2.xml OUTPUT MY_OUTPUT_VAR)
 list(APPEND xacro_outputs ${MY_OUTPUT_VAR})
 
 add_custom_target(xacro_target ALL DEPENDS ${xacro_outputs})

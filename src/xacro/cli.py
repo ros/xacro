@@ -63,8 +63,8 @@ def process_args(argv, require_input=True):
                                  formatter=IndentedHelpFormatterWithNL())
     parser.add_option("-o", dest="output", metavar="FILE",
                       help="write output to FILE instead of stdout")
-    parser.add_option("--oldorder", action="store_false", dest="in_order",
-                      help="use traditional processing order [deprecated default]")
+    parser.add_option("--legacy", action="store_false", dest="in_order",
+                      help="use legacy processing order")
     parser.add_option("--inorder", "-i", action="store_true", dest="in_order",
                       help="use processing in read order")
     parser.add_option("--check-order", action="store_true", dest="do_check_order",
@@ -101,9 +101,13 @@ def process_args(argv, require_input=True):
         mappings = {}
         filtered_args = argv
 
-    parser.set_defaults(in_order=False, just_deps=False, just_includes=False,
-                        verbosity=1)
+    parser.set_defaults(just_deps=False, just_includes=False, verbosity=1)
     (options, pos_args) = parser.parse_args(filtered_args)
+    try:
+        if options.in_order:
+            warning("xacro: in-order processing became default in ROS Melodic. You can drop the option.")
+    except AttributeError:
+        options.in_order = True  # inorder is default
 
     # --inorder is incompatible to --includes: --inorder processing starts evaluation
     # while --includes should return the unmodified document

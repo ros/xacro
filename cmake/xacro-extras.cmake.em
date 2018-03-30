@@ -11,11 +11,11 @@ set(_xacro_py
 add_custom_target(${PROJECT_NAME}_xacro_generated_to_devel_space_ ALL)
 
 
-## xacro_add_xacro_file(<input> [<output>] [INORDER] [REMAP <arg> <arg> ...]
+## xacro_add_xacro_file(<input> [<output>] [LEGACY] [REMAP <arg> <arg> ...]
 ##                      [OUTPUT <variable>] DEPENDS <arg> <arg>)
 ##
 ## Creates a command run xacro on <input> like so:
-## xacro [--inorder] -o <output> <input> [<remap args>]
+## xacro [--legacy] -o <output> <input> [<remap args>]
 ##
 ## If <output> was not specified, it is determined from <input> removing the suffix .xacro
 ## The absolute output file name is returned in variable <output>, which defaults to
@@ -23,7 +23,7 @@ add_custom_target(${PROJECT_NAME}_xacro_generated_to_devel_space_ ALL)
 ##
 ## In order to actually build and install, you need to provide a custom target:
 ## foreach(xacro_file ${MY_XACRO_FILES})
-##   xacro_add_xacro_file(${xacro_file} INORDER REMAP bar:=foo foo:=bar)
+##   xacro_add_xacro_file(${xacro_file} REMAP bar:=foo foo:=bar)
 ##   list(APPEND xacro_outputs ${XACRO_OUTPUT_FILE})
 ## endforeach()
 ## xacro_install(xacro_target ${xacro_outputs} DESTINATION xml)
@@ -32,11 +32,12 @@ add_custom_target(${PROJECT_NAME}_xacro_generated_to_devel_space_ ALL)
 ## Normal install() only installs into install space!
 ##
 ## For conveniency, you might want to use xacro_add_files(), which does the same:
-## xacro_add_files(${MY_XACRO_FILES} INORDER REMAP bar:=foo foo:=bar
+## xacro_add_files(${MY_XACRO_FILES} REMAP bar:=foo foo:=bar
 ##                 TARGET xacro_target INSTALL DESTINATION xml)
 function(xacro_add_xacro_file input)
   # parse arguments
-  set(options INORDER)
+  set(_XACRO_INORDER TRUE)
+  set(options INORDER LEGACY)
   set(oneValueArgs OUTPUT)
   set(multiValueArgs REMAP DEPENDS)
   cmake_parse_arguments(_XACRO "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -61,9 +62,12 @@ function(xacro_add_xacro_file input)
   endif()
   # message(STATUS "output: ${output}")
 
-  # transform _XACRO_INORDER's BOOL value
-  if(_XACRO_INORDER)
-    set(_XACRO_INORDER "--inorder")
+  # process _XACRO_INORDER / _XACRO_LEGACY options
+  if(_XACRO_LEGACY)
+    set(_XACRO_INORDER FALSE)
+  endif()
+  if(NOT _XACRO_INORDER)
+    set(_XACRO_INORDER "--legacy")
   else()
     unset(_XACRO_INORDER)
   endif()

@@ -269,8 +269,8 @@ class TestXacroBase(unittest.TestCase):
 
     def run_xacro(self, input_path, *args):
         args = list(args)
-        if self.in_order:
-            args.append('--inorder')
+        if not self.in_order:
+            args.append('--legacy')
         test_dir = os.path.abspath(os.path.dirname(__file__))
         xacro_path = os.path.join(test_dir, '..', 'scripts', 'xacro')
         subprocess.call([xacro_path, input_path] + args)
@@ -1182,7 +1182,7 @@ class TestXacroInorder(TestXacro):
 <xacro:property name="bar" value="dummy"/>
 <xacro:property name="foo" value="21"/></a>'''
         with capture_stderr(self.quick_xacro, src, do_check_order=True) as (result, output):
-            self.assertTrue("Document is incompatible to --inorder processing." in output)
+            self.assertTrue("Document is incompatible to in-order processing." in output)
             self.assertTrue("foo" in output)  # foo should be reported
             self.assertTrue("bar" not in output)  # bar shouldn't be reported
 

@@ -203,7 +203,7 @@ class Table(object):
         # the following variables are for debugging / checking only
         self.depth = self.parent.depth + 1 if self.parent else 0
         if do_check_order:
-            # this is for smooth transition from deprecated to --inorder processing
+            # this is for smooth transition from deprecated to in-order processing
             self.used = set() # set of used properties
             self.redefined = dict() # set of properties redefined after usage
 
@@ -368,7 +368,7 @@ def get_include_files(filename_spec, symbols):
         filename_spec = abs_filename_spec(eval_text(filename_spec, symbols))
     except XacroException as e:
         if e.exc and isinstance(e.exc, NameError) and symbols is None:
-            raise XacroException('variable filename is supported with --inorder option only')
+            raise XacroException('variable filename is supported with in-order option only')
         else:
             raise
 
@@ -412,7 +412,7 @@ def process_include(elt, macros, symbols, func):
             macros = ns_macros
             symbols = ns_symbols
         except TypeError:
-            raise XacroException('namespaces are supported with --inorder option only')
+            raise XacroException('namespaces are supported with in-order option only')
 
     for filename in get_include_files(filename_spec, symbols):
         # extend filestack
@@ -587,7 +587,7 @@ def grab_properties(elt, table):
         if elt.tagName in ['property', 'xacro:property'] \
                 and check_deprecated_tag(elt.tagName):
             if "default" in elt.attributes.keys():
-                raise XacroException('default property value supported with --inorder option only')
+                raise XacroException('default property value supported with in-order option only')
             grab_property(elt, table)
         else:
             grab_properties(elt, table)
@@ -931,7 +931,7 @@ def parse(inp, filename=None):
 
 
 def process_doc(doc,
-                in_order=False, just_deps=False, just_includes=False,
+                in_order=True, just_deps=False, just_includes=False,
                 mappings=None, xacro_ns=True, **kwargs):
     global verbosity, do_check_order
     verbosity = kwargs.get('verbosity', verbosity)
@@ -967,7 +967,7 @@ def process_doc(doc,
     substitution_args_context['arg'] = {}
 
     if do_check_order and symbols.redefined:
-        warning("Document is incompatible to --inorder processing.")
+        warning("Document is incompatible to in-order processing.")
         warning("The following properties were redefined after usage:")
         for k, v in symbols.redefined.items():
             message(k, "redefined in", v, color='yellow')
@@ -1031,7 +1031,7 @@ def process_file(input_file_name, **kwargs):
 def main():
     opts, input_file_name = process_args(sys.argv[1:])
     if opts.in_order == False and not opts.just_includes:
-        warning("xacro: Traditional processing is deprecated. Switch to --inorder processing!")
+        warning("xacro: Legacy processing is deprecated since ROS Jade and will be removed in N-turtle.")
         message("To check for compatibility of your document, use option --check-order.", color='yellow')
         message("For more infos, see http://wiki.ros.org/xacro#Processing_Order", color='yellow')
 
