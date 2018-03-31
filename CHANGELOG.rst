@@ -2,6 +2,11 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* make --inorder processing the default
+* Contributors: Robert Haschke
+
 1.12.1 (2018-03-28)
 -------------------
 * `#183 <https://github.com/ros/xacro/issues/183>`_: unicode support for python2 and python3
