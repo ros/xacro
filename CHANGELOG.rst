@@ -2,8 +2,8 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.13.0 (2018-03-31)
+-------------------
 * make --inorder processing the default
 * Contributors: Robert Haschke
 
