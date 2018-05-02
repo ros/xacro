@@ -481,6 +481,9 @@ def parse_macro_arg(s):
         # there is a default value specified for param
         param, forward, default, rest = m.groups()
         if not default: default = None
+        if default.startswith("'") and default.endswith("'"):
+            default = default[1:-1]
+        print(param, default)
         return param, (param if forward else None, default), rest
     else:
         # there is no default specified at all
