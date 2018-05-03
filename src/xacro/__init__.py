@@ -210,6 +210,9 @@ class Table(object):
     @staticmethod
     def _eval_literal(value):
         if isinstance(value, _basestr):
+            # remove single quotes from escaped string
+            if len(value) >= 2 and value[0] == "'" and value[-1] == "'":
+                return value[1:-1]
             # try to evaluate as number literal or boolean
             # this is needed to handle numbers in property definitions as numbers, not strings
             for f in [int, float, lambda x: get_boolean_value(x, None)]: # order of types is important!
