@@ -2,6 +2,12 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.12.2 (2018-05-03)
+-------------------
+* fix parsing of quoted strings in default args for xacro params (`#187 <https://github.com/ros/xacro/issues/187>`_)
+* fix xacro-cmake test
+* Contributors: Robert Haschke
+
 1.12.1 (2018-03-28)
 -------------------
 * `#183 <https://github.com/ros/xacro/issues/183>`_: unicode support for python2 and python3
