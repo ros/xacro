@@ -402,6 +402,12 @@ class TestXacro(TestXacroCommentsIgnored):
   <foo lst="${[1,2,3]}"/></a>'''),
         '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">3</a>''')
 
+    def test_macro_params_escaped_string(self):
+        self.assert_matches(self.quick_xacro('''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <xacro:macro name="foo" params="a='1 -2' c=3"><bar a="${a}" c="${c}"/></xacro:macro>
+    <xacro:foo/></a>'''),
+                            '''<a xmlns:xacro="http://www.ros.org/wiki/xacro"><bar a="1 -2" c="3"/></a>''')
+
     def test_property_replacement(self):
         self.assert_matches(
                 self.quick_xacro('''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
