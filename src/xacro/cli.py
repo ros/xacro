@@ -32,7 +32,7 @@
 
 import textwrap
 from optparse import OptionParser, IndentedHelpFormatter
-from .color import colorize, warning
+from .color import colorize, warning, message
 
 class ColoredOptionParser(OptionParser):
     def error(self, message):
@@ -103,11 +103,15 @@ def process_args(argv, require_input=True):
 
     parser.set_defaults(just_deps=False, just_includes=False, verbosity=1)
     (options, pos_args) = parser.parse_args(filtered_args)
-    try:
-        if options.in_order:
-            warning("xacro: in-order processing became default in ROS Melodic. You can drop the option.")
-    except AttributeError:
-        options.in_order = True  # inorder is default
+    if options.in_order is None:
+        # --inorder is default, but it's incompatible to --includes
+        options.in_order = not options.just_includes
+    elif options.in_order == True:
+        warning("xacro: in-order processing became default in ROS Melodic. You can drop the option.")
+    if options.in_order == False:
+        warning("xacro: Legacy processing is deprecated since ROS Jade and will be removed in N-turtle.")
+        message("To check for compatibility of your document, use option --check-order.", color='yellow')
+        message("For more infos, see http://wiki.ros.org/xacro#Processing_Order", color='yellow')
 
     # --inorder is incompatible to --includes: --inorder processing starts evaluation
     # while --includes should return the unmodified document

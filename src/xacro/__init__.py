@@ -1033,11 +1033,6 @@ def process_file(input_file_name, **kwargs):
 
 def main():
     opts, input_file_name = process_args(sys.argv[1:])
-    if opts.in_order == False and not opts.just_includes:
-        warning("xacro: Legacy processing is deprecated since ROS Jade and will be removed in N-turtle.")
-        message("To check for compatibility of your document, use option --check-order.", color='yellow')
-        message("For more infos, see http://wiki.ros.org/xacro#Processing_Order", color='yellow')
-
     try:
         # open and process file
         doc = process_file(input_file_name, **vars(opts))
