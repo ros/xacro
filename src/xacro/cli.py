@@ -63,17 +63,17 @@ def process_args(argv, require_input=True):
                                  formatter=IndentedHelpFormatterWithNL())
     parser.add_option("-o", dest="output", metavar="FILE",
                       help="write output to FILE instead of stdout")
-    parser.add_option("--legacy", action="store_false", dest="in_order",
-                      help="use legacy processing order")
     parser.add_option("--inorder", "-i", action="store_true", dest="in_order",
-                      help="use processing in read order")
+                      help="use processing in read order [default]")
+    parser.add_option("--legacy", action="store_false", dest="in_order",
+                      help="use legacy processing order [deprecated]")
     parser.add_option("--check-order", action="store_true", dest="do_check_order",
                       help="check document for inorder processing", default=False)
 
     parser.add_option("--deps", action="store_true", dest="just_deps",
                       help="print file dependencies")
     parser.add_option("--includes", action="store_true", dest="just_includes",
-                      help="only process includes")
+                      help="only process includes [deprecated]")
     parser.add_option("--xacro-ns", action="store_false", default=True, dest="xacro_ns",
                       help="require xacro namespace prefix for xacro tags")
 
@@ -112,6 +112,9 @@ def process_args(argv, require_input=True):
         warning("xacro: Legacy processing is deprecated since ROS Jade and will be removed in N-turtle.")
         message("To check for compatibility of your document, use option --check-order.", color='yellow')
         message("For more infos, see http://wiki.ros.org/xacro#Processing_Order", color='yellow')
+
+    if options.just_includes:
+        warning("xacro: option --includes is deprecated")
 
     # --inorder is incompatible to --includes: --inorder processing starts evaluation
     # while --includes should return the unmodified document
