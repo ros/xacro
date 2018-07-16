@@ -133,7 +133,7 @@ class XacroException(Exception):
 
     def __str__(self):
         items = [super(XacroException, self).__str__(), self.exc, self.suffix]
-        return ' '.join([unicode(e) for e in items if e not in ['', 'None']])
+        return ' '.join([s for s in [unicode(e) for e in items] if s not in ['', 'None']])
 
 
 verbosity = 1
