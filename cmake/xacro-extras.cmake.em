@@ -14,7 +14,7 @@ add_custom_target(${PROJECT_NAME}_xacro_generated_to_devel_space_ ALL)
 ## xacro_add_xacro_file(<input> [<output>] [LEGACY] [REMAP <arg> <arg> ...]
 ##                      [OUTPUT <variable>] DEPENDS <arg> <arg>)
 ##
-## Creates a command run xacro on <input> like so:
+## Creates a command to run xacro on <input> like so:
 ## xacro [--legacy] -o <output> <input> [<remap args>]
 ##
 ## If <output> was not specified, it is determined from <input> removing the suffix .xacro
@@ -36,7 +36,6 @@ add_custom_target(${PROJECT_NAME}_xacro_generated_to_devel_space_ ALL)
 ##                 TARGET xacro_target INSTALL DESTINATION xml)
 function(xacro_add_xacro_file input)
   # parse arguments
-  set(_XACRO_INORDER TRUE)
   set(options INORDER LEGACY)
   set(oneValueArgs OUTPUT)
   set(multiValueArgs REMAP DEPENDS)
@@ -63,13 +62,13 @@ function(xacro_add_xacro_file input)
   # message(STATUS "output: ${output}")
 
   # process _XACRO_INORDER / _XACRO_LEGACY options
-  if(_XACRO_LEGACY)
-    set(_XACRO_INORDER FALSE)
+  if(_XACRO_INORDER) # INORDER takes precedence over LEGACY
+    set(_XACRO_LEGACY FALSE)
   endif()
-  if(NOT _XACRO_INORDER)
-    set(_XACRO_INORDER "--legacy")
+  if(_XACRO_LEGACY)
+    set(_XACRO_LEGACY "LEGACY")
   else()
-    unset(_XACRO_INORDER)
+    unset(_XACRO_LEGACY)
   endif()
 
   ## determine absolute output target location
@@ -88,7 +87,7 @@ function(xacro_add_xacro_file input)
 
   ## Call out to xacro to determine dependencies
   message(STATUS "xacro: determining deps for: " ${input} " ...")
-  execute_process(COMMAND ${CATKIN_ENV} ${_xacro_py} ${_XACRO_INORDER} --deps ${input} ${_XACRO_REMAP}
+  execute_process(COMMAND ${CATKIN_ENV} ${_xacro_py} ${_XACRO_LEGACY} --deps ${input} ${_XACRO_REMAP}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     RESULT_VARIABLE _xacro_result
     ERROR_VARIABLE _xacro_err
@@ -103,7 +102,7 @@ ${_xacro_err}")
 
   ## command to actually call xacro
   add_custom_command(OUTPUT ${output}
-    COMMAND ${CATKIN_ENV} ${_xacro_py} ${_XACRO_INORDER} -o ${abs_output} ${input} ${_XACRO_REMAP}
+    COMMAND ${CATKIN_ENV} ${_xacro_py} ${_XACRO_LEGACY} -o ${abs_output} ${input} ${_XACRO_REMAP}
     DEPENDS ${input} ${_xacro_deps_result} ${_XACRO_DEPENDS}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMENT "xacro: generating ${output} from ${input}"
@@ -154,7 +153,7 @@ function(xacro_install target)
 endfunction(xacro_install)
 
 
-## xacro_add_files(<file> [<file> ...] [INORDER] [REMAP <arg> <arg> ...] [DEPENDS <arg> <arg>] 
+## xacro_add_files(<file> [<file> ...] [LEGACY] [REMAP <arg> <arg> ...] [DEPENDS <arg> <arg>]
 ##                 [TARGET <target>] [INSTALL [DESTINATION <path>]])
 ##
 ## create make <target> to generate xacro files
@@ -162,17 +161,20 @@ endfunction(xacro_install)
 ## in devel and install space.
 function(xacro_add_files)
   # parse arguments
-  set(options INORDER INSTALL)
+  set(options INORDER LEGACY INSTALL)
   set(oneValueArgs OUTPUT TARGET DESTINATION)
   set(multiValueArgs REMAP DEPENDS)
   cmake_parse_arguments(_XACRO "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
   ## process arguments
-  # transform _XACRO_INORDER's BOOL value
-  if(_XACRO_INORDER)
-    set(_XACRO_INORDER "INORDER")
+  # process _XACRO_INORDER / _XACRO_LEGACY options
+  if(_XACRO_INORDER) # INORDER takes precedence over LEGACY
+    set(_XACRO_LEGACY FALSE)
+  endif()
+  if(_XACRO_LEGACY)
+    set(_XACRO_LEGACY "LEGACY")
   else()
-    unset(_XACRO_INORDER)
+    unset(_XACRO_LEGACY)
   endif()
 
   # prepare REMAP args (prepending REMAP)
@@ -192,7 +194,7 @@ function(xacro_add_files)
 
   foreach(input ${_XACRO_UNPARSED_ARGUMENTS})
     # call to main function
-    xacro_add_xacro_file(${input} ${_XACRO_OUTPUT} ${_XACRO_INORDER} ${_XACRO_REMAP} ${_XACRO_DEPENDS})
+    xacro_add_xacro_file(${input} ${_XACRO_OUTPUT} ${_XACRO_LEGACY} ${_XACRO_REMAP} ${_XACRO_DEPENDS})
     list(APPEND outputs ${XACRO_OUTPUT_FILE})
   endforeach()
 
