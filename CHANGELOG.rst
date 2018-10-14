@@ -2,6 +2,12 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.13.3 (2018-10-14)
+-------------------
+* use INORDER as default in cmake functions
+* remove weird 'None's in error messages
+* Contributors: Robert Haschke
+
 1.13.2 (2018-05-14)
 -------------------
 * deprecate --includes option (which is tied to deprecated --legacy processing)
