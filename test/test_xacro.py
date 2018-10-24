@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/python3.5
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function
@@ -272,7 +272,7 @@ class TestXacroBase(unittest.TestCase):
         if not self.in_order:
             args.append('--legacy')
         test_dir = os.path.abspath(os.path.dirname(__file__))
-        xacro_path = os.path.join(test_dir, '..', 'scripts', 'xacro')
+        xacro_path = os.path.join(test_dir, '..','resource', 'xacro')
         subprocess.call([xacro_path, input_path] + args)
 
 
@@ -528,12 +528,12 @@ class TestXacro(TestXacroCommentsIgnored):
     def test_include(self):
         self.assert_matches(self.quick_xacro('''\
 <a xmlns:xacro="http://www.ros.org/xacro">
-  <xacro:include filename="include1.xml" /></a>'''),
+  <xacro:include filename="$(find xacro)/test/include1.xml" /></a>'''),
                         '''<a xmlns:xacro="http://www.ros.org/xacro"><inc1/></a>''')
 
     def test_include_glob(self):
         input  = '''<a xmlns:xacro="http://www.ros.org/xacro">
-                    <xacro:include filename="include{glob}.xml"/></a>'''
+                    <xacro:include filename="$(find xacro)/test/include{glob}.xml"/></a>'''
         result = '<a xmlns:xacro="http://www.ros.org/xacro"><inc1/><inc2/></a>'
         for pattern in ['*', '?', '[1-2]']:
             self.assert_matches(self.quick_xacro(input.format(glob=pattern)), result)
@@ -552,7 +552,7 @@ class TestXacro(TestXacroCommentsIgnored):
 
     def test_include_from_variable(self):
         doc = '''<a xmlns:xacro="http://www.ros.org/xacro">
-        <xacro:property name="file" value="include1.xml"/>
+        <xacro:property name="file" value="$(find xacro)/test/include1.xml"/>
         <xacro:include filename="${file}" /></a>'''
         if self.in_order:
             self.assert_matches(self.quick_xacro(doc),
@@ -563,9 +563,9 @@ class TestXacro(TestXacroCommentsIgnored):
     def test_include_recursive(self):
         self.assert_matches(self.quick_xacro('''\
 <a xmlns:xacro="http://www.ros.org/xacro">
-    <xacro:include filename="include1.xml"/>
-    <xacro:include filename="./include1.xml"/>
-    <xacro:include filename="subdir/include-recursive.xacro"/>
+    <xacro:include filename="test/include1.xml"/>
+    <xacro:include filename="./test/include1.xml"/>
+    <xacro:include filename="$(find xacro)/test/subdir/include-recursive.xacro"/>
 </a>'''),
 '''<a xmlns:xacro="http://www.ros.org/xacro">
 <inc1/><inc1/>
@@ -575,8 +575,8 @@ class TestXacro(TestXacroCommentsIgnored):
         doc = '''
 <a xmlns:xacro="http://www.ros.org/wiki/xacro">
   <xacro:property name="var" value="main"/>
-  <xacro:include filename="include1.xacro" ns="A"/>
-  <xacro:include filename="include2.xacro" ns="B"/>
+  <xacro:include filename="$(find xacro)/test/include1.xacro" ns="A"/>
+  <xacro:include filename="$(find xacro)/test/include2.xacro" ns="B"/>
   <A.foo/><B.foo/>
   <main var="${var}" A="${2*A.var}" B="${B.var+1}"/>
 </a>'''
@@ -1003,7 +1003,10 @@ class TestXacro(TestXacroCommentsIgnored):
         tmp_dir_name = tempfile.mkdtemp() # create directory we can trash
         shutil.rmtree(tmp_dir_name) # ensure directory is removed
         output_path = os.path.join(tmp_dir_name, "out")
-        self.run_xacro('include1.xml', '-o', output_path)
+
+        test_dir= os.path.abspath(os.path.dirname(__file__))
+        input_path = os.path.join(test_dir, 'include1.xml')
+        self.run_xacro(input_path, '-o', output_path)
 
         output_file_created = os.path.isfile(output_path)
         shutil.rmtree(tmp_dir_name) # clean up after ourselves
@@ -1152,7 +1155,7 @@ class TestXacroInorder(TestXacro):
     def test_yaml_support(self):
         src = '''
 <a xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <xacro:property name="settings" value="${load_yaml('settings.yaml')}"/>
+  <xacro:property name="settings" value="${load_yaml('test/settings.yaml')}"/>
   <xacro:property name="type" value="$(arg type)"/>
   <xacro:include filename="${settings['arms'][type]['file']}"/>
   <xacro:call macro="${settings['arms'][type]['macro']}"/>
