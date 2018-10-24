@@ -61,6 +61,15 @@ class IndentedHelpFormatterWithNL(IndentedHelpFormatter):
         return result
 
 def load_mappings(argv):
+    """ 
+    Load name mappings encoded in command-line arguments. This will filter 
+    out any parameter assignment mappings. 
+    @param argv: command-line arguments 
+    @type  argv: [str] 
+    @return: name->name remappings.  
+    @rtype: dict {str: str} 
+    """     
+
     mappings = {}
     for arg in argv:
         if REMAP in arg:
@@ -114,7 +123,7 @@ def process_args(argv, require_input=True):
     # process substitution args
     try:
         # from rosgraph.names import load_mappings, REMAP
-        mappings = load_mappings(argv)
+        mappings = load_mappings(argv) # TODO temporary fix remove this and uncomment above line when rosgraph will be migrated to ROS2.
         filtered_args = [a for a in argv if REMAP not in a]  # filter-out REMAP args
     except ImportError as e:
         warning(e)
