@@ -33,6 +33,9 @@
 import textwrap
 from optparse import OptionParser, IndentedHelpFormatter
 from .color import colorize, warning, message
+import sys
+
+REMAP = ":="
 
 class ColoredOptionParser(OptionParser):
     def error(self, message):
@@ -56,6 +59,23 @@ class IndentedHelpFormatterWithNL(IndentedHelpFormatter):
         result = IndentedHelpFormatter.format_option(self, text)
         textwrap.wrap = old
         return result
+
+def load_mappings(argv):
+    mappings = {}
+    for arg in argv:
+        if REMAP in arg:
+            try:
+                src, dst = [x.strip() for x in arg.split(REMAP)]
+                if src and dst:
+                    if len(src) > 1 and src[0] == '_' and src[1] != '_':
+                        #ignore parameter assignment mappings
+                        pass
+                    else:
+                        mappings[src] = dst
+            except:
+                #TODO: remove
+                sys.stderr.write("ERROR: Invalid remapping argument '%s'\n"%arg)
+    return mappings
 
 
 def process_args(argv, require_input=True):
@@ -93,7 +113,7 @@ def process_args(argv, require_input=True):
 
     # process substitution args
     try:
-        from rosgraph.names import load_mappings, REMAP
+        # from rosgraph.names import load_mappings, REMAP
         mappings = load_mappings(argv)
         filtered_args = [a for a in argv if REMAP not in a]  # filter-out REMAP args
     except ImportError as e:

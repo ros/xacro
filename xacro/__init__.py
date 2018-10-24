@@ -32,6 +32,7 @@
 
 from __future__ import print_function, division
 
+import launch
 import glob
 import os
 import re
@@ -181,17 +182,20 @@ class Macro(object):
 def eval_extension(s):
     if s == '$(cwd)':
         return os.getcwd()
+    print("s =", s, "substitution_args_context=", substitution_args_context)
+    print(dir(launch.__builtins__))
     try:
         from roslaunch import substitution_args
         from rospkg.common import ResourceNotFound
         return substitution_args.resolve_args(s, context=substitution_args_context, resolve_anon=False)
     except ImportError as e:
         raise XacroException("substitution args not supported: ", exc=e)
-    except substitution_args.ArgException as e:
-        raise XacroException("Undefined substitution argument", exc=e)
-    except ResourceNotFound as e:
+    # except substitution_args.ArgException as e:
+    #     raise XacroException("Undefined substitution argument", exc=e)
+    except Exception as e:
         raise XacroException("resource not found:", exc=e)
-
+    # except ResourceNotFound as e:
+    #    raise XacroException("resource not found:", exc=e)
 
 do_check_order=False
 class Table(object):
@@ -1033,6 +1037,7 @@ def process_file(input_file_name, **kwargs):
 
 def main():
     opts, input_file_name = process_args(sys.argv[1:])
+    from xml.parsers.expat import ExpatError
     try:
         # open and process file
         doc = process_file(input_file_name, **vars(opts))
@@ -1040,7 +1045,7 @@ def main():
         out = open_output(opts.output)
 
     # error handling
-    except xml.parsers.expat.ExpatError as e:
+    except ExpatError as e:
         error("XML parsing error: %s" % unicode(e), alt_text=None)
         if verbosity > 0:
             print_location(filestack, e)
