@@ -21,14 +21,12 @@
   <author>Robert Haschke</author>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
-  <build_depend>roslint</build_depend>
-
+  <build_depend>ros2launch</build_depend>
+  <build_depend>rclpy</build_depend>
   <exec_depend>ros2launch</exec_depend>
   <exec_depend>rclpy</exec_depend>
-  <exec_depend>std_msgs</exec_depend>
 
-  <test_depend>ament_lint_auto</test_depend>
-  <test_depend>ament_lint_common</test_depend>
+  <test_depend>python3-pytest</test_depend>
 
   <export>
     <build_type>ament_python</build_type>
