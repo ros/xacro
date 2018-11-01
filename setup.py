@@ -1,4 +1,4 @@
-#!/usr/bin/python3.5
+#!/usr/bin/env python3
 
 from setuptools import find_packages
 from setuptools import setup
@@ -8,15 +8,8 @@ package_name = 'xacro'
 setup(
     name=package_name,
     version='1.13.4',
+    python_requires='>=3',
     packages=find_packages(exclude=['test']),
-    data_files=[
-        ('share/ament_index/resource_index/packages',
-            ['resource/' + package_name]),
-        ('share/' + package_name, ['package.xml']),
-        ('share/'+ package_name, [
-            'resource/completion.bash'
-        ]),
-    ],
     install_requires=['setuptools'],
     zip_safe=True,
     author='Robert Haschke',
@@ -30,13 +23,13 @@ setup(
         'Programming Language :: Python',
         'Topic :: Software Development',
     ],
-    description='Xacro is an XML macro language. With xacro, you can construct shorter and more readable XML files by using macros that expand to larger XML expressions.',
+    description='Xacro is an XML macro language. With xacro,'
+    'you can construct shorter and more readable XML files'
+    'by using macros that expand to larger XML expressions.',
     license='Apache License, Version 2.0',
     tests_require=['pytest'],
+    test_suite='test',
     entry_points={
-        'xacro.xacro': [
-            'cli = xacro.xacro.cli:ColoredOptionParser',
-        ],
         'console_scripts': [
             'xacro = resource.xacro:main'
         ],
