@@ -1,36 +1,24 @@
 #!/usr/bin/env python3
 
+# Copyright 2018 Open Source Robotics Foundation, Inc.
 # Copyright (c) 2015, Open Source Robotics Foundation, Inc.
 # Copyright (c) 2013, Willow Garage, Inc.
-# All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-#     * Redistributions of source code must retain the above copyright
-#       notice, this list of conditions and the following disclaimer.
-#     * Redistributions in binary form must reproduce the above copyright
-#       notice, this list of conditions and the following disclaimer in the
-#       documentation and/or other materials provided with the distribution.
-#     * Neither the name of the Open Source Robotics Foundation, Inc.
-#       nor the names of its contributors may be used to endorse or promote
-#       products derived from this software without specific prior
-#       written permission.
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
-# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
-
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 # Authors: Stuart Glaser, William Woodall, Robert Haschke
 # Maintainer: Morgan Quigley <morgan@osrfoundation.org>
+
 
 from __future__ import division, print_function
 
@@ -47,7 +35,8 @@ import xml.dom.minidom
 from .cli import process_args
 from .color import error, message, warning
 from .substitution_args import ArgException, resolve_args
-from .xmlutils import check_attrs, first_child_element, next_sibling_element, replace_node, reqd_attrs
+from .xmlutils import check_attrs, first_child_element, \
+    next_sibling_element, replace_node, reqd_attrs
 
 # from .xmlutils import *
 
@@ -89,7 +78,7 @@ def restore_filestack(oldstack):
 
 def abs_filename_spec(filename_spec):
     """
-    Prepend the dirname of the currently processed file
+    Prepend the dirname of the currently processed file.
 
     if filename_spec is not yet absolute
     """
@@ -128,12 +117,13 @@ global_symbols = {'__builtins__': {k: __builtins__[k]
 # also define all math symbols and functions
 global_symbols.update(math.__dict__)
 # allow to import dicts from yaml
-global_symbols.update(dict(load_yaml=load_yaml))
+# global_symbols.update(dict(load_yaml=load_yaml))
+global_symbols.update({'load_yaml': load_yaml})
 
 
 class XacroException(Exception):
     """
-    XacroException
+    XacroException.
 
     XacroException allows to wrap another exception (exc) and to augment
     its error message: prefixing with msg and suffixing with suffix.
@@ -164,7 +154,8 @@ def deprecated_tag(_issued=[False]):
         warning(
             "deprecated: xacro tags should be prepended with 'xacro' xml namespace.")
         message("""Use the following script to fix incorrect usage:
-        find . -iname "*.xacro" | xargs sed -i 's#<\([/]\\?\)\(if\|unless\|include\|arg\|property\|macro\|insert_block\)#<\\1xacro:\\2#g'""")
+        find . -iname "*.xacro" | xargs sed -i 's#<\([/]\\?\)\(if\|unless\|include\|arg
+        \|property\|macro\|insert_block\)#<\\1xacro:\\2#g'""")
         print_location(filestack)
         print(file=sys.stderr)
 
@@ -240,7 +231,8 @@ class Table(object):
             # this is for smooth transition from deprecated to in-order
             # processing
             self.used = set()  # set of used properties
-            self.redefined = dict()  # set of properties redefined after usage
+            # self.redefined = dict()  # set of properties redefined after usage
+            self.redefined = {}  # set of properties redefined after usage
 
     @staticmethod
     def _eval_literal(value):
@@ -401,8 +393,8 @@ def is_include(elt):
         # with Gazebo's <uri> element, but it could be anything. also, make sure the child
         # nodes aren't just a single Text node, which is still considered a deprecated
         # instance
-        if elt.childNodes and not (len(elt.childNodes) == 1
-                                   and elt.childNodes[0].nodeType == elt.TEXT_NODE):
+        if (elt.childNodes and not (len(elt.childNodes) == 1
+                                    and elt.childNodes[0].nodeType == elt.TEXT_NODE)):
             # this is not intended to be a xacro element, so we can ignore it
             return False
         else:
@@ -437,14 +429,14 @@ def get_include_files(filename_spec, symbols):
 
 
 def import_xml_namespaces(parent, attributes):
-    """import all namespace declarations into parent"""
+    """Import all namespace declarations into parent."""
     for name, value in attributes.items():
         if name.startswith('xmlns:'):
             oldAttr = parent.getAttributeNode(name)
             if oldAttr and oldAttr.value != value:
                 warning('inconsistent namespace redefinitions for {name}:'
-                        '\n old: {old}\n new: {new} ({new_file})'.format(name=name,
-                                                                         old=oldAttr.value, new=value, new_file=filestack[-1]))
+                        '\n old: {old}\n new: {new} ({new_file})'
+                        .format(name=name, old=oldAttr.value, new=value, new_file=filestack[-1]))
             else:
                 parent.setAttribute(name, value)
 
@@ -496,7 +488,7 @@ def process_includes(elt, macros=None, symbols=None):
 
 def is_valid_name(name):
     """
-    Checks whether name is a valid property or macro identifier.
+    Check whether name is a valid property or macro identifier.
 
     With python-based evaluation, we need to avoid name clashes with python keywords.
     """
@@ -521,7 +513,7 @@ re_macro_arg = re.compile(
 
 def parse_macro_arg(s):
     """
-    parse the first param spec from a macro parameter string s
+    Parse the first param spec from a macro parameter string s.
 
     accepting the following syntax: <param>[:=|=][^|]<default>
     :param s: param spec string
@@ -860,7 +852,7 @@ _empty_text_node = xml.dom.minidom.getDOMImplementation().createDocument(
 
 
 def remove_previous_comments(node):
-    """remove consecutive comments in front of the xacro-specific node"""
+    """Remove consecutive comments in front of the xacro-specific node."""
     next = node.nextSibling
     previous = node.previousSibling
     while previous:
@@ -882,7 +874,8 @@ def remove_previous_comments(node):
 
 def eval_all(node, macros, symbols):
     """
-    Recursively evaluate node, expanding macros,
+    Recursively evaluate node, expanding macros.
+
     replacing properties, and evaluating expressions
     """
     # evaluate the attributes
@@ -1100,7 +1093,11 @@ def print_location(filestack, err=None, file=sys.stderr):
 
 
 def process_file(input_file_name, **kwargs):
-    """main processing pipeline"""
+    """
+    Process pipeline.
+
+    This is main processing pipeline
+    """
     # initialize file stack for error-reporting
     restore_filestack([input_file_name])
     # parse the document into a xml.dom tree

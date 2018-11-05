@@ -1,43 +1,28 @@
 #!/usr/bin/env python3
 
-
-# Software License Agreement (BSD License)
+# Copyright 2018 Open Source Robotics Foundation, Inc.
 #
-# Copyright (c) 2008, Willow Garage, Inc.
-# All rights reserved.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
-#  * Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-#  * Redistributions in binary form must reproduce the above
-#    copyright notice, this list of conditions and the following
-#    disclaimer in the documentation and/or other materials provided
-#    with the distribution.
-#  * Neither the name of Willow Garage, Inc. nor the names of its
-#    contributors may be used to endorse or promote products derived
-#    from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 #
 # Revision $Id: substitution_args.py 15178 2011-10-10 21:22:53Z kwc $
 
 """
-Library for processing XML substitution args. This is currently used
-by roslaunch and xacro, but it is not yet a top-level ROS feature.
+Library for processing XML substitution args.
+
+This is currently used by roslaunch and xacro,
+but it is not yet a top-level ROS feature.
+This script has been taken from catkin's
+ros_comm/tools/roslaunch/src/roslaunch/substitution_args.py
 """
 
 import math
@@ -59,14 +44,12 @@ _rospack = None
 
 
 class SubstitutionException(Exception):
-
     """Base class for exceptions in substitution_args routines."""
 
     pass
 
 
 class ArgException(SubstitutionException):
-
     """Exception for missing $(arg) values."""
 
     pass
@@ -82,7 +65,7 @@ def _eval_env(name):
 
 def _env(resolved, a, args, context):
     """
-    process $(env) arg
+    Process $(env) arg.
 
     @return: updated resolved argument
     @rtype: str
@@ -103,7 +86,7 @@ def _eval_optenv(name, default=''):
 
 def _optenv(resolved, a, args, context):
     """
-    process $(optenv) arg
+    Process $(optenv) arg.
 
     @return: updated resolved argument
     @rtype: str
@@ -117,7 +100,7 @@ def _optenv(resolved, a, args, context):
 
 def anonymous_name(id):
     """
-    Generate a ROS-legal 'anonymous' name
+    Generate a ROS-legal 'anonymous' name.
 
     @param id: prefix for anonymous name
     @type  id: str
@@ -148,7 +131,7 @@ def _eval_anon(id, anons):
 
 def _anon(resolved, a, args, context):
     """
-    process $(anon) arg
+    Process $(anon) arg.
 
     @return: updated resolved argument
     @rtype: str
@@ -176,7 +159,7 @@ def _eval_dirname(filename):
 
 def _dirname(resolved, a, args, context):
     """
-    process $(dirname)
+    Process $(dirname).
 
     @return: updated resolved argument
     @rtype: str
@@ -193,7 +176,7 @@ def _eval_find(pkg):
 
 def _find(resolved, a, args, context):
     """
-    process $(find PKG)
+    Process $(find PKG).
 
     Resolves the path while considering the path following the command
     to provide backward compatible results.
@@ -246,7 +229,7 @@ def _find(resolved, a, args, context):
 
 def _find_executable(resolved, a, args, _context, source_path_to_packages=None):
     """
-    process $(find-executable PKG PATH)
+    Process $(find-executable PKG PATH).
 
     It finds the executable with the basename(PATH) in the libexec folder
     or under the PATH relative to the package.xml file.
@@ -282,7 +265,7 @@ def _find_executable(resolved, a, args, _context, source_path_to_packages=None):
 
 def _find_resource(resolved, a, args, _context, source_path_to_packages=None):
     """
-    process $(find-resource PKG PATH)
+    Process $(find-resource PKG PATH).
 
     Resolves the relative PATH from the share folder of the PKG either from install space,
     devel space or from the source folder.
@@ -361,7 +344,7 @@ def _eval_arg(name, args):
 
 def _arg(resolved, a, args, context):
     """
-    process $(arg) arg
+    Process $(arg) arg.
 
     :returns: updated resolved argument, ``str``
     :raises: :exc:`ArgException` If arg invalidly specified
@@ -396,7 +379,7 @@ _eval_dict.update(math.__dict__)
 
 def convert_value(value, type_):
         """
-        Convert a value from a string representation into the specified type
+        Convert a value from a string representation into the specified type.
 
         @param value: string representation of value
         @type  value: str
@@ -414,7 +397,7 @@ def convert_value(value, type_):
                     return float(value)
                 else:
                     return int(value)
-            except ValueError as e:
+            except ValueError:
                 pass
             # bool
             lval = value.lower()
@@ -493,7 +476,7 @@ def _eval(s, context):
 
 def resolve_args(arg_str, context=None, resolve_anon=True, filename=None):
     """
-    Resolves substitution args (see wiki spec U{http://ros.org/wiki/roslaunch}).
+    Resolve substitution args (see wiki spec U{http://ros.org/wiki/roslaunch}).
 
     @param arg_str: string to resolve zero or more substitution args
         in. arg_str may be None, in which case resolve_args will
@@ -563,8 +546,9 @@ _IN = 3
 
 def _collect_args(arg_str):
     """
-    State-machine parser for resolve_args. Substitution args are of the form:
+    State-machine parser for resolve_args.
 
+    Substitution args are of the form:
     $(find package_name)/scripts/foo.py $(export some/attribute blar) non-relevant stuff
 
     @param arg_str: argument string to parse args from

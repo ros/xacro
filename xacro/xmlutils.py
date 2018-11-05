@@ -1,34 +1,21 @@
 #!/usr/bin/env python3
 
+# Copyright 2018 Open Source Robotics Foundation, Inc.
 # Copyright (c) 2015, Open Source Robotics Foundation, Inc.
 # Copyright (c) 2013, Willow Garage, Inc.
-# All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-#     * Redistributions of source code must retain the above copyright
-#       notice, this list of conditions and the following disclaimer.
-#     * Redistributions in binary form must reproduce the above copyright
-#       notice, this list of conditions and the following disclaimer in the
-#       documentation and/or other materials provided with the distribution.
-#     * Neither the name of the Open Source Robotics Foundation, Inc.
-#       nor the names of its contributors may be used to endorse or promote
-#       products derived from this software without specific prior
-#       written permission.
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
-# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
-
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 # Authors: Stuart Glaser, William Woodall, Robert Haschke
 # Maintainer: Morgan Quigley <morgan@osrfoundation.org>
 
@@ -75,7 +62,7 @@ def replace_node(node, by, content_only=False):
 
 def attribute(tag, a):
     """
-    Helper function to fetch a single attribute value from tag
+    Fetch a single attribute value from tag.
 
     :param tag (xml.dom.Element): DOM element node
     :param a (str): attribute name
@@ -91,8 +78,9 @@ def attribute(tag, a):
 
 def opt_attrs(tag, attrs):
     """
-    Helper routine for fetching optional tag attributes
+    Fetch optional tag attributes.
 
+    Helper routine for fetching optional tag attributes.
     :param tag (xml.dom.Element): DOM element node
     :param attrs [str]: list of attributes to fetch
     """
@@ -101,8 +89,9 @@ def opt_attrs(tag, attrs):
 
 def reqd_attrs(tag, attrs):
     """
-    Helper routine for fetching required tag attributes
+    Fetch required tag attributes.
 
+    Helper routine for fetching required tag attributes.
     :param tag (xml.dom.Element): DOM element node
     :param attrs [str]: list of attributes to fetch
     :raise RuntimeError: if required attribute is missing
@@ -117,7 +106,7 @@ def reqd_attrs(tag, attrs):
 
 def check_attrs(tag, required, optional):
     """
-    Helper routine to fetch required and optional attributes
+    Fetch required and optional attributes.
 
     and complain about any additional attributes.
     :param tag (xml.dom.Element): DOM element node
