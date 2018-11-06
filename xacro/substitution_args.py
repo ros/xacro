@@ -98,7 +98,7 @@ def _optenv(resolved, a, args, context):
     return resolved.replace('$(%s)' % a, _eval_optenv(args[0], default=' '.join(args[1:])))
 
 
-def anonymous_name(id):
+def anonymous_name(anon_id):
     """
     Generate a ROS-legal 'anonymous' name.
 
@@ -117,15 +117,15 @@ def anonymous_name(id):
     return name.replace(':', '_')
 
 
-def _eval_anon(id, anons):
+def _eval_anon(anon_id, anons):
 
-    if id in anons:
-        return anons[id]
+    if anon_id in anons:
+        return anons[anon_id]
     # TODO use this when rograph will be available in ROS2.
     # resolve_to = rosgraph.names.anonymous_name(id)
     # temporary fix, remove this when rosgraph will be migrated to ROS2.
-    resolve_to = anonymous_name(id)
-    anons[id] = resolve_to
+    resolve_to = anonymous_name(anon_id)
+    anons[anon_id] = resolve_to
     return resolve_to
 
 
@@ -448,8 +448,8 @@ def _eval(s, context):
         context['arg'] = {}
 
     # inject correct anon context
-    def _eval_anon_context(id):
-        return _eval_anon(id, anons=context['anon'])
+    def _eval_anon_context(context_id):
+        return _eval_anon(context_id, anons=context['anon'])
 
     # inject arg context
     def _eval_arg_context(name):

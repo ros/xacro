@@ -598,12 +598,12 @@ class TestXacro(TestXacroCommentsIgnored):
                             '''<a xmlns:xacro='http://www.ros.org/xacro'><inc1/></a>''')
 
     def test_include_glob(self):
-        input = '''<a xmlns:xacro='http://www.ros.org/xacro'>
+        input_data = '''<a xmlns:xacro='http://www.ros.org/xacro'>
                     <xacro:include filename="$(find xacro)/test/include{glob}.xml"/></a>'''
         result = '<a xmlns:xacro="http://www.ros.org/xacro"><inc1/><inc2/></a>'
         for pattern in ['*', '?', '[1-2]']:
             self.assert_matches(
-                self.quick_xacro(input.format(glob=pattern)), result)
+                self.quick_xacro(input_data.format(glob=pattern)), result)
 
     def test_include_nonexistent(self):
         self.assertRaises(xacro.XacroException,

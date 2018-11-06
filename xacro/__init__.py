@@ -353,25 +353,25 @@ class QuickLexer(object):
             for k, v in kwargs.items():
                 self.__setattr__(k, len(self.res))
                 self.res.append(re.compile(v))
-        self.str = ''
+        self.string = ''
         self.top = None
 
-    def lex(self, str):
-        self.str = str
+    def lex(self, string):
+        self.string = string
         self.top = None
-        self.next()
+        self.next_element()
 
     def peek(self):
         return self.top
 
-    def next(self):
+    def next_element(self):
         result = self.top
         self.top = None
         for i in range(len(self.res)):
-            m = self.res[i].match(self.str)
+            m = self.res[i].match(self.string)
             if m:
                 self.top = (i, m.group(0))
-                self.str = self.str[m.end():]
+                self.string = self.string[m.end():]
                 break
         return result
 
@@ -477,13 +477,13 @@ def process_include(elt, macros, symbols, func):
 def process_includes(elt, macros=None, symbols=None):
     elt = first_child_element(elt)
     while elt:
-        next = next_sibling_element(elt)
+        next_element = next_sibling_element(elt)
         if is_include(elt):
             process_include(elt, macros, symbols, process_includes)
         else:
             process_includes(elt)
 
-        elt = next
+        elt = next_element
 
 
 def is_valid_name(name):
@@ -572,14 +572,14 @@ def grab_macro(elt, macros):
 def grab_macros(elt, macros):
     elt = first_child_element(elt)
     while elt:
-        next = next_sibling_element(elt)
+        next_element = next_sibling_element(elt)
         if elt.tagName in ['macro', 'xacro:macro'] \
                 and check_deprecated_tag(elt.tagName):
             grab_macro(elt, macros)
         else:
             grab_macros(elt, macros)
 
-        elt = next
+        elt = next_element
 
 
 def grab_property(elt, table):
@@ -635,7 +635,7 @@ def grab_property(elt, table):
 def grab_properties(elt, table):
     elt = first_child_element(elt)
     while elt:
-        next = next_sibling_element(elt)
+        next_element = next_sibling_element(elt)
         if elt.tagName in ['property', 'xacro:property'] \
                 and check_deprecated_tag(elt.tagName):
             if 'default' in elt.attributes.keys():
@@ -645,7 +645,7 @@ def grab_properties(elt, table):
         else:
             grab_properties(elt, table)
 
-        elt = next
+        elt = next_element
 
 
 LEXER = QuickLexer(DOLLAR_DOLLAR_BRACE=r'^\$\$+(\{|\()',  # multiple $ in a row, followed by { or (
@@ -672,15 +672,15 @@ def eval_text(text, symbols):
     lex = QuickLexer(LEXER)
     lex.lex(text)
     while lex.peek():
-        id = lex.peek()[0]
-        if id == lex.EXPR:
-            results.append(handle_expr(lex.next()[1][2:-1]))
-        elif id == lex.EXTENSION:
-            results.append(handle_extension(lex.next()[1][2:-1]))
-        elif id == lex.TEXT:
-            results.append(lex.next()[1])
-        elif id == lex.DOLLAR_DOLLAR_BRACE:
-            results.append(lex.next()[1][1:])
+        id_value = lex.peek()[0]
+        if id_value == lex.EXPR:
+            results.append(handle_expr(lex.next_element()[1][2:-1]))
+        elif id_value == lex.EXTENSION:
+            results.append(handle_extension(lex.next_element()[1][2:-1]))
+        elif id_value == lex.TEXT:
+            results.append(lex.next_element()[1])
+        elif id_value == lex.DOLLAR_DOLLAR_BRACE:
+            results.append(lex.next_element()[1][1:])
     # return single element as is, i.e. typed
     if len(results) == 1:
         return results[0]
@@ -853,7 +853,7 @@ _empty_text_node = xml.dom.minidom.getDOMImplementation().createDocument(
 
 def remove_previous_comments(node):
     """Remove consecutive comments in front of the xacro-specific node."""
-    next = node.nextSibling
+    next_element = node.nextSibling
     previous = node.previousSibling
     while previous:
         if previous.nodeType == xml.dom.Node.TEXT_NODE and \
@@ -867,8 +867,8 @@ def remove_previous_comments(node):
         else:
             # insert empty text node to stop removing of comments in future calls
             # actually this moves the singleton instance to the new location
-            if next and _empty_text_node != next:
-                node.parentNode.insertBefore(_empty_text_node, next)
+            if next_element and _empty_text_node != next_element:
+                node.parentNode.insertBefore(_empty_text_node, next_element)
             return
 
 
@@ -885,7 +885,7 @@ def eval_all(node, macros, symbols):
 
     node = node.firstChild
     while node:
-        next = node.nextSibling
+        next_element = node.nextSibling
         if node.nodeType == xml.dom.Node.ELEMENT_NODE:
             if node.tagName in ['insert_block', 'xacro:insert_block'] \
                     and check_deprecated_tag(node.tagName):
@@ -977,7 +977,7 @@ def eval_all(node, macros, symbols):
         elif node.nodeType == xml.dom.Node.TEXT_NODE:
             node.data = unicode(eval_text(node.data, symbols))
 
-        node = next
+        node = next_element
 
 
 def parse(inp, filename=None):
