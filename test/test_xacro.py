@@ -367,8 +367,8 @@ class TestXacro(TestXacroCommentsIgnored):
   <xacro:property name="var" value="%s"/>
   <xacro:call macro="${var}"/></a>'''
         res = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">%s</a>'''
-        self.assert_matches(self.quick_xacro(src % 'foo'), res % "<a>foo</a>")
-        self.assert_matches(self.quick_xacro(src % 'bar'), res % "<b>bar</b>")
+        self.assert_matches(self.quick_xacro(src % 'foo'), res % '<a>foo</a>')
+        self.assert_matches(self.quick_xacro(src % 'bar'), res % '<b>bar</b>')
 
     def test_dynamic_macro_name_clash(self):
         src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
@@ -506,7 +506,7 @@ class TestXacro(TestXacroCommentsIgnored):
         self.assert_matches(
             self.quick_xacro(
                 '''<a><f v="$(find xacro)/test/test_xacro.py" /></a>'''),
-            '''<a><f v="''' + os.path.abspath((__file__).replace(".pyc", ".py") + '''" /></a>'''))
+            '''<a><f v="''' + os.path.abspath((__file__).replace('.pyc', '.py') + '''" /></a>'''))
 
     def test_substitution_args_arg(self):
         self.assert_matches(
