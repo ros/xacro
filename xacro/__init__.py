@@ -154,8 +154,8 @@ def deprecated_tag(_issued=[False]):
         warning(
             "deprecated: xacro tags should be prepended with 'xacro' xml namespace.")
         message("""Use the following script to fix incorrect usage:
-        find . -iname "*.xacro" | xargs sed -i 's#<\([/]\\?\)\(if\|unless\|include\|arg
-        \|property\|macro\|insert_block\)#<\\1xacro:\\2#g'""")
+        find . -iname "*.xacro" | xargs sed -i 's#<\\([/]\\?\\)\\(if\\|unless\\|include\\|arg
+        \\|property\\|macro\\|insert_block\\)#<\\1xacro:\\2#g'""")
         print_location(filestack)
         print(file=sys.stderr)
 
@@ -393,8 +393,8 @@ def is_include(elt):
         # with Gazebo's <uri> element, but it could be anything. also, make sure the child
         # nodes aren't just a single Text node, which is still considered a deprecated
         # instance
-        if (elt.childNodes and not (len(elt.childNodes) == 1
-                                    and elt.childNodes[0].nodeType == elt.TEXT_NODE)):
+        if (elt.childNodes and not
+                ((len(elt.childNodes) == 1) and (elt.childNodes[0].nodeType == elt.TEXT_NODE))):
             # this is not intended to be a xacro element, so we can ignore it
             return False
         else:
@@ -507,7 +507,7 @@ def is_valid_name(name):
 
 
 re_macro_arg = re.compile(
-    r'''\s*([^\s:=]+?):?=(\^\|?)?((?:(?:'[^']*')?[^\s'"]*?)*)(?:\s+|$)(.*)''')
+    r"""\s*([^\s:=]+?):?=(\^\|?)?((?:(?:'[^']*')?[^\s'"]*?)*)(?:\s+|$)(.*)""")
 # space   param    :=   ^|   <--      default      -->   space    rest
 
 

@@ -327,10 +327,10 @@ def _get_executable_path(base_path, path):
 def _get_rospack():
 
     global _rospack
-    '''
+    """
     if _rospack is None:
         _rospack = rospkg.RosPack()
-    '''
+    """
     return _rospack
 
 
