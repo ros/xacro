@@ -1,0 +1,43 @@
+dist: trusty
+sudo: enabled
+language: python
+python:
+  - "3.5"
+  - "3.6"
+
+# command to install dependencies
+install:
+  - pip install setuptools pytest pep257 flake8
+  # - pip install rospkg PyYAML argparse catkin_pkg rosdep rosdistro
+  # - sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu trusty main" > /etc/apt/sources.list.d/ros-latest.list'
+  # - wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
+  # - sudo apt-get update
+  # - sudo apt-get install ros-indigo-catkin ros-indigo-roslaunch ros-indigo-rostest ros-indigo-roslint
+  - sudo apt update && sudo apt install curl
+  - curl http://repo.ros2.org/repos.key | sudo apt-key add -
+  - sudo sh -c 'echo "deb [arch=amd64,arm64] http://repo.ros2.org/ubuntu/main `lsb_release -cs` main" > /etc/apt/sources.list.d/ros2-latest.list'
+  - export ROS_DISTRO=bouncy  # or bouncy
+  - sudo apt update
+  - sudo apt install python3-colcon-common-extensions
+  - source /opt/ros/bouncy/setup.bash
+
+before_script:
+  # stop the build if there are Python syntax errors or undefined names
+  - flake8 . --count --select=E901,E999,F821,F822,F823 --show-source --statistics
+  # exit-zero treats all errors as warnings.  The GitHub editor is 127 chars wide
+  - flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+# command to run tests
+script:
+  - colcon build
+  - colcon test
+  # - export PYTHONPATH=`pwd`/src:$PYTHONPATH
+  # - mkdir build
+  # - cd build
+  # - cmake -DCMAKE_BUILD_TYPE=Release -DSETUPTOOLS_DEB_LAYOUT=OFF ..
+  # - make
+  # - make run_tests
+  # - catkin_test_results --all ./
+  # - sudo make install
+notifications:
+  email: false
