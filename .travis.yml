@@ -17,7 +17,7 @@ install:
   - curl http://repo.ros2.org/repos.key | sudo apt-key add -
   - sudo sh -c 'echo "deb [arch=amd64,arm64] http://repo.ros2.org/ubuntu/main `lsb_release -cs` main" > /etc/apt/sources.list.d/ros2-latest.list'
   - export ROS_DISTRO=bouncy  # or bouncy
-  - sudo apt update
+  # - sudo apt update
   - sudo apt install python3-colcon-common-extensions
   - source /opt/ros/bouncy/setup.bash
 
