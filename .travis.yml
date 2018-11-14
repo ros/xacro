@@ -5,6 +5,11 @@ python:
   # - "3.5"
   - "3.6"
 
+env:
+  global:
+    - ROS2_WS_XACRO=~/ros2_ws_xacro
+    - ROS2_WS_XACRO_SRC=${ROS2_WS_XACRO}/src
+
 # command to install dependencies
 install:
   - pip install setuptools pytest pep257 flake8
@@ -22,14 +27,18 @@ install:
   # - sudo apt install python3-colcon-common-extensions
   - source /opt/ros/$ROS_DISTRO/setup.bash
 
-before_script:
+# before_script:
   # stop the build if there are Python syntax errors or undefined names
-  - flake8 . --count --select=E901,E999,F821,F822,F823 --show-source --statistics
+  # - flake8 . --count --select=E901,E999,F821,F822,F823 --show-source --statistics
   # exit-zero treats all errors as warnings.  The GitHub editor is 127 chars wide
-  - flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+  # - flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
 # command to run tests
 script:
+  - mkdir -p $ROS2_WS_XACRO
+  - mkdir -p $ROS2_WS_XACRO_SRC
+  - ln -s $TRAVIS_BUILD_DIR $ROS2_WS_XACRO_SRC
+  - cd $ROS2_WS_XACRO
   - colcon build
   - colcon test
   # - export PYTHONPATH=`pwd`/src:$PYTHONPATH
