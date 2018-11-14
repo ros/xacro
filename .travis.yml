@@ -39,6 +39,7 @@ script:
   - mkdir -p $ROS2_WS_XACRO_SRC
   - ln -s $TRAVIS_BUILD_DIR $ROS2_WS_XACRO_SRC
   - cd $ROS2_WS_XACRO
+  - ament build
   - colcon build
   - colcon test
   # - export PYTHONPATH=`pwd`/src:$PYTHONPATH
