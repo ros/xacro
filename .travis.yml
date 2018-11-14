@@ -16,10 +16,11 @@ install:
   - sudo apt update && sudo apt install curl
   - curl http://repo.ros2.org/repos.key | sudo apt-key add -
   - sudo sh -c 'echo "deb [arch=amd64,arm64] http://repo.ros2.org/ubuntu/main `lsb_release -cs` main" > /etc/apt/sources.list.d/ros2-latest.list'
-  - export ROS_DISTRO=bouncy  # or bouncy
+  - export ROS_DISTRO=ardent  # or bouncy
   - sudo apt update && sudo apt install -y build-essential python3-colcon-common-extensions
   # - sudo apt install python3-colcon-common-extensions
-  - source /opt/ros/bouncy/setup.bash
+  - ls -l /opt/ros
+  - source /opt/ros/ardent/setup.bash
 
 before_script:
   # stop the build if there are Python syntax errors or undefined names
