@@ -51,5 +51,10 @@ script:
   # - make run_tests
   # - catkin_test_results --all ./
   # - sudo make install
+
+branches:
+  only:
+    - ros2-devel
+
 notifications:
   email: false
