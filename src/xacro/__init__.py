@@ -748,6 +748,7 @@ def handle_macro_call(node, macros, symbols):
     if params:
         raise XacroException("Undefined parameters [%s]" % ",".join(params), macro=m)
 
+    oldstack = push_file(m.history[-1][-1])
     try:
         eval_all(body, macros, scoped)
     except Exception as e:
@@ -757,6 +758,8 @@ def handle_macro_call(node, macros, symbols):
         else:
             e.macros = [m]
         raise
+    finally:
+        restore_filestack(oldstack)
 
     # Replaces the macro node with the expansion
     remove_previous_comments(node)
