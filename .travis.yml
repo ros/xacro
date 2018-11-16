@@ -33,7 +33,7 @@ install:
   - rosdep update
   - sudo apt install python3-pip
   - sudo pip3 install argcomplete pytest pep257 flake8
-  - sudo -H python3 -m pip install -U setuptools
+  # - sudo -H python3 -m pip install -U setuptools
 
 # before_script:
   # stop the build if there are Python syntax errors or undefined names
