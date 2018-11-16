@@ -26,14 +26,14 @@ install:
   - sudo apt update && sudo apt install -y python3-rosdep ros-$ROS_DISTRO-ros-base
   - sudo apt install python3-colcon-common-extensions
   - sudo apt install build-essential python3-setuptools
-  - pip3 install -U setuptools
+  # - pip3 install -U setuptools
   # - sudo apt install python3-colcon-common-extensions
   - source /opt/ros/$ROS_DISTRO/setup.bash
   - sudo rosdep init
   - rosdep update
   - sudo apt install python3-pip
-  - sudo pip3 install argcomplete setuptools pytest pep257 flake8
-  - sudo -H python3 -m pip install -U setuptools
+  - sudo pip3 install argcomplete pytest pep257 flake8
+  # - sudo -H python3 -m pip install -U setuptools
 
 # before_script:
   # stop the build if there are Python syntax errors or undefined names
