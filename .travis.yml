@@ -1,9 +1,11 @@
 dist: bionic
 sudo: enabled
-language: python
+language: generic
 python:
   # - "3.5"
   - "3.6"
+cache:
+   - apt
 
 env:
   global:
@@ -12,7 +14,7 @@ env:
 
 # command to install dependencies
 install:
-  - pip3 install setuptools pytest pep257 flake8
+  # - pip3 install setuptools pytest pep257 flake8
   # - pip install rospkg PyYAML argparse catkin_pkg rosdep rosdistro
   # - sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu trusty main" > /etc/apt/sources.list.d/ros-latest.list'
   # - wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
@@ -33,6 +35,7 @@ install:
   - rosdep update
   - sudo apt install python3-pip
   - sudo pip3 install argcomplete setuptools pytest pep257 flake8
+  - sudo -H python3 -m pip install -U setuptools
 
 # before_script:
   # stop the build if there are Python syntax errors or undefined names
@@ -46,7 +49,7 @@ script:
   - mkdir -p $ROS2_WS_XACRO_SRC
   - ln -s $TRAVIS_BUILD_DIR $ROS2_WS_XACRO_SRC
   - cd $ROS2_WS_XACRO
-  - colcon build
+  - colcon build --symlink-install
   - colcon test
   # - export PYTHONPATH=`pwd`/src:$PYTHONPATH
   # - mkdir build
