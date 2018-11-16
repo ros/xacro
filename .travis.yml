@@ -31,6 +31,8 @@ install:
   - source /opt/ros/$ROS_DISTRO/setup.bash
   - sudo rosdep init
   - rosdep update
+  - sudo apt install python3-pip
+  - sudo pip3 install argcomplete setuptools pytest pep257 flake8
 
 # before_script:
   # stop the build if there are Python syntax errors or undefined names
