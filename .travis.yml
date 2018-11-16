@@ -28,8 +28,8 @@ install:
   - sudo apt install build-essential python3-setuptools
   # - sudo apt install python3-colcon-common-extensions
   - source /opt/ros/$ROS_DISTRO/setup.bash
-  - sudo rosdep init
-  - rosdep update
+  # - sudo rosdep init
+  # - rosdep update
 
 # before_script:
   # stop the build if there are Python syntax errors or undefined names
