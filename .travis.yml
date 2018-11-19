@@ -6,13 +6,17 @@ python:
   - "3.5"
   - "3.6"
 
+notifications:
+  email: false
+
 # command to install dependencies
 install:
   - pip install nose coverage pep8 flake8
   - pip install rospkg PyYAML argparse catkin_pkg rosdep rosdistro
+  - sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 421C365BD9FF1F717815A3895523BAEEB01FA116
   - sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu trusty main" > /etc/apt/sources.list.d/ros-latest.list'
-  - wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
   - sudo apt-get update
+  - sudo apt-get install dpkg  # work-around for https://github.com/travis-ci/travis-ci/issues/9361
   - sudo apt-get install ros-indigo-catkin ros-indigo-roslaunch ros-indigo-rostest ros-indigo-roslint
   - source /opt/ros/indigo/setup.bash
 
@@ -32,5 +36,3 @@ script:
   - make run_tests
   - catkin_test_results --all ./
   - sudo make install
-notifications:
-  email: false
