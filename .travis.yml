@@ -12,7 +12,7 @@ env:
 
 # command to install dependencies
 install:
-  - pip3 install setuptools pytest pep257 flake8
+  # - pip3 install setuptools pytest pep257 flake8
   # - pip install rospkg PyYAML argparse catkin_pkg rosdep rosdistro
   # - sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu trusty main" > /etc/apt/sources.list.d/ros-latest.list'
   # - wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
@@ -31,14 +31,14 @@ install:
   - sudo rosdep init
   - rosdep update
   - sudo apt install python3-pip
-  - sudo -H pip3 install argcomplete pytest pep257
-  - sudo -H python3 -m pip install -U setuptools flake8
+  - sudo pip3 install argcomplete setuptools pytest pep257 flake8
+  - sudo -H python3 -m pip install -U setuptools
 
 # before_script:
   # stop the build if there are Python syntax errors or undefined names
-  - flake8 . --count --select=E901,E999,F821,F822,F823 --show-source --statistics
+  # - flake8 . --count --select=E901,E999,F821,F822,F823 --show-source --statistics
   # exit-zero treats all errors as warnings.  The GitHub editor is 127 chars wide
-  - flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+  # - flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
 # command to run tests
 script:
