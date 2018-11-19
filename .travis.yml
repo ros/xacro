@@ -11,8 +11,8 @@ notifications:
 
 # command to install dependencies
 install:
-  - pip install nose coverage pep8 flake8
-  - pip install rospkg PyYAML argparse catkin_pkg rosdep rosdistro
+  - pip install flake8
+  - pip install PyYAML argparse rospkg catkin_pkg
   - sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 421C365BD9FF1F717815A3895523BAEEB01FA116
   - sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu trusty main" > /etc/apt/sources.list.d/ros-latest.list'
   - sudo apt-get update
