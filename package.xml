@@ -1,9 +1,8 @@
 <?xml version="1.0"?>
-<package>
+<package format="2">
   <name>xacro</name>
   <version>1.13.4</version>
   <description>Xacro (XML Macros)
-
     Xacro is an XML macro language. With xacro, you can construct shorter and more readable XML files by using macros that expand to larger XML expressions.
   </description>
 
@@ -20,15 +19,10 @@
   <author>William Woodall</author>
   <author>Robert Haschke</author>
 
-  <buildtool_depend version_gte="0.5.68">catkin</buildtool_depend>
-
-  <build_depend>roslint</build_depend>
-
-  <run_depend>roslaunch</run_depend>
-
-  <test_depend>rostest</test_depend>
+  <buildtool_depend>ament_python</buildtool_depend>
+  <test_depend>python3-pytest</test_depend>
 
   <export>
-    <architecture_independent/>
+    <build_type>ament_python</build_type>
   </export>
 </package>

@@ -1,0 +1,5 @@
+{
+    "hooks": [
+        "share/xacro/environment/completion.bash",
+    ]
+}
