@@ -1,38 +1,64 @@
-dist: trusty
+dist: bionic
 sudo: enabled
 language: python
 python:
-  - "2.7"
-  - "3.5"
+  # - "3.5"
   - "3.6"
-
-notifications:
-  email: false
+env:
+  global:
+    - ROS2_WS_XACRO=~/ros2_ws_xacro
+    - ROS2_WS_XACRO_SRC=${ROS2_WS_XACRO}/src
 
 # command to install dependencies
 install:
-  - pip install flake8
-  - pip install PyYAML argparse rospkg catkin_pkg
-  - sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 421C365BD9FF1F717815A3895523BAEEB01FA116
-  - sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu trusty main" > /etc/apt/sources.list.d/ros-latest.list'
-  - sudo apt-get update
-  - sudo apt-get install dpkg  # work-around for https://github.com/travis-ci/travis-ci/issues/9361
-  - sudo apt-get install ros-indigo-catkin ros-indigo-roslaunch ros-indigo-rostest ros-indigo-roslint
-  - source /opt/ros/indigo/setup.bash
+  # - pip3 install setuptools pytest pep257 flake8
+  # - pip install rospkg PyYAML argparse catkin_pkg rosdep rosdistro
+  # - sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu trusty main" > /etc/apt/sources.list.d/ros-latest.list'
+  # - wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
+  # - sudo apt-get update
+  # - sudo apt-get install ros-indigo-catkin ros-indigo-roslaunch ros-indigo-rostest ros-indigo-roslint
+  - sudo apt update && sudo apt install curl
+  - curl http://repo.ros2.org/repos.key | sudo apt-key add -
+  - sudo sh -c 'echo "deb [arch=amd64,arm64] http://repo.ros2.org/ubuntu/main `lsb_release -cs` main" > /etc/apt/sources.list.d/ros2-latest.list'
+  - export ROS_DISTRO=ardent  # or ardent
+  # - sudo apt update && sudo apt install -y build-essential python3-colcon-common-extensions
+  - sudo apt update && sudo apt install -y python3-rosdep ros-$ROS_DISTRO-ros-base
+  - sudo apt install python3-colcon-common-extensions
+  - sudo apt install build-essential
+  # - sudo apt install python3-colcon-common-extensions
+  - source /opt/ros/$ROS_DISTRO/setup.bash
+  - sudo rosdep init
+  - rosdep update
+  - sudo apt install python3-pip
+  - sudo pip3 install argcomplete setuptools pytest pep257 flake8
+  - sudo -H python3 -m pip install -U setuptools
 
-before_script:
+# before_script:
   # stop the build if there are Python syntax errors or undefined names
-  - flake8 . --count --select=E901,E999,F821,F822,F823 --show-source --statistics
+  # - flake8 . --count --select=E901,E999,F821,F822,F823 --show-source --statistics
   # exit-zero treats all errors as warnings.  The GitHub editor is 127 chars wide
-  - flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+  # - flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
 # command to run tests
 script:
-  - export PYTHONPATH=`pwd`/src:$PYTHONPATH
-  - mkdir build
-  - cd build
-  - cmake -DCMAKE_BUILD_TYPE=Release -DSETUPTOOLS_DEB_LAYOUT=OFF ..
-  - make
-  - make run_tests
-  - catkin_test_results --all ./
-  - sudo make install
+  - mkdir -p $ROS2_WS_XACRO
+  - mkdir -p $ROS2_WS_XACRO_SRC
+  - ln -s $TRAVIS_BUILD_DIR $ROS2_WS_XACRO_SRC
+  - cd $ROS2_WS_XACRO
+  - colcon build
+  - colcon test
+  # - export PYTHONPATH=`pwd`/src:$PYTHONPATH
+  # - mkdir build
+  # - cd build
+  # - cmake -DCMAKE_BUILD_TYPE=Release -DSETUPTOOLS_DEB_LAYOUT=OFF ..
+  # - make
+  # - make run_tests
+  # - catkin_test_results --all ./
+  # - sudo make install
+
+branches:
+  only:
+    - ros2-devel
+
+notifications:
+  email: false
