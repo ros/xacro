@@ -58,7 +58,7 @@ script:
 
 branches:
   only:
-    - ros2-devel
+    - ros2
 
 notifications:
   email: false
