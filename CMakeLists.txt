@@ -3,8 +3,6 @@ project(xacro)
 
 find_package(catkin REQUIRED roslint)
 
-catkin_python_setup()
-
 catkin_package(
   CFG_EXTRAS xacro-extras.cmake
 )
