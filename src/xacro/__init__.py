@@ -973,6 +973,12 @@ def process_doc(doc,
         grab_macros(doc, macros)
         grab_properties(doc, symbols)
 
+    # apply xacro:targetNamespace as global xmlns (if defined)
+    targetNS = doc.documentElement.getAttribute('xacro:targetNamespace')
+    if targetNS:
+        doc.documentElement.removeAttribute('xacro:targetNamespace')
+        doc.documentElement.setAttribute('xmlns', targetNS)
+
     eval_all(doc.documentElement, macros, symbols)
 
     # reset substitution args
