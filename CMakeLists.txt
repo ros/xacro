@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(xacro)
 
-find_package(catkin REQUIRED roslint)
+find_package(catkin REQUIRED COMPONENTS roslint)
 
 catkin_package(
   CFG_EXTRAS xacro-extras.cmake
