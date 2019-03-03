@@ -807,8 +807,17 @@ def eval_all(node, macros, symbols):
     """Recursively evaluate node, expanding macros, replacing properties, and evaluating expressions"""
     # evaluate the attributes
     for name, value in node.attributes.items():
-        result = unicode(eval_text(value, symbols))
-        node.setAttribute(name, result)
+        if name.startswith('xacro:'):  # remove xacro:* attributes
+            node.removeAttribute(name)
+        else:
+            result = unicode(eval_text(value, symbols))
+            node.setAttribute(name, result)
+
+    # remove xacro namespace definition
+    try:
+        node.removeAttribute('xmlns:xacro')
+    except xml.dom.NotFoundErr:
+        pass
 
     node = node.firstChild
     while node:
