@@ -807,8 +807,17 @@ def eval_all(node, macros, symbols):
     """Recursively evaluate node, expanding macros, replacing properties, and evaluating expressions"""
     # evaluate the attributes
     for name, value in node.attributes.items():
-        result = unicode(eval_text(value, symbols))
-        node.setAttribute(name, result)
+        if name.startswith('xacro:'):  # remove xacro:* attributes
+            node.removeAttribute(name)
+        else:
+            result = unicode(eval_text(value, symbols))
+            node.setAttribute(name, result)
+
+    # remove xacro namespace definition
+    try:
+        node.removeAttribute('xmlns:xacro')
+    except xml.dom.NotFoundErr:
+        pass
 
     node = node.firstChild
     while node:
@@ -963,6 +972,12 @@ def process_doc(doc,
         process_includes(doc.documentElement)
         grab_macros(doc, macros)
         grab_properties(doc, symbols)
+
+    # apply xacro:targetNamespace as global xmlns (if defined)
+    targetNS = doc.documentElement.getAttribute('xacro:targetNamespace')
+    if targetNS:
+        doc.documentElement.removeAttribute('xacro:targetNamespace')
+        doc.documentElement.setAttribute('xmlns', targetNS)
 
     eval_all(doc.documentElement, macros, symbols)
 
