@@ -19,7 +19,7 @@ install(PROGRAMS scripts/xacro DESTINATION bin)
 ## For backwards compatibility we also install as xacro.py
 #  The roslaunch $(find ...) expects the script to be in the package directory, 
 #  and in catkin the package direcory is /share.
-install(PROGRAMS xacro.py DESTINATION share/${PROJECT_NAME})
+install(PROGRAMS xacro.py DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
