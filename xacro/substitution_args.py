@@ -31,6 +31,9 @@ import sys
 
 import yaml
 
+from ament_index_python.packages import get_package_prefix
+
+
 try:
     from cStringIO import StringIO  # Python 2.x
 except ImportError:
@@ -170,8 +173,7 @@ def _dirname(resolved, a, args, context):
 
 
 def _eval_find(pkg):
-    rp = _get_rospack()
-    return rp.get_path(pkg)
+    return get_package_prefix(pkg)
 
 
 def _find(resolved, a, args, context):
@@ -197,31 +199,30 @@ def _find(resolved, a, args, context):
     path = _sanitize_path(path)
     if path.startswith('/') or path.startswith('\\'):
         path = path[1:]
-    rp = _get_rospack()
     if path:
-        source_path_to_packages = rp.get_custom_cache(
-            'source_path_to_packages', {})
+        # source_path_to_packages = rp.get_custom_cache(
+        #     'source_path_to_packages', {})
         res = None
         try:
             res = _find_executable(
-                resolve_without_path, a, [args[0], path], context,
-                source_path_to_packages=source_path_to_packages)
+                resolve_without_path, a, [args[0], path], context)
+                # source_path_to_packages=source_path_to_packages)
         except SubstitutionException:
             pass
         if res is None:
             try:
                 res = _find_resource(
-                    resolve_without_path, a, [args[0], path], context,
-                    source_path_to_packages=source_path_to_packages)
+                    resolve_without_path, a, [args[0], path], context)
+                    # source_path_to_packages=source_path_to_packages)
             except SubstitutionException:
                 pass
         # persist mapping of packages in rospack instance
-        if source_path_to_packages:
-            rp.set_custom_cache(
-                'source_path_to_packages', source_path_to_packages)
+        # if source_path_to_packages:
+        #     rp.set_custom_cache(
+        #         'source_path_to_packages', source_path_to_packages)
         if res is not None:
             return res
-    pkg_path = rp.get_path(args[0])
+    pkg_path = get_package_prefix(args[0])
     if path:
         pkg_path = os.path.join(pkg_path, path)
     return before + pkg_path + after
@@ -255,8 +256,7 @@ def _find_executable(resolved, a, args, _context, source_path_to_packages=None):
     if not full_path:
         # else we will look for the executable in the source folder of the
         # package
-        rp = _get_rospack()
-        full_path = _get_executable_path(rp.get_path(args[0]), path)
+        full_path = _get_executable_path(get_package_prefix(args[0]), path)
     if not full_path:
         raise SubstitutionException('$(find-executable pkg path) '
                                     'could not find executable [%s]' % a)
@@ -322,16 +322,6 @@ def _get_executable_path(base_path, path):
     if os.path.isfile(full_path) and os.access(full_path, os.X_OK):
         return full_path
     return None
-
-
-def _get_rospack():
-
-    global _rospack
-    """
-    if _rospack is None:
-        _rospack = rospkg.RosPack()
-    """
-    return _rospack
 
 
 def _eval_arg(name, args):
