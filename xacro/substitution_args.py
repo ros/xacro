@@ -43,8 +43,6 @@ except ImportError:
 # import c
 # from roslaunch.loader import convert_value
 
-_rospack = None
-
 
 class SubstitutionException(Exception):
     """Base class for exceptions in substitution_args routines."""
@@ -187,7 +185,7 @@ def _find(resolved, a, args, context):
     Else it resolves to the source share folder of the PKG.
     :returns: updated resolved argument, ``str``
     :raises: :exc:SubstitutionException: if PKG invalidly specified
-    :raises: :exc:`rospkg.ResourceNotFound` If PKG requires resource (e.g. package)
+    :raises: :exc:`LookupError` If PKG requires resource (e.g. package)
     that does not exist
     """
     if len(args) != 1:
@@ -200,26 +198,18 @@ def _find(resolved, a, args, context):
     if path.startswith('/') or path.startswith('\\'):
         path = path[1:]
     if path:
-        # source_path_to_packages = rp.get_custom_cache(
-        #     'source_path_to_packages', {})
         res = None
         try:
             res = _find_executable(
                 resolve_without_path, a, [args[0], path], context)
-                # source_path_to_packages=source_path_to_packages)
         except SubstitutionException:
             pass
         if res is None:
             try:
                 res = _find_resource(
                     resolve_without_path, a, [args[0], path], context)
-                    # source_path_to_packages=source_path_to_packages)
             except SubstitutionException:
                 pass
-        # persist mapping of packages in rospack instance
-        # if source_path_to_packages:
-        #     rp.set_custom_cache(
-        #         'source_path_to_packages', source_path_to_packages)
         if res is not None:
             return res
     pkg_path = get_package_prefix(args[0])
