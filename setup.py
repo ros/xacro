@@ -31,7 +31,7 @@ setup(
     test_suite='test',
     entry_points={
         'console_scripts': [
-            'xacro = resource.xacro:main'
+            'xacro = xacro:main'
         ],
     },
 )
