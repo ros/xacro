@@ -137,9 +137,9 @@ def fixed_writexml(self, writer, indent="", addindent="", newl=""):
     a_names = sorted(attrs.keys())
 
     for a_name in a_names:
-        writer.write(" %s=\"" % a_name)
+        writer.write(' %s="' % a_name)
         xml.dom.minidom._write_data(writer, attrs[a_name].value)
-        writer.write("\"")
+        writer.write('"')
     if self.childNodes:
         if len(self.childNodes) == 1 \
            and self.childNodes[0].nodeType == xml.dom.minidom.Node.TEXT_NODE:
