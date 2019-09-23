@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>xacro</name>
-  <version>1.13.4</version>
+  <version>1.13.3</version>
   <description>Xacro (XML Macros)
 
     Xacro is an XML macro language. With xacro, you can construct shorter and more readable XML files by using macros that expand to larger XML expressions.
@@ -10,7 +10,7 @@
   <maintainer email="rhaschke@techfak.uni-bielefeld.de">Robert Haschke</maintainer>
   <maintainer email="morgan@osrfoundation.org">Morgan Quigley</maintainer>
 
-  <license>Apache License 2.0</license>
+  <license>BSD</license>
 
   <url type="website">http://ros.org/wiki/xacro</url>
   <url type="repository">https://github.com/ros/xacro</url>
@@ -21,10 +21,6 @@
   <author>Robert Haschke</author>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
-  <build_depend>ros2launch</build_depend>
-  <build_depend>rclpy</build_depend>
-  <exec_depend>ros2launch</exec_depend>
-  <exec_depend>rclpy</exec_depend>
 
   <test_depend>python3-pytest</test_depend>
   <test_depend>ament_copyright</test_depend>

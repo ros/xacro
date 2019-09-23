@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 from setuptools import find_packages
 from setuptools import setup
 
@@ -26,7 +24,7 @@ setup(
     description='Xacro is an XML macro language. With xacro,'
     'you can construct shorter and more readable XML files'
     'by using macros that expand to larger XML expressions.',
-    license='Apache License, Version 2.0',
+    license='BSD',
     tests_require=['pytest'],
     test_suite='test',
     entry_points={
