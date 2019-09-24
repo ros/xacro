@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # Copyright (c) 2015, Open Source Robotics Foundation, Inc.
 # Copyright (c) 2013, Willow Garage, Inc.
 # All rights reserved.
