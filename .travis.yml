@@ -2,7 +2,6 @@ dist: xenial
 sudo: required
 language: python
 python:
-  - "2.7"
   - "3.5"
   - "3.6"
 
@@ -11,11 +10,11 @@ notifications:
 
 # command to install dependencies
 install:
-  - pip install flake8 PyYAML argparse rospkg catkin_pkg defusedxml
-  - sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
-  - sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu `lsb_release -cs` main" > /etc/apt/sources.list.d/ros-latest.list'
+  - pip install colcon-common-extensions flake8 pytest PyYAML argparse
+  - curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
+  - sudo sh -c 'echo "deb http://packages.ros.org/ros2/ubuntu `lsb_release -cs` main" > /etc/apt/sources.list.d/ros2-latest.list'
   - sudo apt -qq update
-  - sudo apt -qq install -y ros-kinetic-catkin ros-kinetic-roslaunch ros-kinetic-rostest ros-kinetic-roslint
+  - sudo apt -qq install ros-ardent-ament-index-python ros-ardent-ament-cmake ros-ardent-ament-lint-auto ros-ardent-ament-cmake-pytest
 
 before_script:
   # stop the build if there are Python syntax errors or undefined names
@@ -23,13 +22,10 @@ before_script:
   # exit-zero treats all errors as warnings.  The GitHub editor is 127 chars wide
   - flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
   # prepare workspace
-  - source /opt/ros/kinetic/setup.bash
+  - source /opt/ros/ardent/setup.bash
+  - mkdir -p ros_ws/src && ln -s $TRAVIS_BUILD_DIR ros_ws/src && cd ros_ws
 
 # command to run tests
 script:
-  - mkdir build && cd build
-  - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/tmp/install -DSETUPTOOLS_DEB_LAYOUT=OFF ..
-  - make install
-  - source /tmp/install/setup.bash
-  - make test
-  - catkin_test_results
+  - colcon build
+  - colcon test && colcon test-result
