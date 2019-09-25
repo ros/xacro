@@ -272,8 +272,7 @@ class TestXacroBase(unittest.TestCase):
         if not self.in_order:
             args.append('--legacy')
         test_dir = os.path.abspath(os.path.dirname(__file__))
-        xacro_path = os.path.join(test_dir, '..', 'scripts', 'xacro')
-        subprocess.call([xacro_path, input_path] + args)
+        subprocess.call(['xacro', input_path] + args)
 
 
 # class to match XML docs while ignoring any comments
