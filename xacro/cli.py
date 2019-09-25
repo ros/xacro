@@ -58,6 +58,36 @@ class IndentedHelpFormatterWithNL(IndentedHelpFormatter):
         return result
 
 
+# copied from rosgraph.names
+REMAP = ":="
+
+
+def load_mappings(argv):
+    """
+    Load name mappings encoded in command-line arguments. This will filter
+    out any parameter assignment mappings.
+
+    @param argv: command-line arguments
+    @type  argv: [str]
+    @return: name->name remappings.
+    @rtype: dict {str: str}
+    """
+    mappings = {}
+    for arg in argv:
+        if REMAP in arg:
+            try:
+                src, dst = [x.strip() for x in arg.split(REMAP)]
+                if src and dst:
+                    if len(src) > 1 and src[0] == '_' and src[1] != '_':
+                        # ignore parameter assignment mappings
+                        pass
+                    else:
+                        mappings[src] = dst
+            except:
+                raise RuntimeError("Invalid remapping argument '%s'\n" % arg)
+    return mappings
+
+
 def process_args(argv, require_input=True):
     parser = ColoredOptionParser(usage="usage: %prog [options] <input>",
                                  formatter=IndentedHelpFormatterWithNL())
@@ -93,7 +123,6 @@ def process_args(argv, require_input=True):
 
     # process substitution args
     try:
-        from rosgraph.names import load_mappings, REMAP
         mappings = load_mappings(argv)
         filtered_args = [a for a in argv if REMAP not in a]  # filter-out REMAP args
     except ImportError as e:
