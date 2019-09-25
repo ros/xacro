@@ -386,9 +386,9 @@ def is_valid_name(name):
 
     return False
 
-
-re_macro_arg = re.compile(r'''\s*([^\s:=]+?):?=(\^\|?)?((?:(?:'[^']*')?[^\s'"]*?)*)(?:\s+|$)(.*)''')
-#                           space   param    :=   ^|   <--      default      -->   space    rest
+re_macro_arg = re.compile(
+    r"""\s*([^\s:=]+?):?=(\^\|?)?((?:(?:'[^']*')?[^\s'"]*?)*)(?:\s+|$)(.*)""")
+#    space   param    :=   ^|   <--      default      -->   space    rest
 
 
 def parse_macro_arg(s):
