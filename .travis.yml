@@ -1,5 +1,5 @@
-dist: trusty
-sudo: enabled
+dist: xenial
+sudo: required
 language: python
 python:
   - "2.7"
@@ -7,18 +7,16 @@ python:
   - "3.6"
 
 notifications:
-  email: false
+  email: true
 
 # command to install dependencies
 install:
-  - pip install flake8
-  - pip install PyYAML argparse rospkg catkin_pkg
-  - sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 421C365BD9FF1F717815A3895523BAEEB01FA116
-  - sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu trusty main" > /etc/apt/sources.list.d/ros-latest.list'
-  - sudo apt-get update
-  - sudo apt-get install dpkg  # work-around for https://github.com/travis-ci/travis-ci/issues/9361
-  - sudo apt-get install ros-indigo-catkin ros-indigo-roslaunch ros-indigo-rostest ros-indigo-roslint
-  - source /opt/ros/indigo/setup.bash
+  - pip install flake8 PyYAML argparse rospkg catkin_pkg defusedxml
+  - sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
+  - sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu `lsb_release -cs` main" > /etc/apt/sources.list.d/ros-latest.list'
+  - sudo apt -qq update
+  - sudo apt -qq install -y ros-kinetic-catkin ros-kinetic-roslaunch ros-kinetic-rostest ros-kinetic-roslint
+  - source /opt/ros/kinetic/setup.bash
 
 before_script:
   # stop the build if there are Python syntax errors or undefined names
