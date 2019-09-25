@@ -1,26 +1,37 @@
 #!/usr/bin/env python3
 
-# Copyright 2018 Open Source Robotics Foundation, Inc.
 # Copyright (c) 2015, Open Source Robotics Foundation, Inc.
 # Copyright (c) 2013, Willow Garage, Inc.
+# All rights reserved.
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#     * Redistributions of source code must retain the above copyright
+#       notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of the Open Source Robotics Foundation, Inc.
+#       nor the names of its contributors may be used to endorse or promote
+#       products derived from this software without specific prior
+#       written permission.
 #
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
 # Authors: Stuart Glaser, William Woodall, Robert Haschke
 # Maintainer: Morgan Quigley <morgan@osrfoundation.org>
 
-
-from __future__ import division, print_function
 
 import ast
 from copy import deepcopy
@@ -31,26 +42,18 @@ import re
 import sys
 import xml.dom.minidom
 
-# import substitution_args
 from .cli import process_args
 from .color import error, message, warning
 from .substitution_args import ArgException, resolve_args
 from .xmlutils import check_attrs, first_child_element, \
     next_sibling_element, replace_node, reqd_attrs
 
-# from .xmlutils import *
-
-try:  # python 2
-    _basestr = basestring
-    encoding = {'encoding': 'utf-8'}
-except NameError:  # python 3
-    _basestr = str
-    unicode = str
-    encoding = {}
+_basestr = str
+unicode = str
+encoding = {}
 
 # Dictionary of substitution args
 substitution_args_context = {}
-
 
 # Stack of currently processed files
 filestack = []
@@ -542,7 +545,7 @@ def grab_macro(elt, macros):
     name, params = check_attrs(elt, ['name'], ['params'])
     if name == 'call':
         warning(
-            'deprecated use of macro name \'call\'; xacro:call became a new keyword')
+            "deprecated use of macro name 'call'; xacro:call became a new keyword")
     if name.find('.') != -1:
         warning('macro names must not contain ".": %s' % name)
     # always have 'xacro:' namespace in macro name
@@ -663,7 +666,7 @@ def eval_text(text, symbols):
         except Exception as e:
             # re-raise as XacroException to add more context
             raise XacroException(exc=e,
-                                 suffix=os.linesep + 'when evaluating expression "%s"' % s)
+                                 suffix=os.linesep + "when evaluating expression '%s'" % s)
 
     def handle_extension(s):
         return eval_extension('$(%s)' % eval_text(s, symbols))
@@ -705,7 +708,7 @@ def eval_default_arg(forward_variable, default, symbols, macro):
 def handle_dynamic_macro_call(node, macros, symbols):
     name, = reqd_attrs(node, ['macro'])
     if not name:
-        raise XacroException('xacro:call is missing the "macro" attribute')
+        raise XacroException("xacro:call is missing the 'macro' attribute")
     name = unicode(eval_text(name, symbols))
 
     # remove 'macro' attribute and rename tag with resolved macro name

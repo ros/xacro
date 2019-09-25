@@ -1,20 +1,34 @@
-#!/usr/bin/env python3
+# Copyright (c) 2015, Open Source Robotics Foundation, Inc.
+# Copyright (c) 2013, Willow Garage, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#     * Redistributions of source code must retain the above copyright
+#       notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of the Open Source Robotics Foundation, Inc.
+#       nor the names of its contributors may be used to endorse or promote
+#       products derived from this software without specific prior
+#       written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
 
-# Copyright 2018 Open Source Robotics Foundation, Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-# Revision $Id: substitution_args.py 15178 2011-10-10 21:22:53Z kwc $
+# Authors: Stuart Glaser, William Woodall, Robert Haschke
+# Maintainer: Morgan Quigley <morgan@osrfoundation.org>
 
 """
 Library for processing XML substitution args.
@@ -33,15 +47,7 @@ import yaml
 
 from ament_index_python.packages import get_package_prefix
 
-
-try:
-    from cStringIO import StringIO  # Python 2.x
-except ImportError:
-    from io import StringIO  # Python 3.x
-
-# import rosgraph.names  # TODO Use this when rosgraph will be migrated to ROS2.
-# import c
-# from roslaunch.loader import convert_value
+from io import StringIO  # Python 3.x
 
 
 class SubstitutionException(Exception):
@@ -57,6 +63,12 @@ class ArgException(SubstitutionException):
 
 
 def _eval_env(name):
+    """
+    Returns the environment variable value or throws exception.
+
+    @return: enviroment variable value
+    @raise SubstitutionException: if environment variable not set
+    """
     try:
         return os.environ[name]
     except KeyError as e:
@@ -79,7 +91,14 @@ def _env(resolved, a, args, context):
 
 
 def _eval_optenv(name, default=''):
+    """
+    Eval_optenv
 
+    Returns the value of the environment variable or default
+
+    @name: name of the environment variable
+    @return: enviroment variable value or default
+    """
     if name in os.environ:
         return os.environ[name]
     return default
@@ -151,7 +170,13 @@ def _anon(resolved, a, args, context):
 
 
 def _eval_dirname(filename):
+    """
+    Gets the absolute path of a given filename
 
+    @param filename
+    @return: absolute path
+    @rtype path
+    """
     if not filename:
         raise SubstitutionException('Cannot substitute $(dirname),'
                                     'no file/directory information available.')
@@ -358,53 +383,53 @@ _eval_dict.update(math.__dict__)
 
 
 def convert_value(value, type_):
-        """
-        Convert a value from a string representation into the specified type.
+    """
+    Convert a value from a string representation into the specified type.
 
-        @param value: string representation of value
-        @type  value: str
-        @param type_: int, double, string, bool, or auto
-        @type  type_: str
-        @raise ValueError: if parameters are invalid
-        """
-        type_ = type_.lower()
-        # currently don't support XML-RPC date, dateTime, maps, or list
-        # types
-        if type_ == 'auto':
-            # attempt numeric conversion
-            try:
-                if '.' in value:
-                    return float(value)
-                else:
-                    return int(value)
-            except ValueError:
-                pass
-            # bool
-            lval = value.lower()
-            if lval == 'true' or lval == 'false':
-                return convert_value(value, 'bool')
-            # string
-            return value
-        elif type_ == 'str' or type_ == 'string':
-            return value
-        elif type_ == 'int':
-            return int(value)
-        elif type_ == 'double':
-            return float(value)
-        elif type_ == 'bool' or type_ == 'boolean':
-            value = value.lower().strip()
-            if value == 'true' or value == '1':
-                return True
-            elif value == 'false' or value == '0':
-                return False
-            raise ValueError("%s is not a '%s' type" % (value, type_))
-        elif type_ == 'yaml':
-            try:
-                return yaml.load(value)
-            except yaml.parser.ParserError as e:
-                raise ValueError(e)
-        else:
-            raise ValueError("Unknown type '%s'" % type_)
+    @param value: string representation of value
+    @type  value: str
+    @param type_: int, double, string, bool, or auto
+    @type  type_: str
+    @raise ValueError: if parameters are invalid
+    """
+    type_ = type_.lower()
+    # currently don't support XML-RPC date, dateTime, maps, or list
+    # types
+    if type_ == 'auto':
+        # attempt numeric conversion
+        try:
+            if '.' in value:
+                return float(value)
+            else:
+                return int(value)
+        except ValueError:
+            pass
+        # bool
+        lval = value.lower()
+        if lval == 'true' or lval == 'false':
+            return convert_value(value, 'bool')
+        # string
+        return value
+    elif type_ == 'str' or type_ == 'string':
+        return value
+    elif type_ == 'int':
+        return int(value)
+    elif type_ == 'double':
+        return float(value)
+    elif type_ == 'bool' or type_ == 'boolean':
+        value = value.lower().strip()
+        if value == 'true' or value == '1':
+            return True
+        elif value == 'false' or value == '0':
+            return False
+        raise ValueError("%s is not a '%s' type" % (value, type_))
+    elif type_ == 'yaml':
+        try:
+            return yaml.load(value)
+        except yaml.parser.ParserError as e:
+            raise ValueError(e)
+    else:
+        raise ValueError("Unknown type '%s'" % type_)
 
 
 class _DictWrapper(object):
