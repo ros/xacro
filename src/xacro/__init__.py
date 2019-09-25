@@ -182,12 +182,12 @@ def eval_extension(s):
     if s == '$(cwd)':
         return os.getcwd()
     try:
-        from roslaunch import substitution_args
+        from roslaunch.substitution_args import resolve_args, ArgException
         from rospkg.common import ResourceNotFound
-        return substitution_args.resolve_args(s, context=substitution_args_context, resolve_anon=False)
+        return resolve_args(s, context=substitution_args_context, resolve_anon=False)
     except ImportError as e:
         raise XacroException("substitution args not supported: ", exc=e)
-    except substitution_args.ArgException as e:
+    except ArgException as e:
         raise XacroException("Undefined substitution argument", exc=e)
     except ResourceNotFound as e:
         raise XacroException("resource not found:", exc=e)
