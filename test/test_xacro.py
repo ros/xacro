@@ -438,8 +438,8 @@ class TestXacro(TestXacroCommentsIgnored):
                 '''<a><f v="0.25" /></a>''')
 
     def test_substitution_args_find(self):
-        self.assert_matches(self.quick_xacro('''<a><f v="$(find xacro)/test/test_xacro.py" /></a>'''),
-                '''<a><f v="''' + os.path.abspath((__file__).replace(".pyc",".py") + '''" /></a>'''))
+        resolved = self.quick_xacro('''<a>$(find xacro)/test/test_xacro.py</a>''').firstChild.firstChild.data
+        self.assertEqual(os.path.realpath(resolved), os.path.realpath(__file__))
 
     def test_substitution_args_arg(self):
         self.assert_matches(self.quick_xacro('''<a><f v="$(arg sub_arg)" /></a>''', cli=['sub_arg:=my_arg']),
