@@ -26,7 +26,7 @@ mkdir $dir
 cd $dir
 
 echo "*** running cmake ***"
-cmake -DCATKIN_DEVEL_PREFIX=devel -DCMAKE_INSTALL_PREFIX=install $1 || exit $?
+cmake -DCMAKE_INSTALL_PREFIX=install $1 || exit $?
 
 echo
 echo "*** running make ***"
