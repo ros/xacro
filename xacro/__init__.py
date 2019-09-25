@@ -191,15 +191,9 @@ class Macro(object):
         self.history = []  # definition history
 
 def eval_extension(s):
-    # TODO This is Temporary fix to return cwd() for 'find xacro' command.
-    # We can use resolve_args() when rospkg will be migrated to ROS2.
-    if s == '$(cwd)' or s == '$(find xacro)':
+    if s == '$(cwd)' :
         return os.getcwd()
     try:
-        # TODO use following when roslaunch will be fully migrated to ROS2.
-        # from roslaunch import substitution_args
-        # TODO use this when rospkg will be migrated to ROS2.
-        # from rospkg.common import ResourceNotFound
         return resolve_args(s, context=substitution_args_context, resolve_anon=False)
     except ImportError as e:
         raise XacroException('substitution args not supported: ', exc=e)
@@ -505,7 +499,7 @@ def is_valid_name(name):
 
 re_macro_arg = re.compile(
     r"""\s*([^\s:=]+?):?=(\^\|?)?((?:(?:'[^']*')?[^\s'"]*?)*)(?:\s+|$)(.*)""")
-# space   param    :=   ^|   <--      default      -->   space    rest
+#    space   param    :=   ^|   <--      default      -->   space    rest
 
 
 def parse_macro_arg(s):
