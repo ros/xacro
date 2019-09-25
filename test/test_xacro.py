@@ -45,10 +45,7 @@ import xacro
 import xml.dom
 from xml.dom.minidom import parseString
 
-try:
-    from cStringIO import StringIO  # Python 2.x
-except ImportError:
-    from io import StringIO  # Python 3.x
+from io import StringIO
 
 # regex to match whitespace
 whitespace = re.compile(r'\s+')
@@ -352,7 +349,6 @@ class TestXacro(TestXacroCommentsIgnored):
   <xacro:macro name="call"><a name="bar"/></xacro:macro>
   <xacro:call macro="foo"/></a>'''
         self.assertRaises(xacro.XacroException, self.quick_xacro, src)
-
     def test_dynamic_macro_undefined(self):
         self.assertRaises(xacro.XacroException,
                           self.quick_xacro,

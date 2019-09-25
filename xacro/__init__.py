@@ -48,7 +48,6 @@ from .xmlutils import check_attrs, first_child_element, \
 # Dictionary of substitution args
 substitution_args_context = {}
 
-
 # Stack of currently processed files
 filestack = []
 
