@@ -120,7 +120,6 @@ global_symbols = {'__builtins__': {k: __builtins__[k]
 # also define all math symbols and functions
 global_symbols.update(math.__dict__)
 # allow to import dicts from yaml
-# global_symbols.update(dict(load_yaml=load_yaml))
 global_symbols.update({'load_yaml': load_yaml})
 
 
@@ -157,8 +156,8 @@ def deprecated_tag(_issued=[False]):
         warning(
             "deprecated: xacro tags should be prepended with 'xacro' xml namespace.")
         message("""Use the following script to fix incorrect usage:
-        find . -iname "*.xacro" | xargs sed -i 's#<\\([/]\\?\\)\\(if\\|unless\\|include\\|arg
-        \\|property\\|macro\\|insert_block\\)#<\\1xacro:\\2#g'""")
+        find . -iname *.xacro | xargs sed -i -E 's/<([\/]?)(if|unless|include|arg|\
+property|macro|insert_block)/<\\1xacro:\\2/' """)
         print_location(filestack)
         print(file=sys.stderr)
 
@@ -191,11 +190,6 @@ class Macro(object):
         self.defaultmap = {}  # default parameter values
         self.history = []  # definition history
 
-
-class ResourceNotFound(Exception):
-    pass
-
-
 def eval_extension(s):
     # TODO This is Temporary fix to return cwd() for 'find xacro' command.
     # We can use resolve_args() when rospkg will be migrated to ROS2.
@@ -213,8 +207,8 @@ def eval_extension(s):
         raise XacroException('Undefined substitution argument', exc=e)
     except Exception as e:
         raise XacroException('resource not found:', exc=e)
-    except ResourceNotFound as e:
-        raise XacroException('resource not found:', exc=e)
+#    except ResourceNotFound as e:
+#        raise XacroException('resource not found:', exc=e)
 
 
 do_check_order = False
@@ -381,7 +375,7 @@ class QuickLexer(object):
 
 all_includes = []
 
-include_no_matches_msg = 'Include tag\'s filename spec "{}" matched no files.'
+include_no_matches_msg = "Include tag's filename spec '{}' matched no files."
 
 
 def is_include(elt):
@@ -547,7 +541,7 @@ def grab_macro(elt, macros):
         warning(
             "deprecated use of macro name 'call'; xacro:call became a new keyword")
     if name.find('.') != -1:
-        warning('macro names must not contain ".": %s' % name)
+        warning("macro names must not contain '.': %s" % name)
     # always have 'xacro:' namespace in macro name
     if not name.startswith('xacro:'):
         name = 'xacro:' + name
@@ -717,7 +711,7 @@ def handle_dynamic_macro_call(node, macros, symbols):
     # forward to handle_macro_call
     result = handle_macro_call(node, macros, symbols)
     if not result:  # we expect the call to succeed
-        raise XacroException('unknown macro name "%s" in xacro:call' % name)
+        raise XacroException("unknown macro name '%s' in xacro:call" % name)
     return True
 
 
@@ -767,7 +761,7 @@ def handle_macro_call(node, macros, symbols):
     for name, value in node.attributes.items():
         if name not in params:
             raise XacroException(
-                'Invalid parameter "%s"' % unicode(name), macro=m)
+                "Invalid parameter '%s'" % unicode(name), macro=m)
         params.remove(name)
         scoped._setitem(name, eval_text(value, symbols), unevaluated=False)
         node.setAttribute(name, '')  # suppress second evaluation in eval_all()
@@ -786,7 +780,7 @@ def handle_macro_call(node, macros, symbols):
             block = next_sibling_element(block)
 
     if block is not None:
-        raise XacroException('Unused block "%s"' % block.tagName, macro=m)
+        raise XacroException("Unused block '%s'" % block.tagName, macro=m)
 
     # Try to load defaults for any remaining non-block parameters
     for param in params[:]:
@@ -846,8 +840,8 @@ def get_boolean_value(value, condition):
         else:
             return bool(value)
     except Exception:
-        raise XacroException('Xacro conditional "%s" evaluated to "%s", '
-                             'which is not a boolean expression.' % (condition, value))
+        raise XacroException("Xacro conditional '%s' evaluated to '%s', "
+                             "which is not a boolean expression." % (condition, value))
 
 
 _empty_text_node = xml.dom.minidom.getDOMImplementation().createDocument(
@@ -912,7 +906,7 @@ def eval_all(node, macros, symbols):
                     block = symbols['*' + name]
                     content_only = False
                 else:
-                    raise XacroException('Undefined block "%s"' % name)
+                    raise XacroException("Undefined block '%s'" % name)
 
                 # cloning block allows to insert the same block multiple times
                 block = block.cloneNode(deep=True)
