@@ -1210,7 +1210,7 @@ ${u'🍔' * how_many}
         tmp_dir_name = tempfile.mkdtemp()  # create directory we can trash
         output_path = os.path.join(tmp_dir_name, "out.xml")
         self.run_xacro(input_path, '-o', output_path)
-        output_file_created = os.path.isfile(output_path)
+        self.assertTrue(os.path.isfile(output_path))
         self.assert_matches(xml.dom.minidom.parse(output_path), '''<robot>🍔</robot>''')
         shutil.rmtree(tmp_dir_name)  # clean up after ourselves
 
