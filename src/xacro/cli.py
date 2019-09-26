@@ -34,6 +34,7 @@ import textwrap
 from optparse import OptionParser, IndentedHelpFormatter
 from .color import colorize, warning, message
 
+
 class ColoredOptionParser(OptionParser):
     def error(self, message):
         msg = colorize(message, 'red')
@@ -41,11 +42,14 @@ class ColoredOptionParser(OptionParser):
 
 
 _original_wrap = textwrap.wrap
+
+
 def wrap_with_newlines(text, width, **kwargs):
     result = []
     for paragraph in text.split('\n'):
         result.extend(_original_wrap(paragraph, width, **kwargs))
     return result
+
 
 class IndentedHelpFormatterWithNL(IndentedHelpFormatter):
     def __init__(self, *args, **kwargs):

@@ -32,7 +32,8 @@ import sys
 # bold colors
 _ansi = {'red': 91, 'yellow': 93}
 
-def is_tty(stream): # taken from catkin_tools/common.py
+
+def is_tty(stream):  # taken from catkin_tools/common.py
     """Returns True if the given stream is a tty, else False"""
     return hasattr(stream, 'isatty') and stream.isatty()
 
@@ -47,7 +48,7 @@ def colorize(msg, color, file=sys.stderr, alt_text=None):
 
 
 def message(msg, *args, **kwargs):
-    file  = kwargs.get('file', sys.stderr)
+    file = kwargs.get('file', sys.stderr)
     alt_text = kwargs.get('alt_text', None)
     color = kwargs.get('color', None)
     print(colorize(msg, color, file, alt_text), *args, file=file)

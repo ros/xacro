@@ -45,10 +45,10 @@ from .xmlutils import *
 from .cli import process_args
 
 
-try: # python 2
+try:  # python 2
     _basestr = basestring
-    encoding = { 'encoding': 'utf-8' }
-except NameError: # python 3
+    encoding = {'encoding': 'utf-8'}
+except NameError:  # python 3
     _basestr = str
     unicode = str
     encoding = {}
@@ -59,6 +59,7 @@ substitution_args_context = {}
 
 # Stack of currently processed files
 filestack = []
+
 
 def push_file(filename):
     """
@@ -72,6 +73,7 @@ def push_file(filename):
     filestack = deepcopy(filestack)
     filestack.append(filename)
     return oldstack
+
 
 def restore_filestack(oldstack):
     global filestack
@@ -112,7 +114,9 @@ def load_yaml(filename):
 # taking simple security measures to forbid access to __builtins__
 # only the very few symbols explicitly listed are allowed
 # for discussion, see: http://nedbatchelder.com/blog/201206/eval_really_is_dangerous.html
-global_symbols = {'__builtins__': {k: __builtins__[k] for k in ['list', 'dict', 'map', 'len', 'str', 'float', 'int', 'True', 'False', 'min', 'max', 'round']}}
+global_symbols = {'__builtins__': {k: __builtins__[k] for k in
+                                   ['list', 'dict', 'map', 'len', 'str', 'float', 'int',
+                                    'True', 'False', 'min', 'max', 'round']}}
 # also define all math symbols and functions
 global_symbols.update(math.__dict__)
 # allow to import dicts from yaml
@@ -125,6 +129,7 @@ class XacroException(Exception):
     its error message: prefixing with msg and suffixing with suffix.
     str(e) finally prints: msg str(exc) suffix
     """
+
     def __init__(self, msg=None, suffix=None, exc=None, macro=None):
         super(XacroException, self).__init__(msg)
         self.suffix = suffix
@@ -179,7 +184,7 @@ class Table(object):
                 return value[1:-1]
             # try to evaluate as number literal or boolean
             # this is needed to handle numbers in property definitions as numbers, not strings
-            for f in [int, float, lambda x: get_boolean_value(x, None)]: # order of types is important!
+            for f in [int, float, lambda x: get_boolean_value(x, None)]:  # order of types is important!
                 try:
                     return f(value)
                 except:
@@ -201,7 +206,7 @@ class Table(object):
         value = self.table[key]
         if (verbosity > 2 and self.parent is None) or verbosity > 3:
             print("{indent}use {key}: {value} ({loc})".format(
-                indent=self.depth*' ', key=key, value=value, loc=filestack[-1]), file=sys.stderr)
+                indent=self.depth * ' ', key=key, value=value, loc=filestack[-1]), file=sys.stderr)
         return value
 
     def __getitem__(self, key):
@@ -227,7 +232,7 @@ class Table(object):
             self.unevaluated.remove(key)
         if (verbosity > 2 and self.parent is None) or verbosity > 3:
             print("{indent}set {key}: {value} ({loc})".format(
-                indent=self.depth*' ', key=key, value=value, loc=filestack[-1]), file=sys.stderr)
+                indent=self.depth * ' ', key=key, value=value, loc=filestack[-1]), file=sys.stderr)
 
     def __setitem__(self, key, value):
         self._setitem(key, value, unevaluated=True)
@@ -250,14 +255,17 @@ class Table(object):
             p = p.parent
         return p
 
+
 class NameSpace(object):
     # dot access (namespace.property) is forwarded to getitem()
     def __getattr__(self, item):
         return self.__getitem__(item)
 
+
 class PropertyNameSpace(Table, NameSpace):
     def __init__(self, parent=None):
         super(PropertyNameSpace, self).__init__(parent)
+
 
 class MacroNameSpace(dict, NameSpace):
     def __init__(self, *args, **kwargs):
@@ -300,6 +308,8 @@ class QuickLexer(object):
 
 all_includes = []
 include_no_matches_msg = """Include tag's filename spec \"{}\" matched no files."""
+
+
 def get_include_files(filename_spec, symbols):
     try:
         filename_spec = abs_filename_spec(eval_text(filename_spec, symbols))
@@ -332,8 +342,8 @@ def import_xml_namespaces(parent, attributes):
             if oldAttr and oldAttr.value != value:
                 warning("inconsistent namespace redefinitions for {name}:"
                         "\n old: {old}\n new: {new} ({new_file})".format(
-                    name=name, old=oldAttr.value, new=value,
-                    new_file=filestack[-1]))
+                            name=name, old=oldAttr.value, new=value,
+                            new_file=filestack[-1]))
             else:
                 parent.setAttribute(name, value)
 
@@ -390,6 +400,8 @@ def is_valid_name(name):
 
 re_macro_arg = re.compile(r'''\s*([^\s:=]+?):?=(\^\|?)?((?:(?:'[^']*')?[^\s'"]*?)*)(?:\s+|$)(.*)''')
 #                           space   param    :=   ^|   <--      default      -->   space    rest
+
+
 def parse_macro_arg(s):
     """
     parse the first param spec from a macro parameter string s
@@ -404,7 +416,8 @@ def parse_macro_arg(s):
     if m:
         # there is a default value specified for param
         param, forward, default, rest = m.groups()
-        if not default: default = None
+        if not default:
+            default = None
         return param, (param if forward else None, default), rest
     else:
         # there is no default specified at all
@@ -478,7 +491,7 @@ def grab_property(elt, table):
             unevaluated = False
         else:
             warning("%s: no parent scope at global scope " % name)
-            return # cannot store the value, no reason to evaluate it
+            return  # cannot store the value, no reason to evaluate it
     else:
         target_table = table
         unevaluated = True
@@ -489,10 +502,10 @@ def grab_property(elt, table):
     target_table._setitem(name, value, unevaluated=unevaluated)
 
 
-LEXER = QuickLexer(DOLLAR_DOLLAR_BRACE=r"^\$\$+(\{|\()", # multiple $ in a row, followed by { or (
-                   EXPR=r"^\$\{[^\}]*\}",       # stuff starting with ${
-                   EXTENSION=r"^\$\([^\)]*\)",  # stuff starting with $(
-                   TEXT=r"[^$]+|\$[^{($]+|\$$") # any text w/o $  or  $ following any chars except {($  or  single $
+LEXER = QuickLexer(DOLLAR_DOLLAR_BRACE=r"^\$\$+(\{|\()",  # multiple $ in a row, followed by { or (
+                   EXPR=r"^\$\{[^\}]*\}",        # stuff starting with ${
+                   EXTENSION=r"^\$\([^\)]*\)",   # stuff starting with $(
+                   TEXT=r"[^$]+|\$[^{($]+|\$$")  # any text w/o $  or  $ following any chars except {($  or  single $
 
 
 # evaluate text and return typed value
@@ -503,7 +516,7 @@ def eval_text(text, symbols):
         except Exception as e:
             # re-raise as XacroException to add more context
             raise XacroException(exc=e,
-                suffix=os.linesep + "when evaluating expression '%s'" % s)
+                                 suffix=os.linesep + "when evaluating expression '%s'" % s)
 
     def handle_extension(s):
         return eval_extension("$(%s)" % eval_text(s, symbols))
@@ -553,6 +566,7 @@ def handle_dynamic_macro_call(node, macros, symbols):
     # forward to handle_macro_call
     handle_macro_call(node, macros, symbols)
     return True
+
 
 def resolve_macro(fullname, macros):
     # split name into namespaces and real name
@@ -618,10 +632,11 @@ def handle_macro_call(node, macros, symbols):
     # Try to load defaults for any remaining non-block parameters
     for param in params[:]:
         # block parameters are not supported for defaults
-        if param[0] == '*': continue
+        if param[0] == '*':
+            continue
 
         # get default
-        name, default = m.defaultmap.get(param, (None,None))
+        name, default = m.defaultmap.get(param, (None, None))
         if name is not None or default is not None:
             scoped._setitem(param, eval_default_arg(name, default, symbols, m), unevaluated=False)
             params.remove(param)
@@ -659,9 +674,12 @@ def get_boolean_value(value, condition):
     """
     try:
         if isinstance(value, _basestr):
-            if value == 'true' or value == 'True': return True
-            elif value == 'false' or value == 'False': return False
-            else: return bool(int(value))
+            if value == 'true' or value == 'True':
+                return True
+            elif value == 'false' or value == 'False':
+                return False
+            else:
+                return bool(int(value))
         else:
             return bool(value)
     except:
@@ -670,6 +688,8 @@ def get_boolean_value(value, condition):
 
 
 _empty_text_node = xml.dom.minidom.getDOMImplementation().createDocument(None, "dummy", None).createTextNode('\n\n')
+
+
 def remove_previous_comments(node):
     """remove consecutive comments in front of the xacro-specific node"""
     next = node.nextSibling
@@ -686,7 +706,8 @@ def remove_previous_comments(node):
         else:
             # insert empty text node to stop removing of comments in future calls
             # actually this moves the singleton instance to the new location
-            if next and _empty_text_node != next: node.parentNode.insertBefore(_empty_text_node, next)
+            if next and _empty_text_node != next:
+                node.parentNode.insertBefore(_empty_text_node, next)
             return
 
 
@@ -828,7 +849,8 @@ def process_doc(doc, mappings=None, **kwargs):
     substitution_args_context['arg'] = {} if mappings is None else mappings
 
     # if not yet defined: initialize filestack
-    if not filestack: restore_filestack([None])
+    if not filestack:
+        restore_filestack([None])
 
     macros = {}
     symbols = Table()
@@ -875,9 +897,11 @@ def print_location(filestack, err=None, file=sys.stderr):
 
     msg = 'in file:' if macros else 'when processing file:'
     for f in reversed(filestack):
-        if f is None: f = 'string'
+        if f is None:
+            f = 'string'
         print(msg, f, file=file)
         msg = 'included from:'
+
 
 def process_file(input_file_name, **kwargs):
     """main processing pipeline"""
@@ -900,6 +924,7 @@ def process_file(input_file_name, **kwargs):
 
     return doc
 
+
 def main():
     opts, input_file_name = process_args(sys.argv[1:])
     try:
@@ -913,7 +938,7 @@ def main():
         error("XML parsing error: %s" % unicode(e), alt_text=None)
         if verbosity > 0:
             print_location(filestack, e)
-            print(file=sys.stderr) # add empty separator line before error
+            print(file=sys.stderr)  # add empty separator line before error
             print("Check that:", file=sys.stderr)
             print(" - Your XML is well-formed", file=sys.stderr)
             print(" - You have the xacro xmlns declaration:",
@@ -922,7 +947,8 @@ def main():
 
     except Exception as e:
         msg = unicode(e)
-        if not msg: msg = repr(e)
+        if not msg:
+            msg = repr(e)
         error(msg)
         if verbosity > 0:
             print_location(filestack, e)

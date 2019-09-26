@@ -33,6 +33,7 @@
 import xml.dom.minidom
 from .color import warning
 
+
 def first_child_element(elt):
     c = elt.firstChild
     while c and c.nodeType != xml.dom.Node.ELEMENT_NODE:
@@ -157,7 +158,7 @@ def fixed_writexml(self, writer, indent="", addindent="", newl=""):
         writer.write("%s</%s>%s" % (indent, self.tagName, newl))
     else:
         writer.write("/>%s" % newl)
+
+
 # replace minidom's function with ours
 xml.dom.minidom.Element.writexml = fixed_writexml
-
-
