@@ -16,21 +16,20 @@ install:
   - sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu `lsb_release -cs` main" > /etc/apt/sources.list.d/ros-latest.list'
   - sudo apt -qq update
   - sudo apt -qq install -y ros-kinetic-catkin ros-kinetic-roslaunch ros-kinetic-rostest ros-kinetic-roslint
-  - source /opt/ros/kinetic/setup.bash
 
 before_script:
   # stop the build if there are Python syntax errors or undefined names
   - flake8 . --count --select=E901,E999,F821,F822,F823 --show-source --statistics
   # exit-zero treats all errors as warnings.  The GitHub editor is 127 chars wide
   - flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+  # prepare workspace
+  - source /opt/ros/kinetic/setup.bash
 
 # command to run tests
 script:
-  - export PYTHONPATH=`pwd`/src:$PYTHONPATH
-  - mkdir build
-  - cd build
-  - cmake -DCMAKE_BUILD_TYPE=Release -DSETUPTOOLS_DEB_LAYOUT=OFF ..
-  - make
-  - make run_tests
-  - catkin_test_results --all ./
-  - sudo make install
+  - mkdir build && cd build
+  - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/tmp/install -DSETUPTOOLS_DEB_LAYOUT=OFF ..
+  - make install
+  - source /tmp/install/setup.bash
+  - make test
+  - catkin_test_results

@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<package>
+  <name>xacro-test</name>
+  <version>0.0.0</version>
+  <description>test xacro's cmake extension</description>
+
+  <author>Robert Haschke</author>
+  <maintainer email="rhaschke@techfak.uni-bielefeld.de">Robert Haschke</maintainer>
+  <license>BSD</license>
+
+  <buildtool_depend version_gte="0.5.68">catkin</buildtool_depend>
+</package>

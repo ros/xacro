@@ -25,9 +25,6 @@ rm -rf $dir
 mkdir $dir
 cd $dir
 
-# load catkin environent
-source ../../../../devel/setup.sh
-
 echo "*** running cmake ***"
 cmake -DCATKIN_DEVEL_PREFIX=devel -DCMAKE_INSTALL_PREFIX=install $1 || exit $?
 
@@ -37,4 +34,4 @@ make || exit $?
 
 echo
 echo "*** running make install ***"
-make || exit $?
+make install || exit $?

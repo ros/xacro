@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(xacro-test)
 
-include(CMakeParseArguments)
-find_package(xacro REQUIRED)
+find_package(catkin REQUIRED COMPONENTS xacro)
+
+catkin_package()
 
 ## manual usage of eval
 xacro_add_xacro_file(../include1.xml manual1.xml)

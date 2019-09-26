@@ -1,13 +1,3 @@
-@[if DEVELSPACE]@
-set(_xacro_py
-  @(CMAKE_CURRENT_SOURCE_DIR)/scripts/xacro
-  )
-@[else]@
-set(_xacro_py
-  ${xacro_DIR}/../../../@(CATKIN_PACKAGE_BIN_DESTINATION)/xacro
-  )
-@[end if]@
-
 add_custom_target(${PROJECT_NAME}_xacro_generated_to_devel_space_ ALL)
 
 
@@ -87,7 +77,7 @@ function(xacro_add_xacro_file input)
 
   ## Call out to xacro to determine dependencies
   message(STATUS "xacro: determining deps for: " ${input} " ...")
-  execute_process(COMMAND ${CATKIN_ENV} ${_xacro_py} ${_XACRO_LEGACY} --deps ${input} ${_XACRO_REMAP}
+  execute_process(COMMAND ${CATKIN_ENV} xacro ${_XACRO_LEGACY} --deps ${input} ${_XACRO_REMAP}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     RESULT_VARIABLE _xacro_result
     ERROR_VARIABLE _xacro_err
@@ -102,7 +92,7 @@ ${_xacro_err}")
 
   ## command to actually call xacro
   add_custom_command(OUTPUT ${output}
-    COMMAND ${CATKIN_ENV} ${_xacro_py} ${_XACRO_LEGACY} -o ${abs_output} ${input} ${_XACRO_REMAP}
+    COMMAND ${CATKIN_ENV} xacro ${_XACRO_LEGACY} -o ${abs_output} ${input} ${_XACRO_REMAP}
     DEPENDS ${input} ${_xacro_deps_result} ${_XACRO_DEPENDS}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMENT "xacro: generating ${output} from ${input}"
