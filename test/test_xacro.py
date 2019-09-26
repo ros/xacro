@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
 # Copyright (c) 2015, Open Source Robotics Foundation, Inc.
@@ -32,8 +31,6 @@
 
 # Authors: Stuart Glaser, William Woodall, Robert Haschke
 # Maintainer: Robert Haschke <rhaschke@techfak.uni-bielefeld.de>
-
-from __future__ import print_function
 
 import ast
 from contextlib import contextmanager

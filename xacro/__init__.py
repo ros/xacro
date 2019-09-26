@@ -30,8 +30,6 @@
 # Authors: Stuart Glaser, William Woodall, Robert Haschke
 # Maintainer: Morgan Quigley <morgan@osrfoundation.org>
 
-from __future__ import print_function, division
-
 import ast
 import glob
 import math
@@ -46,14 +44,6 @@ from .color import error, message, warning
 from .xmlutils import check_attrs, first_child_element, \
     next_sibling_element, replace_node, reqd_attrs
 
-
-try:  # python 2
-    _basestr = basestring
-    encoding = {'encoding': 'utf-8'}
-except NameError:  # python 3
-    _basestr = str
-    unicode = str
-    encoding = {}
 
 # Dictionary of substitution args
 substitution_args_context = {}
@@ -140,7 +130,7 @@ class XacroException(Exception):
 
     def __str__(self):
         items = [super(XacroException, self).__str__(), self.exc, self.suffix]
-        return ' '.join([s for s in [unicode(e) for e in items] if s not in ['', 'None']])
+        return ' '.join([s for s in [str(e) for e in items] if s not in ['', 'None']])
 
 
 verbosity = 1
@@ -179,7 +169,7 @@ class Table(object):
 
     @staticmethod
     def _eval_literal(value):
-        if isinstance(value, _basestr):
+        if isinstance(value, str):
             # remove single quotes from escaped string
             if len(value) >= 2 and value[0] == "'" and value[-1] == "'":
                 return value[1:-1]
@@ -225,7 +215,7 @@ class Table(object):
 
         value = self._eval_literal(value)
         self.table[key] = value
-        if unevaluated and isinstance(value, _basestr):
+        if unevaluated and isinstance(value, str):
             # literal evaluation failed: re-evaluate lazily at first access
             self.unevaluated.add(key)
         elif key in self.unevaluated:
@@ -244,10 +234,10 @@ class Table(object):
             (self.parent and key in self.parent)
 
     def __str__(self):
-        s = unicode(self.table)
+        s = str(self.table)
         if isinstance(self.parent, Table):
             s += "\n  parent: "
-            s += unicode(self.parent)
+            s += str(self.parent)
         return s
 
     def root(self):
@@ -497,7 +487,7 @@ def grab_property(elt, table):
         target_table = table
         unevaluated = True
 
-    if not unevaluated and isinstance(value, _basestr):
+    if not unevaluated and isinstance(value, str):
         value = eval_text(value, table)
 
     target_table._setitem(name, value, unevaluated=unevaluated)
@@ -540,7 +530,7 @@ def eval_text(text, symbols):
         return results[0]
     # otherwise join elements to a string
     else:
-        return ''.join(map(unicode, results))
+        return ''.join(map(str, results))
 
 
 def eval_default_arg(forward_variable, default, symbols, macro):
@@ -559,7 +549,7 @@ def handle_dynamic_macro_call(node, macros, symbols):
     name, = reqd_attrs(node, ['macro'])
     if not name:
         raise XacroException("xacro:call is missing the 'macro' attribute")
-    name = unicode(eval_text(name, symbols))
+    name = str(eval_text(name, symbols))
 
     # remove 'macro' attribute and rename tag with resolved macro name
     node.removeAttribute('macro')
@@ -609,7 +599,7 @@ def handle_macro_call(node, macros, symbols):
     params = m.params[:]  # deep copy macro's params list
     for name, value in node.attributes.items():
         if name not in params:
-            raise XacroException("Invalid parameter \"%s\"" % unicode(name), macro=m)
+            raise XacroException("Invalid parameter \"%s\"" % str(name), macro=m)
         params.remove(name)
         scoped._setitem(name, eval_text(value, symbols), unevaluated=False)
         node.setAttribute(name, "")  # suppress second evaluation in eval_all()
@@ -674,7 +664,7 @@ def get_boolean_value(value, condition):
     :raises ValueError: If the condition value is incorrect.
     """
     try:
-        if isinstance(value, _basestr):
+        if isinstance(value, str):
             if value == 'true' or value == 'True':
                 return True
             elif value == 'false' or value == 'False':
@@ -719,7 +709,7 @@ def eval_all(node, macros, symbols):
         if name.startswith('xacro:'):  # remove xacro:* attributes
             node.removeAttribute(name)
         else:
-            result = unicode(eval_text(value, symbols))
+            result = str(eval_text(value, symbols))
             node.setAttribute(name, result)
 
     # remove xacro namespace definition
@@ -807,7 +797,7 @@ def eval_all(node, macros, symbols):
 
         # TODO: Also evaluate content of COMMENT_NODEs?
         elif node.nodeType == xml.dom.Node.TEXT_NODE:
-            node.data = unicode(eval_text(node.data, symbols))
+            node.data = str(eval_text(node.data, symbols))
 
         node = next
 
@@ -831,7 +821,7 @@ def parse(inp, filename=None):
             raise XacroException(e.strerror + ": " + e.filename)
 
     try:
-        if isinstance(inp, _basestr):
+        if isinstance(inp, str):
             return xml.dom.minidom.parseString(inp)
         elif hasattr(inp, 'read'):
             return xml.dom.minidom.parse(inp)
@@ -936,7 +926,7 @@ def main():
 
     # error handling
     except xml.parsers.expat.ExpatError as e:
-        error("XML parsing error: %s" % unicode(e), alt_text=None)
+        error("XML parsing error: %s" % str(e), alt_text=None)
         if verbosity > 0:
             print_location(filestack, e)
             print(file=sys.stderr)  # add empty separator line before error
@@ -947,7 +937,7 @@ def main():
         sys.exit(2)  # indicate failure, but don't print stack trace on XML errors
 
     except Exception as e:
-        msg = unicode(e)
+        msg = str(e)
         if not msg:
             msg = repr(e)
         error(msg)
@@ -966,7 +956,7 @@ def main():
         return
 
     # write output
-    out.write(doc.toprettyxml(indent='  ', **encoding))
+    out.write(doc.toprettyxml(indent='  '))
     print()
     # only close output file, but not stdout
     if opts.output:
