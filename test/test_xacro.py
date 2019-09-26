@@ -203,7 +203,7 @@ class TestXacroFunctions(unittest.TestCase):
 
     def test_resolve_macro(self):
         # define three nested macro dicts with the same macro names (keys)
-        content = {'xacro:simple': 'simple'}
+        content = {'simple': 'simple'}
         ns2 = dict({k: v+'2' for k,v in content.items()})
         ns1 = dict({k: v+'1' for k,v in content.items()})
         ns1.update(ns2=ns2)
@@ -213,10 +213,6 @@ class TestXacroFunctions(unittest.TestCase):
         self.assertEqual(xacro.resolve_macro('simple', macros), 'simple')
         self.assertEqual(xacro.resolve_macro('ns1.simple', macros), 'simple1')
         self.assertEqual(xacro.resolve_macro('ns1.ns2.simple', macros), 'simple2')
-
-        self.assertEqual(xacro.resolve_macro('xacro:simple', macros), 'simple')
-        self.assertEqual(xacro.resolve_macro('xacro:ns1.simple', macros), 'simple1')
-        self.assertEqual(xacro.resolve_macro('xacro:ns1.ns2.simple', macros), 'simple2')
 
     def check_macro_arg(self, s, param, forward, default, rest):
         p, v, r = xacro.parse_macro_arg(s)
@@ -311,15 +307,8 @@ class TestXacro(TestXacroCommentsIgnored):
         src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
   <xacro:macro name="foo"><a name="foo"/></xacro:macro>
   <xacro:macro name="call"><a name="bar"/></xacro:macro>
-  <xacro:call/></a>'''
-        # for now we only issue a deprecated warning and expect the old behaviour
-        # resolving macro "call"
-        res = '''<a><a name="bar"/></a>'''
-        # new behaviour would be to resolve to foo of course
-        # res = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro"><a name="foo"/></a>'''
-        with capture_stderr(self.quick_xacro, src) as (result, output):
-            self.assert_matches(result, res)
-            self.assertTrue("deprecated use of macro name 'call'" in output)
+  <xacro:call macro="foo"/></a>'''
+        self.assertRaises(xacro.XacroException, self.quick_xacro, src)
 
     def test_dynamic_macro_undefined(self):
         self.assertRaises(xacro.XacroException,
@@ -385,7 +374,7 @@ class TestXacro(TestXacroCommentsIgnored):
     def test_evaluate_macro_params_before_body(self):
         self.assert_matches(self.quick_xacro('''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
   <xacro:macro name="foo" params="lst">${lst[-1]}</xacro:macro>
-  <foo lst="${[1,2,3]}"/></a>'''),
+  <xacro:foo lst="${[1,2,3]}"/></a>'''),
         '''<a>3</a>''')
 
     def test_macro_params_escaped_string(self):
@@ -547,7 +536,7 @@ class TestXacro(TestXacroCommentsIgnored):
   <xacro:property name="var" value="main"/>
   <xacro:include filename="include1.xacro" ns="A"/>
   <xacro:include filename="include2.xacro" ns="B"/>
-  <A.foo/><B.foo/>
+  <xacro:A.foo/><xacro:B.foo/>
   <main var="${var}" A="${2*A.var}" B="${B.var+1}"/>
 </a>'''
         result = '''
@@ -1034,7 +1023,7 @@ class TestXacro(TestXacroCommentsIgnored):
   <xacro:macro name="foo" params="a b:=${a} c:=$${a}"> a=${a} b=${b} c=${c} </xacro:macro>
   <xacro:property name="a" value="1"/>
   <xacro:property name="d" value="$${a}"/>
-  <d d="${d}"><foo a="2"/></d>
+  <d d="${d}"><xacro:foo a="2"/></d>
 </a>'''
         res = '''<a><d d="${a}"> a=2 b=1 c=${a} </d></a>'''
         self.assert_matches(self.quick_xacro(src), res)
