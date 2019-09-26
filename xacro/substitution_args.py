@@ -45,7 +45,7 @@ import sys
 
 import yaml
 
-from ament_index_python.packages import get_package_prefix
+from ament_index_python.packages import get_package_share_directory
 
 from io import StringIO  # Python 3.x
 
@@ -196,7 +196,7 @@ def _dirname(resolved, a, args, context):
 
 
 def _eval_find(pkg):
-    return get_package_prefix(pkg)
+    return get_package_share_directory(pkg)
 
 
 def _find(resolved, a, args, context):
@@ -237,7 +237,7 @@ def _find(resolved, a, args, context):
                 pass
         if res is not None:
             return res
-    pkg_path = get_package_prefix(args[0])
+    pkg_path = get_package_share_directory(args[0])
     if path:
         pkg_path = os.path.join(pkg_path, path)
     return before + pkg_path + after
