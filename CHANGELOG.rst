@@ -2,6 +2,25 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.13.4 (2019-09-26)
+-------------------
+* [feature] remove xmlns:xacro from processed file (`#207 <https://github.com/ros/xacro/issues/207>`_)
+  - Remove all notions of xmlns:xacro from the resulting document.
+  - If the root node defines a xacro:targetNamespace attribute,
+    this will become the global xmlns namespace of the resulting document.
+* [feature] Add len() to allowed python functions (`#208 <https://github.com/ros/xacro/issues/208>`_)
+* [maintanence]
+  - --in-order warning: reduce severity level to message
+  - fix and cleanup test of cmake extensions
+  - adapt run_xacro() to run xacro from PATH
+  - simplify import of substition_args
+  - remove 'requires' field from setup.py
+  - fix Travis config: use new repository key, use xenial/kinetic distro
+  - basic README.md
+  - fix catkin_lint issue
+  - remove duplicate catkin_python_setup() (`#206 <https://github.com/ros/xacro/issues/206>`_)
+* Contributors: Robert Haschke, James Xu, Martin Pecka
+
 1.13.3 (2018-10-14)
 -------------------
 * use INORDER as default in cmake functions
