@@ -97,7 +97,7 @@ def abs_filename_spec(filename_spec):
 def load_yaml(filename):
     try:
         import yaml
-    except:
+    except Exception:
         raise XacroException("yaml support not available; install python-yaml")
 
     filename = abs_filename_spec(filename)
@@ -189,7 +189,7 @@ class Table(object):
             for f in [int, float, lambda x: get_boolean_value(x, None)]:  # order of types is important!
                 try:
                     return f(value)
-                except:
+                except Exception:
                     pass
         return value
 
@@ -684,7 +684,7 @@ def get_boolean_value(value, condition):
                 return bool(int(value))
         else:
             return bool(value)
-    except:
+    except Exception:
         raise XacroException("Xacro conditional \"%s\" evaluated to \"%s\", "
                              "which is not a boolean expression." % (condition, value))
 
