@@ -20,7 +20,10 @@
   <author>Robert Haschke</author>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
-  <test_depend>python3-pytest</test_depend>
+  <depend>ament_index_python</depend>
+  <depend>python3-yaml</depend>
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_cmake_pytest</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
