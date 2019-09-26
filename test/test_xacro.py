@@ -249,7 +249,6 @@ class TestXacroFunctions(unittest.TestCase):
 class TestXacroBase(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         super(TestXacroBase, self).__init__(*args, **kwargs)
-        self.in_order = False
         self.ignore_nodes = []
 
     def assert_matches(self, a, b):
@@ -260,7 +259,6 @@ class TestXacroBase(unittest.TestCase):
         if cli:
             opts, _ = xacro.cli.process_args(cli, require_input=False)
             args.update(vars(opts))  # initialize with cli args
-        args.update(dict(in_order = self.in_order))  # set in_order option from test class
         args.update(kwargs)  # explicit function args have highest priority
 
         doc = xacro.parse(xml)
@@ -269,9 +267,6 @@ class TestXacroBase(unittest.TestCase):
 
     def run_xacro(self, input_path, *args):
         args = list(args)
-        if not self.in_order:
-            args.append('--legacy')
-        test_dir = os.path.abspath(os.path.dirname(__file__))
         subprocess.call(['xacro', input_path] + args)
 
 
@@ -368,19 +363,13 @@ class TestXacro(TestXacroCommentsIgnored):
   <xacro:macro name="m" params="foo"><b bar="${foo}"/></xacro:macro>
   <xacro:m foo="2 ${foo}"/>
 </xml>'''
-        oldOrder = '''
-<xml>
-  <b bar="1 2.0"/>
-  <b bar="2 2.0"/>
-</xml>
-'''
-        inOrder = '''
+        expected = '''
 <xml>
   <a foo="1 1.0"/>
   <b bar="2 2.0"/>
 </xml>
 '''
-        self.assert_matches(self.quick_xacro(src), inOrder if self.in_order else oldOrder)
+        self.assert_matches(self.quick_xacro(src), expected)
 
     def test_should_replace_before_macroexpand(self):
         self.assert_matches(self.quick_xacro('''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
@@ -540,10 +529,7 @@ class TestXacro(TestXacroCommentsIgnored):
         doc = '''<a xmlns:xacro="http://www.ros.org/xacro">
         <xacro:property name="file" value="include1.xml"/>
         <xacro:include filename="${file}" /></a>'''
-        if self.in_order:
-            self.assert_matches(self.quick_xacro(doc), '''<a><inc1/></a>''')
-        else:
-            self.assertRaises(xacro.XacroException, self.quick_xacro, doc)
+        self.assert_matches(self.quick_xacro(doc), '''<a><inc1/></a>''')
 
     def test_include_recursive(self):
         self.assert_matches(self.quick_xacro('''\
@@ -568,11 +554,7 @@ class TestXacro(TestXacroCommentsIgnored):
 <a>
     <inc1/><inc2/><main var="main" A="2" B="3"/>
 </a>'''
-
-        if self.in_order:
-            self.assert_matches(self.quick_xacro(doc), result)
-        else:
-            self.assertRaises(xacro.XacroException, self.quick_xacro, doc)
+        self.assert_matches(self.quick_xacro(doc), result)
 
     def test_boolean_if_statement(self):
         self.assert_matches(
@@ -1088,12 +1070,6 @@ class TestXacro(TestXacroCommentsIgnored):
         res='''<a><b/></a>'''
         self.assert_matches(self.quick_xacro(src), res)
 
-# test class for in-order processing
-class TestXacroInorder(TestXacro):
-    def __init__(self, *args, **kwargs):
-        super(TestXacroInorder, self).__init__(*args, **kwargs)
-        self.in_order = True
-
     def test_include_lazy(self):
         doc = ('''<a xmlns:xacro="http://www.ros.org/xacro">
         <xacro:if value="false"><xacro:include filename="non-existent"/></xacro:if></a>''')
@@ -1136,21 +1112,6 @@ class TestXacroInorder(TestXacro):
         res='''<a>
 <f val="42"/><f val="**"/></a>'''
         self.assert_matches(self.quick_xacro(src), res)
-
-    def test_check_order_warning(self):
-        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
-<xacro:property name="bar" value="unused"/>
-<xacro:property name="foo" value="unused"/>
-<xacro:macro name="foo" params="arg:=${foo}">
-    <a val="${arg}"/>
-</xacro:macro>
-<xacro:foo/>
-<xacro:property name="bar" value="dummy"/>
-<xacro:property name="foo" value="21"/></a>'''
-        with capture_stderr(self.quick_xacro, src, do_check_order=True) as (result, output):
-            self.assertTrue("Document is incompatible to in-order processing." in output)
-            self.assertTrue("foo" in output)  # foo should be reported
-            self.assertTrue("bar" not in output)  # bar shouldn't be reported
 
     def test_default_property(self):
         src = '''

@@ -193,7 +193,6 @@ def eval_extension(s):
         raise XacroException("resource not found:", exc=e)
 
 
-do_check_order=False
 class Table(object):
     def __init__(self, parent=None):
         self.parent = parent
@@ -202,10 +201,6 @@ class Table(object):
         self.recursive = []  # list of currently resolved vars (to resolve recursive definitions)
         # the following variables are for debugging / checking only
         self.depth = self.parent.depth + 1 if self.parent else 0
-        if do_check_order:
-            # this is for smooth transition from deprecated to in-order processing
-            self.used = set() # set of used properties
-            self.redefined = dict() # set of properties redefined after usage
 
     @staticmethod
     def _eval_literal(value):
@@ -238,8 +233,6 @@ class Table(object):
         if (verbosity > 2 and self.parent is None) or verbosity > 3:
             print("{indent}use {key}: {value} ({loc})".format(
                 indent=self.depth*' ', key=key, value=value, loc=filestack[-1]), file=sys.stderr)
-        if do_check_order:
-            self.used.add(key)
         return value
 
     def __getitem__(self, key):
@@ -251,9 +244,6 @@ class Table(object):
             raise KeyError(key)
 
     def _setitem(self, key, value, unevaluated):
-        if do_check_order and key in self.used and key not in self.redefined:
-            self.redefined[key] = filestack[-1]
-
         if key in global_symbols:
             warning("redefining global property: %s" % key)
             print_location(filestack)
@@ -435,19 +425,6 @@ def process_include(elt, macros, symbols, func):
     replace_node(elt, by=included, content_only=True)
 
 
-# @throws XacroException if a parsing error occurs with an included document
-def process_includes(elt, macros=None, symbols=None):
-    elt = first_child_element(elt)
-    while elt:
-        next = next_sibling_element(elt)
-        if is_include(elt):
-            process_include(elt, macros, symbols, process_includes)
-        else:
-            process_includes(elt)
-
-        elt = next
-
-
 def is_valid_name(name):
     """
     Checks whether name is a valid property or macro identifier.
@@ -523,20 +500,6 @@ def grab_macro(elt, macros):
     replace_node(elt, by=None)
 
 
-# Fill the dictionary { macro_name => macro_xml_block }
-def grab_macros(elt, macros):
-    elt = first_child_element(elt)
-    while elt:
-        next = next_sibling_element(elt)
-        if elt.tagName in ['macro', 'xacro:macro'] \
-                and check_deprecated_tag(elt.tagName):
-            grab_macro(elt, macros)
-        else:
-            grab_macros(elt, macros)
-
-        elt = next
-
-
 def grab_property(elt, table):
     assert(elt.tagName in ['property', 'xacro:property'])
     remove_previous_comments(elt)
@@ -580,22 +543,6 @@ def grab_property(elt, table):
         value = eval_text(value, table)
 
     target_table._setitem(name, value, unevaluated=unevaluated)
-
-
-# Fill the table of the properties
-def grab_properties(elt, table):
-    elt = first_child_element(elt)
-    while elt:
-        next = next_sibling_element(elt)
-        if elt.tagName in ['property', 'xacro:property'] \
-                and check_deprecated_tag(elt.tagName):
-            if "default" in elt.attributes.keys():
-                raise XacroException('default property value supported with in-order option only')
-            grab_property(elt, table)
-        else:
-            grab_properties(elt, table)
-
-        elt = next
 
 
 LEXER = QuickLexer(DOLLAR_DOLLAR_BRACE=r"^\$\$+(\{|\()", # multiple $ in a row, followed by { or (
@@ -942,16 +889,12 @@ def parse(inp, filename=None):
             f.close()
 
 
-def process_doc(doc,
-                in_order=True, just_deps=False, just_includes=False,
-                mappings=None, xacro_ns=True, **kwargs):
-    global verbosity, do_check_order
+def process_doc(doc, mappings=None, xacro_ns=True, **kwargs):
+    global verbosity
     verbosity = kwargs.get('verbosity', verbosity)
-    do_check_order = kwargs.get('do_check_order', do_check_order)
 
     # set substitution args
-    if mappings is not None:
-        substitution_args_context['arg'] = mappings
+    substitution_args_context['arg'] = {} if mappings is None else mappings
 
     global allow_non_prefixed_tags
     allow_non_prefixed_tags = xacro_ns
@@ -959,19 +902,8 @@ def process_doc(doc,
     # if not yet defined: initialize filestack
     if not filestack: restore_filestack([None])
 
-    # inorder processing requires to process the whole document for deps too
-    # because filenames might be specified via properties or macro parameters
-    if (just_deps or just_includes) and not in_order:
-        process_includes(doc.documentElement)
-        return
-
     macros = {}
     symbols = Table()
-    if not in_order:
-        # process includes, macros, and properties before evaluating stuff
-        process_includes(doc.documentElement)
-        grab_macros(doc, macros)
-        grab_properties(doc, symbols)
 
     # apply xacro:targetNamespace as global xmlns (if defined)
     targetNS = doc.documentElement.getAttribute('xacro:targetNamespace')
@@ -983,12 +915,6 @@ def process_doc(doc,
 
     # reset substitution args
     substitution_args_context['arg'] = {}
-
-    if do_check_order and symbols.redefined:
-        warning("Document is incompatible to in-order processing.")
-        warning("The following properties were redefined after usage:")
-        for k, v in symbols.redefined.items():
-            message(k, "redefined in", v, color='yellow')
 
 
 def open_output(output_filename):
