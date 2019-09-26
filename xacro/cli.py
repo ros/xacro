@@ -34,6 +34,7 @@ import textwrap
 from optparse import OptionParser, IndentedHelpFormatter
 from .color import colorize, warning, message
 
+
 class ColoredOptionParser(OptionParser):
     def error(self, message):
         msg = colorize(message, 'red')
@@ -41,11 +42,14 @@ class ColoredOptionParser(OptionParser):
 
 
 _original_wrap = textwrap.wrap
+
+
 def wrap_with_newlines(text, width, **kwargs):
     result = []
     for paragraph in text.split('\n'):
         result.extend(_original_wrap(paragraph, width, **kwargs))
     return result
+
 
 class IndentedHelpFormatterWithNL(IndentedHelpFormatter):
     def __init__(self, *args, **kwargs):
@@ -83,7 +87,7 @@ def load_mappings(argv):
                         pass
                     else:
                         mappings[src] = dst
-            except:
+            except Exception:
                 raise RuntimeError("Invalid remapping argument '%s'\n" % arg)
     return mappings
 
@@ -123,7 +127,7 @@ def process_args(argv, require_input=True):
 
     parser.set_defaults(just_deps=False, just_includes=False, verbosity=1)
     (options, pos_args) = parser.parse_args(filtered_args)
-    if options.in_order == True:
+    if options.in_order:
         message("xacro: in-order processing became default in ROS Melodic. You can drop the option.")
     options.in_order = True
 
