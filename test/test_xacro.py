@@ -203,7 +203,7 @@ class TestXacroFunctions(unittest.TestCase):
 
     def test_resolve_macro(self):
         # define three nested macro dicts with the same macro names (keys)
-        content = {'xacro:simple': 'simple'}
+        content = {'simple': 'simple'}
         ns2 = dict({k: v+'2' for k,v in content.items()})
         ns1 = dict({k: v+'1' for k,v in content.items()})
         ns1.update(ns2=ns2)
@@ -213,10 +213,6 @@ class TestXacroFunctions(unittest.TestCase):
         self.assertEqual(xacro.resolve_macro('simple', macros), 'simple')
         self.assertEqual(xacro.resolve_macro('ns1.simple', macros), 'simple1')
         self.assertEqual(xacro.resolve_macro('ns1.ns2.simple', macros), 'simple2')
-
-        self.assertEqual(xacro.resolve_macro('xacro:simple', macros), 'simple')
-        self.assertEqual(xacro.resolve_macro('xacro:ns1.simple', macros), 'simple1')
-        self.assertEqual(xacro.resolve_macro('xacro:ns1.ns2.simple', macros), 'simple2')
 
     def check_macro_arg(self, s, param, forward, default, rest):
         p, v, r = xacro.parse_macro_arg(s)
@@ -249,7 +245,6 @@ class TestXacroFunctions(unittest.TestCase):
 class TestXacroBase(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         super(TestXacroBase, self).__init__(*args, **kwargs)
-        self.in_order = False
         self.ignore_nodes = []
 
     def assert_matches(self, a, b):
@@ -260,7 +255,6 @@ class TestXacroBase(unittest.TestCase):
         if cli:
             opts, _ = xacro.cli.process_args(cli, require_input=False)
             args.update(vars(opts))  # initialize with cli args
-        args.update(dict(in_order = self.in_order))  # set in_order option from test class
         args.update(kwargs)  # explicit function args have highest priority
 
         doc = xacro.parse(xml)
@@ -269,9 +263,6 @@ class TestXacroBase(unittest.TestCase):
 
     def run_xacro(self, input_path, *args):
         args = list(args)
-        if not self.in_order:
-            args.append('--legacy')
-        test_dir = os.path.abspath(os.path.dirname(__file__))
         subprocess.call(['xacro', input_path] + args)
 
 
@@ -316,15 +307,8 @@ class TestXacro(TestXacroCommentsIgnored):
         src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
   <xacro:macro name="foo"><a name="foo"/></xacro:macro>
   <xacro:macro name="call"><a name="bar"/></xacro:macro>
-  <xacro:call/></a>'''
-        # for now we only issue a deprecated warning and expect the old behaviour
-        # resolving macro "call"
-        res = '''<a><a name="bar"/></a>'''
-        # new behaviour would be to resolve to foo of course
-        # res = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro"><a name="foo"/></a>'''
-        with capture_stderr(self.quick_xacro, src) as (result, output):
-            self.assert_matches(result, res)
-            self.assertTrue("deprecated use of macro name 'call'" in output)
+  <xacro:call macro="foo"/></a>'''
+        self.assertRaises(xacro.XacroException, self.quick_xacro, src)
 
     def test_dynamic_macro_undefined(self):
         self.assertRaises(xacro.XacroException,
@@ -368,19 +352,13 @@ class TestXacro(TestXacroCommentsIgnored):
   <xacro:macro name="m" params="foo"><b bar="${foo}"/></xacro:macro>
   <xacro:m foo="2 ${foo}"/>
 </xml>'''
-        oldOrder = '''
-<xml>
-  <b bar="1 2.0"/>
-  <b bar="2 2.0"/>
-</xml>
-'''
-        inOrder = '''
+        expected = '''
 <xml>
   <a foo="1 1.0"/>
   <b bar="2 2.0"/>
 </xml>
 '''
-        self.assert_matches(self.quick_xacro(src), inOrder if self.in_order else oldOrder)
+        self.assert_matches(self.quick_xacro(src), expected)
 
     def test_should_replace_before_macroexpand(self):
         self.assert_matches(self.quick_xacro('''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
@@ -396,7 +374,7 @@ class TestXacro(TestXacroCommentsIgnored):
     def test_evaluate_macro_params_before_body(self):
         self.assert_matches(self.quick_xacro('''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
   <xacro:macro name="foo" params="lst">${lst[-1]}</xacro:macro>
-  <foo lst="${[1,2,3]}"/></a>'''),
+  <xacro:foo lst="${[1,2,3]}"/></a>'''),
         '''<a>3</a>''')
 
     def test_macro_params_escaped_string(self):
@@ -540,10 +518,7 @@ class TestXacro(TestXacroCommentsIgnored):
         doc = '''<a xmlns:xacro="http://www.ros.org/xacro">
         <xacro:property name="file" value="include1.xml"/>
         <xacro:include filename="${file}" /></a>'''
-        if self.in_order:
-            self.assert_matches(self.quick_xacro(doc), '''<a><inc1/></a>''')
-        else:
-            self.assertRaises(xacro.XacroException, self.quick_xacro, doc)
+        self.assert_matches(self.quick_xacro(doc), '''<a><inc1/></a>''')
 
     def test_include_recursive(self):
         self.assert_matches(self.quick_xacro('''\
@@ -561,18 +536,14 @@ class TestXacro(TestXacroCommentsIgnored):
   <xacro:property name="var" value="main"/>
   <xacro:include filename="include1.xacro" ns="A"/>
   <xacro:include filename="include2.xacro" ns="B"/>
-  <A.foo/><B.foo/>
+  <xacro:A.foo/><xacro:B.foo/>
   <main var="${var}" A="${2*A.var}" B="${B.var+1}"/>
 </a>'''
         result = '''
 <a>
     <inc1/><inc2/><main var="main" A="2" B="3"/>
 </a>'''
-
-        if self.in_order:
-            self.assert_matches(self.quick_xacro(doc), result)
-        else:
-            self.assertRaises(xacro.XacroException, self.quick_xacro, doc)
+        self.assert_matches(self.quick_xacro(doc), result)
 
     def test_boolean_if_statement(self):
         self.assert_matches(
@@ -1052,7 +1023,7 @@ class TestXacro(TestXacroCommentsIgnored):
   <xacro:macro name="foo" params="a b:=${a} c:=$${a}"> a=${a} b=${b} c=${c} </xacro:macro>
   <xacro:property name="a" value="1"/>
   <xacro:property name="d" value="$${a}"/>
-  <d d="${d}"><foo a="2"/></d>
+  <d d="${d}"><xacro:foo a="2"/></d>
 </a>'''
         res = '''<a><d d="${a}"> a=2 b=1 c=${a} </d></a>'''
         self.assert_matches(self.quick_xacro(src), res)
@@ -1087,12 +1058,6 @@ class TestXacro(TestXacroCommentsIgnored):
         src='''<a xmlns:xacro="http://www.ros.org/wiki/xacro"><b xacro:targetNamespace="http://www.ros.org"/></a>'''
         res='''<a><b/></a>'''
         self.assert_matches(self.quick_xacro(src), res)
-
-# test class for in-order processing
-class TestXacroInorder(TestXacro):
-    def __init__(self, *args, **kwargs):
-        super(TestXacroInorder, self).__init__(*args, **kwargs)
-        self.in_order = True
 
     def test_include_lazy(self):
         doc = ('''<a xmlns:xacro="http://www.ros.org/xacro">
@@ -1136,21 +1101,6 @@ class TestXacroInorder(TestXacro):
         res='''<a>
 <f val="42"/><f val="**"/></a>'''
         self.assert_matches(self.quick_xacro(src), res)
-
-    def test_check_order_warning(self):
-        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
-<xacro:property name="bar" value="unused"/>
-<xacro:property name="foo" value="unused"/>
-<xacro:macro name="foo" params="arg:=${foo}">
-    <a val="${arg}"/>
-</xacro:macro>
-<xacro:foo/>
-<xacro:property name="bar" value="dummy"/>
-<xacro:property name="foo" value="21"/></a>'''
-        with capture_stderr(self.quick_xacro, src, do_check_order=True) as (result, output):
-            self.assertTrue("Document is incompatible to in-order processing." in output)
-            self.assertTrue("foo" in output)  # foo should be reported
-            self.assertTrue("bar" not in output)  # bar shouldn't be reported
 
     def test_default_property(self):
         src = '''

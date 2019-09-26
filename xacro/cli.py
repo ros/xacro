@@ -93,23 +93,14 @@ def process_args(argv, require_input=True):
                                  formatter=IndentedHelpFormatterWithNL())
     parser.add_option("-o", dest="output", metavar="FILE",
                       help="write output to FILE instead of stdout")
-    parser.add_option("--inorder", "-i", action="store_true", dest="in_order",
-                      help="use processing in read order [default]")
-    parser.add_option("--legacy", action="store_false", dest="in_order",
-                      help="use legacy processing order [deprecated]")
-    parser.add_option("--check-order", action="store_true", dest="do_check_order",
-                      help="check document for inorder processing", default=False)
-
     parser.add_option("--deps", action="store_true", dest="just_deps",
                       help="print file dependencies")
-    parser.add_option("--includes", action="store_true", dest="just_includes",
-                      help="only process includes [deprecated]")
-    parser.add_option("--xacro-ns", action="store_false", default=True, dest="xacro_ns",
-                      help="require xacro namespace prefix for xacro tags")
+    parser.add_option("--inorder", "-i", action="store_true", dest="in_order",
+                      help="processing in read order (default, can be omitted)")
 
     # verbosity options
     parser.add_option("-q", action="store_const", dest="verbosity", const=0,
-                      help="quiet operation suppressing warnings")
+                      help="quiet operation, suppressing warnings")
     parser.add_option("-v", action="count", dest="verbosity",
                       help="increase verbosity")
     parser.add_option("--verbosity", metavar='level', dest="verbosity", type='int',
@@ -132,26 +123,9 @@ def process_args(argv, require_input=True):
 
     parser.set_defaults(just_deps=False, just_includes=False, verbosity=1)
     (options, pos_args) = parser.parse_args(filtered_args)
-    if options.in_order is None:
-        # --inorder is default, but it's incompatible to --includes
-        options.in_order = not options.just_includes
-    elif options.in_order == True:
+    if options.in_order == True:
         message("xacro: in-order processing became default in ROS Melodic. You can drop the option.")
-    if options.in_order == False:
-        warning("xacro: Legacy processing is deprecated since ROS Jade and will be removed in N-turtle.")
-        message("To check for compatibility of your document, use option --check-order.", color='yellow')
-        message("For more infos, see http://wiki.ros.org/xacro#Processing_Order", color='yellow')
-
-    if options.just_includes:
-        warning("xacro: option --includes is deprecated")
-
-    # --inorder is incompatible to --includes: --inorder processing starts evaluation
-    # while --includes should return the unmodified document
-    if options.in_order and options.just_includes:
-        parser.error("options --inorder and --includes are mutually exclusive")
-
-    if options.do_check_order:
-        options.in_order = True  # check-order implies inorder
+    options.in_order = True
 
     if len(pos_args) != 1:
         if require_input:
