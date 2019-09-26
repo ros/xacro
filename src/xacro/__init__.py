@@ -32,17 +32,19 @@
 
 from __future__ import print_function, division
 
+import ast
 import glob
+import math
 import os
 import re
 import sys
-import ast
-import math
+import xml.dom.minidom
 
 from copy import deepcopy
-from .color import warning, error, message
-from .xmlutils import *
 from .cli import process_args
+from .color import error, message, warning
+from .xmlutils import check_attrs, first_child_element, \
+    next_sibling_element, replace_node, reqd_attrs
 
 
 try:  # python 2

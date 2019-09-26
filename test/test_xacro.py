@@ -35,23 +35,23 @@
 
 from __future__ import print_function
 
-import sys
-import unittest
-import xacro
-from xml.dom.minidom import parseString
-import xml.dom
+import ast
+from contextlib import contextmanager
 import os.path
-import tempfile
+import re
 import shutil
 import subprocess
-import re
-import ast
-try:
-    from cStringIO import StringIO # Python 2.x
-except ImportError:
-    from io import StringIO # Python 3.x
-from contextlib import contextmanager
+import sys
+import tempfile
+import unittest
+import xacro
+import xml.dom
+from xml.dom.minidom import parseString
 
+try:
+    from cStringIO import StringIO  # Python 2.x
+except ImportError:
+    from io import StringIO  # Python 3.x
 
 # regex to match whitespace
 whitespace = re.compile(r'\s+')
