@@ -2,6 +2,28 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.0.0 (2019-09-28)
+------------------
+* PEP8 cleanup
+  - code simplifications
+  - avoid empty except
+  - sort imports
+  - format line breaks
+* Code cleanup
+  - Removed deprecated options --legacy, --inorder, --check-order, --includes
+  - Require all xacro commands to be prefixed with 'xacro:'
+  - Added missing copyright notices
+  - Removed python2 stuff
+* Adapt Travis config to use colcon
+* Provide ROS2-based replacement for substition args
+* Modified package structure as per ROS2 rules
+  - Using ament_cmake
+  - Moved source contents from "src/xacro" to "xacro"
+  - Modified package.xml and setup.py according to ROS2 requirements
+  - Configured completion hook
+  - Removed catkin artifacts from cmake extension
+* Contributors: vandanamandlik, Jacob Perron, Robert Haschke
+
 1.13.4 (2019-09-26)
 -------------------
 * [feature] remove xmlns:xacro from processed file (`#207 <https://github.com/ros/xacro/issues/207>`_)
