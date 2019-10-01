@@ -12,6 +12,7 @@ install(FILES scripts/completion.bash DESTINATION share/${PROJECT_NAME}/environm
 ament_python_install_package(xacro)
 # install main script
 install(PROGRAMS scripts/xacro DESTINATION bin)
+install(PROGRAMS scripts/xacro DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   ## run linters as defined in package.xml
