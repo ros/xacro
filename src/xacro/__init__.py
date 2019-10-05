@@ -115,8 +115,8 @@ def load_yaml(filename):
 global_symbols = {'__builtins__': {k: __builtins__[k] for k in ['list', 'dict', 'map', 'len', 'str', 'float', 'int', 'True', 'False', 'min', 'max', 'round']}}
 # also define all math symbols and functions
 global_symbols.update(math.__dict__)
-# allow to import dicts from yaml
-global_symbols.update(dict(load_yaml=load_yaml))
+# expose load_yaml and abs_filename
+global_symbols.update(dict(load_yaml=load_yaml, abs_filename=abs_filename_spec))
 
 
 class XacroException(Exception):
