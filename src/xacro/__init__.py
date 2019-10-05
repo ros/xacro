@@ -497,12 +497,12 @@ def grab_macro(elt, macros):
 
     name, params = check_attrs(elt, ['name'], ['params'])
     if name == 'call':
-        warning("deprecated use of macro name 'call'; xacro:call became a new keyword")
+        warning("deprecated use of 'call' as macro name: xacro:call became a keyword")
     if name.find('.') != -1:
-        warning("macro names must not contain '.': %s" % name)
-    # always have 'xacro:' namespace in macro name
-    if not name.startswith('xacro:'):
-        name = 'xacro:' + name
+        raise XacroException("macro names must not contain '.' (reserved for namespaces): %s" % name)
+    if name.startswith('xacro:'):
+        warning("macro names must not contain prefix 'xacro:': %s" % name)
+        name = name[6:]  # drop 'xacro:' prefix
 
     # fetch existing or create new macro definition
     macro = macros.get(name, Macro())
@@ -658,47 +658,49 @@ def handle_dynamic_macro_call(node, macros, symbols):
 
     # remove 'macro' attribute and rename tag with resolved macro name
     node.removeAttribute('macro')
-    node.tagName = name
+    node.tagName = 'xacro:' + name
     # forward to handle_macro_call
-    result = handle_macro_call(node, macros, symbols)
-    if not result:  # we expect the call to succeed
+    try:
+    	return handle_macro_call(node, macros, symbols)
+    except KeyError:
         raise XacroException("unknown macro name '%s' in xacro:call" % name)
-    return True
 
 def resolve_macro(fullname, macros):
     # split name into namespaces and real name
     namespaces = fullname.split('.')
     name = namespaces.pop(-1)
-    # move xacro: prefix from first namespace to name
-    if namespaces and namespaces[0].startswith('xacro:'):
-        namespaces[0] = namespaces[0].replace('xacro:', '')
-        name = 'xacro:' + name
 
     def _resolve(namespaces, name, macros):
         # traverse namespaces to actual macros dict
         for ns in namespaces:
             macros = macros[ns]
-        try:
-            return macros[name]
-        except KeyError:
-            # try with xacro: prefix as well
-            if allow_non_prefixed_tags and not name.startswith('xacro:'):
-                result = macros['xacro:' + name]
-                deprecated_tag(name)
-                return result
+        return macros[name]
 
     # try fullname and (namespaces, name) in this order
-    m = _resolve([], fullname, macros)
-    if m: return m
-    elif namespaces: return _resolve(namespaces, name, macros)\
+    try:
+        return _resolve([], fullname, macros)
+    except KeyError:
+        if namespaces:
+            return _resolve(namespaces, name, macros)
+        else:
+            raise
 
 
 def handle_macro_call(node, macros, symbols):
+    if node.tagName.startswith('xacro:'):
+        name = node.tagName[6:]  # strip off 'xacro:' prefix
+    elif allow_non_prefixed_tags:
+        name = node.tagName
+    else:  # require prefixed macro names
+        return False
+
     try:
-        m = resolve_macro(node.tagName, macros)
+        m = resolve_macro(name, macros)
+        if name is node.tagName:  # no xacro prefix provided?
+            deprecated_tag(name)
         body = m.body.cloneNode(deep=True)
 
-    except (KeyError, TypeError, AttributeError):
+    except KeyError:
         # TODO If deprecation runs out, this test should be moved up front
         if node.tagName == 'xacro:call':
             return handle_dynamic_macro_call(node, macros, symbols)
@@ -903,7 +905,7 @@ def eval_all(node, macros, symbols):
             else:
                 # these are the non-xacro tags
                 if node.tagName.startswith("xacro:"):
-                    raise XacroException("unknown macro name: %s" % node.tagName)
+                    raise XacroException("unknown macro name: %s" % node.tagName[6:])
 
                 eval_all(node, macros, symbols)
 

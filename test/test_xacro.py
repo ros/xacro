@@ -203,7 +203,7 @@ class TestXacroFunctions(unittest.TestCase):
 
     def test_resolve_macro(self):
         # define three nested macro dicts with the same macro names (keys)
-        content = {'xacro:simple': 'simple'}
+        content = {'simple': 'simple'}
         ns2 = dict({k: v+'2' for k,v in content.items()})
         ns1 = dict({k: v+'1' for k,v in content.items()})
         ns1.update(ns2=ns2)
@@ -213,10 +213,6 @@ class TestXacroFunctions(unittest.TestCase):
         self.assertEqual(xacro.resolve_macro('simple', macros), 'simple')
         self.assertEqual(xacro.resolve_macro('ns1.simple', macros), 'simple1')
         self.assertEqual(xacro.resolve_macro('ns1.ns2.simple', macros), 'simple2')
-
-        self.assertEqual(xacro.resolve_macro('xacro:simple', macros), 'simple')
-        self.assertEqual(xacro.resolve_macro('xacro:ns1.simple', macros), 'simple1')
-        self.assertEqual(xacro.resolve_macro('xacro:ns1.ns2.simple', macros), 'simple2')
 
     def check_macro_arg(self, s, param, forward, default, rest):
         p, v, r = xacro.parse_macro_arg(s)
@@ -324,7 +320,7 @@ class TestXacro(TestXacroCommentsIgnored):
         # res = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro"><a name="foo"/></a>'''
         with capture_stderr(self.quick_xacro, src) as (result, output):
             self.assert_matches(result, res)
-            self.assertTrue("deprecated use of macro name 'call'" in output)
+            self.assertTrue("deprecated use of 'call' as macro name" in output)
 
     def test_dynamic_macro_undefined(self):
         self.assertRaises(xacro.XacroException,
@@ -1229,6 +1225,14 @@ ${u'🍔' * how_many}
         self.assert_matches(xml.dom.minidom.parse(output_path),
             '''<robot>🍔</robot>''')
         shutil.rmtree(tmp_dir_name) # clean up after ourselves
+
+    def test_macro_name_clash(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+<xacro:macro name="foo"><bar/></xacro:macro>
+<foo/></a>
+'''
+        self.assert_matches(self.quick_xacro(src, ['--xacro-ns']), '<a><foo/></a>')
+        self.assert_matches(self.quick_xacro(src), '<a><bar/></a>')
 
 if __name__ == '__main__':
     unittest.main()
