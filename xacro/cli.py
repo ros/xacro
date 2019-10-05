@@ -99,6 +99,8 @@ def process_args(argv, require_input=True):
                       help="write output to FILE instead of stdout")
     parser.add_option("--deps", action="store_true", dest="just_deps",
                       help="print file dependencies")
+    parser.add_option("--xacro-ns", action="store_false", default=True, dest="xacro_ns",
+                      help="require xacro namespace prefix for xacro tags")
     parser.add_option("--inorder", "-i", action="store_true", dest="in_order",
                       help="processing in read order (default, can be omitted)")
 

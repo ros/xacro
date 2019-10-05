@@ -134,6 +134,37 @@ class XacroException(Exception):
 
 
 verbosity = 1
+# deprecate non-namespaced use of xacro tags (issues #41, #59, #60)
+def deprecated_tag(tag_name = None, _issued=[False]):
+    if _issued[0]:
+        return
+
+    if verbosity > 0:
+        _issued[0] = True
+        warning("Deprecated: xacro tag '{}' w/o 'xacro' xml namespace prefix (will be forbidden in F-turtle)".format(tag_name))
+        print_location(filestack)
+        message("""Use the following command to fix incorrect tag usage:
+find . -iname "*.xacro" | xargs sed -i 's#<\([/]\\?\)\(if\|unless\|include\|arg\|property\|macro\|insert_block\)#<\\1xacro:\\2#g'""")
+        print(file=sys.stderr)
+
+
+# require xacro namespace?
+allow_non_prefixed_tags = True
+
+
+def check_deprecated_tag(tag_name):
+    """
+    Check whether tagName starts with xacro prefix. If not, issue a warning.
+    :param tag_name:
+    :return: True if tagName is accepted as xacro tag
+             False if tagName doesn't start with xacro prefix, but the prefix is required
+    """
+    if tag_name.startswith('xacro:'):
+        return True
+    else:
+        if allow_non_prefixed_tags:
+            deprecated_tag(tag_name)
+        return allow_non_prefixed_tags
 
 
 class Macro(object):
@@ -301,6 +332,28 @@ all_includes = []
 include_no_matches_msg = """Include tag's filename spec \"{}\" matched no files."""
 
 
+def is_include(elt):
+    # Xacro should not use plain 'include' tags but only namespaced ones. Causes conflicts with
+    # other XML elements including Gazebo's <gazebo> extensions
+    if elt.tagName not in ['xacro:include', 'include']:
+        return False
+
+    # Temporary fix for ROS Hydro and the xacro include scope problem
+    if elt.tagName == 'include':
+        # check if there is any element within the <include> tag. mostly we are concerned
+        # with Gazebo's <uri> element, but it could be anything. also, make sure the child
+        # nodes aren't just a single Text node, which is still considered a deprecated
+        # instance
+        if elt.childNodes and not (len(elt.childNodes) == 1 and
+                                   elt.childNodes[0].nodeType == elt.TEXT_NODE):
+            # this is not intended to be a xacro element, so we can ignore it
+            return False
+        else:
+            # throw a deprecated warning
+            return check_deprecated_tag(elt.tagName)
+    return True
+
+
 def get_include_files(filename_spec, symbols):
     try:
         filename_spec = abs_filename_spec(eval_text(filename_spec, symbols))
@@ -417,7 +470,7 @@ def parse_macro_arg(s):
 
 
 def grab_macro(elt, macros):
-    assert(elt.tagName == 'xacro:macro')
+    assert(elt.tagName in ['macro', 'xacro:macro'])
     remove_previous_comments(elt)
 
     name, params = check_attrs(elt, ['name'], ['params'])
@@ -449,7 +502,7 @@ def grab_macro(elt, macros):
 
 
 def grab_property(elt, table):
-    assert(elt.tagName == 'xacro:property')
+    assert(elt.tagName in ['property', 'xacro:property'])
     remove_previous_comments(elt)
 
     name, value, default, scope = check_attrs(elt, ['name'], ['value', 'default', 'scope'])
@@ -555,8 +608,10 @@ def handle_dynamic_macro_call(node, macros, symbols):
     node.removeAttribute('macro')
     node.tagName = 'xacro:' + name
     # forward to handle_macro_call
-    handle_macro_call(node, macros, symbols)
-    return True
+    try:
+    	return handle_macro_call(node, macros, symbols)
+    except KeyError:
+        raise XacroException("unknown macro name '%s' in xacro:call" % name)
 
 
 def resolve_macro(fullname, macros):
@@ -581,18 +636,24 @@ def resolve_macro(fullname, macros):
 
 
 def handle_macro_call(node, macros, symbols):
-    if node.tagName == 'xacro:call':
-        return handle_dynamic_macro_call(node, macros, symbols)
-    elif not node.tagName.startswith('xacro:'):
-        return False  # no macro
+    if node.tagName.startswith('xacro:'):
+        name = node.tagName[6:]  # strip off 'xacro:' prefix
+    elif allow_non_prefixed_tags:
+        name = node.tagName
+    else:  # require prefixed macro names
+        return False
 
-    name = node.tagName[6:]  # drop 'xacro:' prefix
     try:
         m = resolve_macro(name, macros)
+        if name is node.tagName:  # no xacro prefix provided?
+            deprecated_tag(name)
         body = m.body.cloneNode(deep=True)
 
     except KeyError:
-        raise XacroException("unknown macro name: %s" % node.tagName)
+        # TODO If deprecation runs out, this test should be moved up front
+        if node.tagName == 'xacro:call':
+            return handle_dynamic_macro_call(node, macros, symbols)
+        return False  # no macro
 
     # Expand the macro
     scoped = Table(symbols)  # new local name space for macro evaluation
@@ -722,7 +783,8 @@ def eval_all(node, macros, symbols):
     while node:
         next = node.nextSibling
         if node.nodeType == xml.dom.Node.ELEMENT_NODE:
-            if node.tagName == 'xacro:insert_block':
+            if node.tagName in ['insert_block', 'xacro:insert_block'] \
+                    and check_deprecated_tag(node.tagName):
                 name, = check_attrs(node, ['name'], [])
 
                 if ("**" + name) in symbols:
@@ -742,16 +804,19 @@ def eval_all(node, macros, symbols):
                 eval_all(block, macros, symbols)
                 replace_node(node, by=block, content_only=content_only)
 
-            elif node.tagName == 'xacro:include':
+            elif is_include(node):
                 process_include(node, macros, symbols, eval_all)
 
-            elif node.tagName == 'xacro:property':
+            elif node.tagName in ['property', 'xacro:property'] \
+                    and check_deprecated_tag(node.tagName):
                 grab_property(node, symbols)
 
-            elif node.tagName == 'xacro:macro':
+            elif node.tagName in ['macro', 'xacro:macro'] \
+                    and check_deprecated_tag(node.tagName):
                 grab_macro(node, macros)
 
-            elif node.tagName == 'xacro:arg':
+            elif node.tagName in ['arg', 'xacro:arg'] \
+                    and check_deprecated_tag(node.tagName):
                 name, default = check_attrs(node, ['name', 'default'], [])
                 if name not in substitution_args_context['arg']:
                     substitution_args_context['arg'][name] = eval_text(default, symbols)
@@ -776,7 +841,8 @@ def eval_all(node, macros, symbols):
                 node.parentNode.setAttribute(name, value)
                 replace_node(node, by=None)
 
-            elif node.tagName in ['xacro:if', 'xacro:unless']:
+            elif node.tagName in ['if', 'xacro:if', 'unless', 'xacro:unless'] \
+                    and check_deprecated_tag(node.tagName):
                 remove_previous_comments(node)
                 cond, = check_attrs(node, ['value'], [])
                 keep = get_boolean_value(eval_text(cond, symbols), cond)
@@ -793,6 +859,10 @@ def eval_all(node, macros, symbols):
                 pass  # handle_macro_call does all the work of expanding the macro
 
             else:
+                # these are the non-xacro tags
+                if node.tagName.startswith("xacro:"):
+                    raise XacroException("unknown macro name: %s" % node.tagName[6:])
+
                 eval_all(node, macros, symbols)
 
         # TODO: Also evaluate content of COMMENT_NODEs?
@@ -832,12 +902,15 @@ def parse(inp, filename=None):
             f.close()
 
 
-def process_doc(doc, mappings=None, **kwargs):
+def process_doc(doc, mappings=None, xacro_ns=True, **kwargs):
     global verbosity
     verbosity = kwargs.get('verbosity', verbosity)
 
     # set substitution args
     substitution_args_context['arg'] = {} if mappings is None else mappings
+
+    global allow_non_prefixed_tags
+    allow_non_prefixed_tags = xacro_ns = xacro_ns
 
     # if not yet defined: initialize filestack
     if not filestack:

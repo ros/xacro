@@ -578,7 +578,7 @@ class TestXacro(TestXacroCommentsIgnored):
   <xacro:property name="var" value="main"/>
   <xacro:include filename="include1.xacro" ns="A"/>
   <xacro:include filename="include2.xacro" ns="B"/>
-  <xacro:A.foo/><xacro:B.foo/>
+  <xacro:A.foo/><B.foo/>
   <main var="${var}" A="${2*A.var}" B="${B.var+1}"/>
 </a>'''
         res = '''
@@ -1210,6 +1210,14 @@ ${u'🍔' * how_many}
         self.assertTrue(os.path.isfile(output_path))
         self.assert_matches(xml.dom.minidom.parse(output_path), '''<robot>🍔</robot>''')
         shutil.rmtree(tmp_dir_name)  # clean up after ourselves
+
+    def test_macro_name_clash(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+<xacro:macro name="foo"><bar/></xacro:macro>
+<foo/></a>
+'''
+        self.assert_matches(self.quick_xacro(src, ['--xacro-ns']), '<a><foo/></a>')
+        self.assert_matches(self.quick_xacro(src), '<a><bar/></a>')
 
 
 if __name__ == '__main__':
