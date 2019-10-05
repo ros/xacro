@@ -138,16 +138,16 @@ class XacroException(Exception):
 
 verbosity = 1
 # deprecate non-namespaced use of xacro tags (issues #41, #59, #60)
-def deprecated_tag(_issued=[False]):
+def deprecated_tag(tag_name = None, _issued=[False]):
     if _issued[0]:
         return
-    _issued[0] = True
 
     if verbosity > 0:
-        warning("deprecated: xacro tags should be prepended with 'xacro' xml namespace.")
-        message("""Use the following script to fix incorrect usage:
-        find . -iname "*.xacro" | xargs sed -i 's#<\([/]\\?\)\(if\|unless\|include\|arg\|property\|macro\|insert_block\)#<\\1xacro:\\2#g'""")
+        _issued[0] = True
+        warning("Deprecated: xacro tag '{}' w/o 'xacro:' xml namespace prefix (will be forbidden in Noetic)".format(tag_name))
         print_location(filestack)
+        message("""Use the following command to fix incorrect tag usage:
+find . -iname "*.xacro" | xargs sed -i 's#<\([/]\\?\)\(if\|unless\|include\|arg\|property\|macro\|insert_block\)#<\\1xacro:\\2#g'""")
         print(file=sys.stderr)
 
 
@@ -166,7 +166,7 @@ def check_deprecated_tag(tag_name):
         return True
     else:
         if allow_non_prefixed_tags:
-            deprecated_tag()
+            deprecated_tag(tag_name)
         return allow_non_prefixed_tags
 
 
@@ -683,7 +683,9 @@ def resolve_macro(fullname, macros):
         except KeyError:
             # try with xacro: prefix as well
             if allow_non_prefixed_tags and not name.startswith('xacro:'):
-                return _resolve([], 'xacro:' + name, macros)
+                result = macros['xacro:' + name]
+                deprecated_tag(name)
+                return result
 
     # try fullname and (namespaces, name) in this order
     m = _resolve([], fullname, macros)
