@@ -392,7 +392,7 @@ class TestXacro(TestXacroCommentsIgnored):
     def test_evaluate_macro_params_before_body(self):
         self.assert_matches(self.quick_xacro('''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
   <xacro:macro name="foo" params="lst">${lst[-1]}</xacro:macro>
-  <foo lst="${[1,2,3]}"/></a>'''),
+  <xacro:foo lst="${[1,2,3]}"/></a>'''),
         '''<a>3</a>''')
 
     def test_macro_params_escaped_string(self):
@@ -557,7 +557,7 @@ class TestXacro(TestXacroCommentsIgnored):
   <xacro:property name="var" value="main"/>
   <xacro:include filename="include1.xacro" ns="A"/>
   <xacro:include filename="include2.xacro" ns="B"/>
-  <A.foo/><B.foo/>
+  <xacro:A.foo/><B.foo/>
   <main var="${var}" A="${2*A.var}" B="${B.var+1}"/>
 </a>'''
         result = '''
@@ -1033,7 +1033,9 @@ class TestXacro(TestXacroCommentsIgnored):
         <xacro:my_macro/>
         </a>'''
         res = '''<a><foo/></a>'''
-        self.assert_matches(self.quick_xacro(src), res)
+        with capture_stderr(self.quick_xacro, src) as (result, output):
+            self.assert_matches(result, res)
+            self.assertTrue("macro names must not contain prefix 'xacro:'" in output)
 
     def test_overwrite_globals(self):
         src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
@@ -1048,7 +1050,7 @@ class TestXacro(TestXacroCommentsIgnored):
   <xacro:macro name="foo" params="a b:=${a} c:=$${a}"> a=${a} b=${b} c=${c} </xacro:macro>
   <xacro:property name="a" value="1"/>
   <xacro:property name="d" value="$${a}"/>
-  <d d="${d}"><foo a="2"/></d>
+  <d d="${d}"><xacro:foo a="2"/></d>
 </a>'''
         res = '''<a><d d="${a}"> a=2 b=1 c=${a} </d></a>'''
         self.assert_matches(self.quick_xacro(src), res)
