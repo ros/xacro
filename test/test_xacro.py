@@ -1236,5 +1236,12 @@ ${u'🍔' * how_many}
         self.assert_matches(self.quick_xacro(src, ['--xacro-ns']), '<a><foo/></a>')
         self.assert_matches(self.quick_xacro(src), '<a><bar/></a>')
 
+    def test_invalid_syntax(self):
+        self.assertRaises(xacro.XacroException, self.quick_xacro, '<a>a${</a>')
+        self.assertRaises(xacro.XacroException, self.quick_xacro, '<a>${b</a>')
+        self.assertRaises(xacro.XacroException, self.quick_xacro, '<a>${{}}</a>')
+        self.assertRaises(xacro.XacroException, self.quick_xacro, '<a>a$(</a>')
+        self.assertRaises(xacro.XacroException, self.quick_xacro, '<a>$(b</a>')
+
 if __name__ == '__main__':
     unittest.main()

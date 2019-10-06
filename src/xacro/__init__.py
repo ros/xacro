@@ -330,13 +330,15 @@ class QuickLexer(object):
     def next(self):
         result = self.top
         self.top = None
+        if not self.str:  # empty string
+            return result
         for i in range(len(self.res)):
             m = self.res[i].match(self.str)
             if m:
                 self.top = (i, m.group(0))
                 self.str = self.str[m.end():]
-                break
-        return result
+                return result
+        raise XacroException('invalid expression: ' + self.str)
 
 
 all_includes = []
