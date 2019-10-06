@@ -2,6 +2,15 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.0.1 (2019-10-06)
+------------------
+* Revert requiring that all xacro commands are prefixed with 'xacro:' namespace
+  Although this is deprecated since `#79 <https://github.com/ros/xacro/issues/79>`_,
+  the corresponding deprecation warning wasn't actually issued.
+  Thus, we will accept non-prefixed xacro tags until F-turtle.
+* Install to both, bin/xacro and lib/xacro/xacro
+* Contributors: Robert Haschke
+
 2.0.0 (2019-09-28)
 ------------------
 * PEP8 cleanup
@@ -28,8 +37,7 @@ Changelog for package xacro
 -------------------
 * [feature] remove xmlns:xacro from processed file (`#207 <https://github.com/ros/xacro/issues/207>`_)
   - Remove all notions of xmlns:xacro from the resulting document.
-  - If the root node defines a xacro:targetNamespace attribute,
-    this will become the global xmlns namespace of the resulting document.
+  - If the root node defines a xacro:targetNamespace attribute, this will become the global xmlns namespace of the resulting document.
 * [feature] Add len() to allowed python functions (`#208 <https://github.com/ros/xacro/issues/208>`_)
 * [maintanence]
   - --in-order warning: reduce severity level to message
