@@ -134,8 +134,10 @@ class XacroException(Exception):
 
 
 verbosity = 1
+
+
 # deprecate non-namespaced use of xacro tags (issues #41, #59, #60)
-def deprecated_tag(tag_name = None, _issued=[False]):
+def deprecated_tag(tag_name=None, _issued=[False]):
     if _issued[0]:
         return
 
@@ -609,7 +611,7 @@ def handle_dynamic_macro_call(node, macros, symbols):
     node.tagName = 'xacro:' + name
     # forward to handle_macro_call
     try:
-    	return handle_macro_call(node, macros, symbols)
+        return handle_macro_call(node, macros, symbols)
     except KeyError:
         raise XacroException("unknown macro name '%s' in xacro:call" % name)
 
