@@ -660,7 +660,7 @@ def handle_macro_call(node, macros, symbols):
     params = m.params[:]  # deep copy macro's params list
     for name, value in node.attributes.items():
         if name not in params:
-            raise XacroException("Invalid parameter \"%s\"" % str(name), macro=m)
+            raise XacroException("Invalid parameter '%s'" % str(name), macro=m)
         params.remove(name)
         scoped._setitem(name, eval_text(value, symbols), unevaluated=False)
         node.setAttribute(name, "")  # suppress second evaluation in eval_all()
@@ -679,7 +679,7 @@ def handle_macro_call(node, macros, symbols):
             block = next_sibling_element(block)
 
     if block is not None:
-        raise XacroException("Unused block \"%s\"" % block.tagName, macro=m)
+        raise XacroException("Unused block '%s'" % block.tagName, macro=m)
 
     # Try to load defaults for any remaining non-block parameters
     for param in params[:]:
@@ -735,7 +735,7 @@ def get_boolean_value(value, condition):
         else:
             return bool(value)
     except Exception:
-        raise XacroException("Xacro conditional \"%s\" evaluated to \"%s\", "
+        raise XacroException("Xacro conditional '%s' evaluated to '%s', "
                              "which is not a boolean expression." % (condition, value))
 
 
@@ -796,7 +796,7 @@ def eval_all(node, macros, symbols):
                     block = symbols['*' + name]
                     content_only = False
                 else:
-                    raise XacroException("Undefined block \"%s\"" % name)
+                    raise XacroException("Undefined block '%s'" % name)
 
                 # cloning block allows to insert the same block multiple times
                 block = block.cloneNode(deep=True)
@@ -1003,11 +1003,12 @@ def main():
         if verbosity > 0:
             print_location(filestack, e)
             print(file=sys.stderr)  # add empty separator line before error
-            print("Check that:", file=sys.stderr)
-            print(" - Your XML is well-formed", file=sys.stderr)
-            print(" - You have the xacro xmlns declaration:",
-                  "xmlns:xacro=\"http://www.ros.org/wiki/xacro\"", file=sys.stderr)
-        sys.exit(2)  # indicate failure, but don't print stack trace on XML errors
+            print('Check that:', file=sys.stderr)
+            print(' - Your XML is well-formed', file=sys.stderr)
+            print(' - You have the xacro xmlns declaration:',
+                  'xmlns:xacro="http://www.ros.org/wiki/xacro"', file=sys.stderr)
+        # indicate failure, but don't print stack trace on XML errors
+        sys.exit(2)
 
     except Exception as e:
         msg = str(e)

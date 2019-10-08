@@ -56,6 +56,12 @@ class ArgException(SubstitutionException):
 
 
 def _eval_env(name):
+    """
+    Returns the environment variable value or throws exception.
+
+    @return: enviroment variable value
+    @raise SubstitutionException: if environment variable not set
+    """
     try:
         return os.environ[name]
     except KeyError as e:
@@ -78,7 +84,14 @@ def _env(resolved, a, args, context):
 
 
 def _eval_optenv(name, default=''):
+    """
+    Eval_optenv
 
+    Returns the value of the environment variable or default
+
+    @name: name of the environment variable
+    @return: enviroment variable value or default
+    """
     if name in os.environ:
         return os.environ[name]
     return default
@@ -99,7 +112,13 @@ def _optenv(resolved, a, args, context):
 
 
 def _eval_dirname(filename):
+    """
+    Gets the absolute path of a given filename
 
+    @param filename
+    @return: absolute path
+    @rtype path
+    """
     if not filename:
         raise SubstitutionException('Cannot substitute $(dirname),'
                                     'no file/directory information available.')

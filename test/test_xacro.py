@@ -45,10 +45,7 @@ import xacro
 import xml.dom
 from xml.dom.minidom import parseString
 
-try:
-    from cStringIO import StringIO  # Python 2.x
-except ImportError:
-    from io import StringIO  # Python 3.x
+from io import StringIO
 
 # regex to match whitespace
 whitespace = re.compile(r'\s+')
