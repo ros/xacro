@@ -991,24 +991,45 @@ def process_file(input_file_name, **kwargs):
     return doc
 
 
+def process(input_file_name, output=None, in_order=True, do_check_order=False,
+            just_deps=False, just_includes=False, xacro_ns=True, verbosity=1, mappings={}):
+
+    opts_map = {
+        'output': output,
+        'in_order': in_order,
+        'do_check_order': do_check_order,
+        'just_deps': just_deps,
+        'just_includes': just_includes,
+        'xacro_ns': xacro_ns,
+        'verbosity': verbosity,
+        'mappings': mappings,
+    }
+
+    return exec(input_file_name, opts_map)
+
 def main():
     opts, input_file_name = process_args(sys.argv[1:])
+    exec(input_file_name, vars(opts))
+
+def exec(input_file_name, opts):
+
+    from xml.parsers.expat import ExpatError
     try:
         # open and process file
-        doc = process_file(input_file_name, **vars(opts))
+        doc = process_file(input_file_name, **opts)
         # open the output file
-        out = open_output(opts.output)
+        out = open_output(opts['output'])
 
     # error handling
-    except xml.parsers.expat.ExpatError as e:
-        error("XML parsing error: %s" % str(e), alt_text=None)
+    except ExpatError as e:
+        error('XML parsing error: %s' % str(e), alt_text=None)
         if verbosity > 0:
             print_location(filestack, e)
             print(file=sys.stderr)  # add empty separator line before error
             print('Check that:', file=sys.stderr)
             print(' - Your XML is well-formed', file=sys.stderr)
             print(' - You have the xacro xmlns declaration:',
-                  'xmlns:xacro="http://www.ros.org/wiki/xacro"', file=sys.stderr)
+                  'xmlns:xacro=\"http://www.ros.org/wiki/xacro\"', file=sys.stderr)
         # indicate failure, but don't print stack trace on XML errors
         sys.exit(2)
 
@@ -1026,14 +1047,16 @@ def main():
             sys.exit(2)  # gracefully exit with error condition
 
     # special output mode
-    if opts.just_deps:
-        out.write(" ".join(set(all_includes)))
+    #if opts.just_deps:
+    if opts['just_deps']:
+        out.write(' '.join(set(all_includes)))
         print()
-        return
+        return ' '.join(set(all_includes))
 
     # write output
     out.write(doc.toprettyxml(indent='  '))
     print()
     # only close output file, but not stdout
-    if opts.output:
+    if opts['output']:
         out.close()
+    return doc.toprettyxml(indent='  ')
