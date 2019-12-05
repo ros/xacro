@@ -1044,7 +1044,6 @@ def exec(input_file_name, opts):
             sys.exit(2)  # gracefully exit with error condition
 
     # special output mode
-    #if opts.just_deps:
     if opts['just_deps']:
         out.write(' '.join(set(all_includes)))
         out.write('\n')
