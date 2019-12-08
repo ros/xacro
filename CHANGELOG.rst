@@ -2,6 +2,13 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.14.0 (2019-12-08)
+-------------------
+* [maintanence] Remove deprecations
+  - Require all xacro commands to be prefixed with 'xacro:'
+  - Remove options --legacy, --inorder, --check-order, --includes
+* Contributors: Robert Haschke
+
 1.13.5 (2019-12-08)
 -------------------
 * [feature] Expose abs_filename() (`#220 <https://github.com/ros/xacro/issues/220>`_)
