@@ -991,15 +991,11 @@ def process_file(input_file_name, **kwargs):
     return doc
 
 
-def process(input_file_name, output_file_name, in_order=True, do_check_order=False,
-            just_deps=False, just_includes=False, xacro_ns=True, verbosity=1, mappings={}):
-
+def process(input_file_name, output_file_name, just_deps=False, xacro_ns=True, verbosity=1, mappings={}):
+    """Processing function to be used from python code directly"""
     opts_map = {
         'output': output_file_name,
-        'in_order': in_order,
-        'do_check_order': do_check_order,
         'just_deps': just_deps,
-        'just_includes': just_includes,
         'xacro_ns': xacro_ns,
         'verbosity': verbosity,
         'mappings': mappings,
