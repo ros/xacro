@@ -1005,8 +1005,6 @@ def process(input_file_name, output_file_name, just_deps=False, xacro_ns=True, v
 
 
 def exec(input_file_name, opts):
-
-    from xml.parsers.expat import ExpatError
     try:
         # open and process file
         doc = process_file(input_file_name, **opts)
@@ -1014,7 +1012,7 @@ def exec(input_file_name, opts):
         out = open_output(opts['output'])
 
     # error handling
-    except ExpatError as e:
+    except xml.parsers.expat.ExpatError as e:
         error('XML parsing error: %s' % str(e), alt_text=None)
         if verbosity > 0:
             print_location(filestack, e)
@@ -1039,20 +1037,14 @@ def exec(input_file_name, opts):
         else:
             sys.exit(2)  # gracefully exit with error condition
 
-    # special output mode
-    if opts['just_deps']:
+    if opts['just_deps']:  # only output list of dependencies
         out.write(' '.join(set(all_includes)))
-        out.write('\n')
-        if opts['output']:
-            out.close()
-        return
+    else:  # write XML output
+        out.write(doc.toprettyxml(indent='  '))
 
-    # write output
-    out.write(doc.toprettyxml(indent='  '))
     # only close output file, but not stdout
     if opts['output']:
         out.close()
-    return
 
 
 def main():
