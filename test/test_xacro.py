@@ -1044,7 +1044,9 @@ class TestXacro(TestXacroCommentsIgnored):
         <xacro:my_macro/>
         </a>'''
         res = '''<a><foo/></a>'''
-        self.assert_matches(self.quick_xacro(src), res)
+        with capture_stderr(self.quick_xacro, src) as (result, output):
+            self.assert_matches(result, res)
+            self.assertTrue("macro names must not contain prefix 'xacro:'" in output)
 
     def test_overwrite_globals(self):
         src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
@@ -1108,6 +1110,18 @@ class TestXacro(TestXacroCommentsIgnored):
     <xacro:include file="$(find nonexistent_package)/stuff.urdf" />
   </xacro:if>
 </a>'''), '<a/>')
+
+    def test_include_from_macro(self):
+        src = '''
+    <a xmlns:xacro="http://www.ros.org/xacro">
+      <xacro:macro name="foo" params="file:=include1.xml"><xacro:include filename="${file}"/></xacro:macro>
+      <xacro:foo/>
+      <xacro:foo file="${abs_filename('include1.xml')}"/>
+      <xacro:include filename="subdir/foo.xacro"/>
+      <xacro:foo file="$(cwd)/subdir/include1.xml"/>
+    </a>'''
+        res = '''<a><inc1/><inc1/><subdir_inc1/><subdir_inc1/></a>'''
+        self.assert_matches(self.quick_xacro(src), res)
 
     def test_yaml_support(self):
         src = '''
@@ -1214,6 +1228,12 @@ ${u'🍔' * how_many}
         self.assert_matches(xml.dom.minidom.parse(output_path), '''<robot>🍔</robot>''')
         shutil.rmtree(tmp_dir_name)  # clean up after ourselves
 
+    def test_invalid_syntax(self):
+        self.assertRaises(xacro.XacroException, self.quick_xacro, '<a>a${</a>')
+        self.assertRaises(xacro.XacroException, self.quick_xacro, '<a>${b</a>')
+        self.assertRaises(xacro.XacroException, self.quick_xacro, '<a>${{}}</a>')
+        self.assertRaises(xacro.XacroException, self.quick_xacro, '<a>a$(</a>')
+        self.assertRaises(xacro.XacroException, self.quick_xacro, '<a>$(b</a>')
 
 if __name__ == '__main__':
     unittest.main()

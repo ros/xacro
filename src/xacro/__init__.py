@@ -104,7 +104,7 @@ def load_yaml(filename):
     f = open(filename)
     oldstack = push_file(filename)
     try:
-        return yaml.load(f)
+        return yaml.safe_load(f)
     finally:
         f.close()
         restore_filestack(oldstack)
@@ -121,8 +121,8 @@ global_symbols = {'__builtins__': {k: __builtins__[k] for k in
                                     'True', 'False', 'min', 'max', 'round']}}
 # also define all math symbols and functions
 global_symbols.update(math.__dict__)
-# allow to import dicts from yaml
-global_symbols.update(dict(load_yaml=load_yaml))
+# expose load_yaml and abs_filename
+global_symbols.update(dict(load_yaml=load_yaml, abs_filename=abs_filename_spec))
 
 
 class XacroException(Exception):
@@ -299,13 +299,15 @@ class QuickLexer(object):
     def next(self):
         result = self.top
         self.top = None
+        if not self.str:  # empty string
+            return result
         for i in range(len(self.res)):
             m = self.res[i].match(self.str)
             if m:
                 self.top = (i, m.group(0))
                 self.str = self.str[m.end():]
-                break
-        return result
+                return result
+        raise XacroException('invalid expression: ' + self.str)
 
 
 all_includes = []
