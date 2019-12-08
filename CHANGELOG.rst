@@ -2,6 +2,16 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.13.5 (2019-12-08)
+-------------------
+* [feature] Expose abs_filename() (`#220 <https://github.com/ros/xacro/issues/220>`_)
+* [feature] Catch missing closing brace in $() and ${} expressions
+* [maintanence]
+  - Replace deprecated yaml.load() -> yaml.safe_load()
+  - Save macro names internally w/o 'xacro:' prefix
+  - Correctly issue deprecation warning for non-prefixed xacro tags
+* Contributors: Robert Haschke
+
 1.13.4 (2019-09-26)
 -------------------
 * [feature] remove xmlns:xacro from processed file (`#207 <https://github.com/ros/xacro/issues/207>`_)
