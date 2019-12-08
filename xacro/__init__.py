@@ -991,20 +991,7 @@ def process_file(input_file_name, **kwargs):
     return doc
 
 
-def process(input_file_name, output_file_name, just_deps=False, xacro_ns=True, verbosity=1, mappings={}):
-    """Processing function to be used from python code directly"""
-    opts_map = {
-        'output': output_file_name,
-        'just_deps': just_deps,
-        'xacro_ns': xacro_ns,
-        'verbosity': verbosity,
-        'mappings': mappings,
-    }
-
-    return exec(input_file_name, opts_map)
-
-
-def exec(input_file_name, opts):
+def _process(input_file_name, opts):
     try:
         # open and process file
         doc = process_file(input_file_name, **opts)
@@ -1049,4 +1036,16 @@ def exec(input_file_name, opts):
 
 def main():
     opts, input_file_name = process_args(sys.argv[1:])
-    exec(input_file_name, vars(opts))
+    _process(input_file_name, vars(opts))
+
+
+def process(input_file_name, output_file_name, just_deps=False, xacro_ns=True, verbosity=1, mappings={}):
+    """Processing function to be used from python code directly"""
+    opts_map = {
+        'output': output_file_name,
+        'just_deps': just_deps,
+        'xacro_ns': xacro_ns,
+        'verbosity': verbosity,
+        'mappings': mappings,
+    }
+    _process(input_file_name, opts_map)
