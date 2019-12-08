@@ -1107,6 +1107,18 @@ class TestXacroInorder(TestXacro):
   </xacro:if>
 </a>'''), '<a/>')
 
+    def test_include_from_macro(self):
+        src = '''
+    <a xmlns:xacro="http://www.ros.org/xacro">
+      <xacro:macro name="foo" params="file:=include1.xml"><xacro:include filename="${file}"/></xacro:macro>
+      <xacro:foo/>
+      <xacro:foo file="${abs_filename('include1.xml')}"/>
+      <xacro:include filename="subdir/foo.xacro"/>
+      <xacro:foo file="$(cwd)/subdir/include1.xml"/>
+    </a>'''
+        res = '''<a><inc1/><inc1/><subdir_inc1/><subdir_inc1/></a>'''
+        self.assert_matches(self.quick_xacro(src), res)
+
     def test_yaml_support(self):
         src = '''
 <a xmlns:xacro="http://www.ros.org/wiki/xacro">
