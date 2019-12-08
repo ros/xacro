@@ -100,7 +100,7 @@ def load_yaml(filename):
     f = open(filename)
     oldstack = push_file(filename)
     try:
-        return yaml.load(f)
+        return yaml.safe_load(f)
     finally:
         f.close()
         restore_filestack(oldstack)
