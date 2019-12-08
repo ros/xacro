@@ -1039,13 +1039,12 @@ def main():
     _process(input_file_name, vars(opts))
 
 
-def process(input_file_name, output_file_name, just_deps=False, xacro_ns=True, verbosity=1, mappings={}):
-    """Processing function to be used from python code directly"""
-    opts_map = {
-        'output': output_file_name,
-        'just_deps': just_deps,
-        'xacro_ns': xacro_ns,
-        'verbosity': verbosity,
-        'mappings': mappings,
-    }
-    _process(input_file_name, opts_map)
+def process(input_file_name, just_deps=False, xacro_ns=True, verbosity=1, mappings={}):
+    """Function to be used from python code, returning the processed XML"""
+    from io import StringIO
+    old, sys.stdout = sys.stdout, StringIO()  # temporarily replace sys.stdout with StringIO()
+    _process(input_file_name, dict(output=None, just_deps=just_deps, xacro_ns=xacro_ns, verbosity=verbosity, mappings=mappings))
+    sys.stdout.seek(0)
+    result = sys.stdout.read()
+    sys.stdout = old  # restore sys.stdout
+    return result
