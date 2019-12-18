@@ -1034,11 +1034,6 @@ def _process(input_file_name, opts):
         out.close()
 
 
-def main():
-    opts, input_file_name = process_args(sys.argv[1:])
-    _process(input_file_name, vars(opts))
-
-
 def process(input_file_name, just_deps=False, xacro_ns=True, verbosity=1, mappings={}):
     """Function to be used from python code, returning the processed XML"""
     from io import StringIO
@@ -1048,3 +1043,8 @@ def process(input_file_name, just_deps=False, xacro_ns=True, verbosity=1, mappin
     result = sys.stdout.read()
     sys.stdout = old  # restore sys.stdout
     return result
+
+
+def main():
+    opts, input_file_name = process_args(sys.argv[1:])
+    _process(input_file_name, vars(opts))
