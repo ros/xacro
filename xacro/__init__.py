@@ -991,17 +991,16 @@ def process_file(input_file_name, **kwargs):
     return doc
 
 
-def main():
-    opts, input_file_name = process_args(sys.argv[1:])
+def _process(input_file_name, opts):
     try:
         # open and process file
-        doc = process_file(input_file_name, **vars(opts))
+        doc = process_file(input_file_name, **opts)
         # open the output file
-        out = open_output(opts.output)
+        out = open_output(opts['output'])
 
     # error handling
     except xml.parsers.expat.ExpatError as e:
-        error("XML parsing error: %s" % str(e), alt_text=None)
+        error('XML parsing error: %s' % str(e), alt_text=None)
         if verbosity > 0:
             print_location(filestack, e)
             print(file=sys.stderr)  # add empty separator line before error
@@ -1025,15 +1024,27 @@ def main():
         else:
             sys.exit(2)  # gracefully exit with error condition
 
-    # special output mode
-    if opts.just_deps:
-        out.write(" ".join(set(all_includes)))
-        print()
-        return
+    if opts['just_deps']:  # only output list of dependencies
+        out.write(' '.join(set(all_includes)))
+    else:  # write XML output
+        out.write(doc.toprettyxml(indent='  '))
 
-    # write output
-    out.write(doc.toprettyxml(indent='  '))
-    print()
     # only close output file, but not stdout
-    if opts.output:
+    if opts['output']:
         out.close()
+
+
+def process(input_file_name, just_deps=False, xacro_ns=True, verbosity=1, mappings={}):
+    """Function to be used from python code, returning the processed XML"""
+    from io import StringIO
+    old, sys.stdout = sys.stdout, StringIO()  # temporarily replace sys.stdout with StringIO()
+    _process(input_file_name, dict(output=None, just_deps=just_deps, xacro_ns=xacro_ns, verbosity=verbosity, mappings=mappings))
+    sys.stdout.seek(0)
+    result = sys.stdout.read()
+    sys.stdout = old  # restore sys.stdout
+    return result
+
+
+def main():
+    opts, input_file_name = process_args(sys.argv[1:])
+    _process(input_file_name, vars(opts))

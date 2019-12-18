@@ -127,7 +127,7 @@ def process_args(argv, require_input=True):
         mappings = {}
         filtered_args = argv
 
-    parser.set_defaults(just_deps=False, just_includes=False, verbosity=1)
+    parser.set_defaults(just_deps=False, verbosity=1)
     (options, pos_args) = parser.parse_args(filtered_args)
     if options.in_order:
         message("xacro: in-order processing became default in ROS Melodic. You can drop the option.")

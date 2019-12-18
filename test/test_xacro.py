@@ -1216,6 +1216,11 @@ ${u'🍔' * how_many}
         self.assert_matches(self.quick_xacro(src, ['--xacro-ns']), '<a><foo/></a>')
         self.assert_matches(self.quick_xacro(src), '<a><bar/></a>')
 
+    def test_process_return_value(self):
+        test_dir = os.path.abspath(os.path.dirname(__file__))
+        input_path = os.path.join(test_dir, 'emoji.xacro')
+        self.assert_matches(xacro.process(input_path), '<robot>🍔</robot>')
+
 
 if __name__ == '__main__':
     unittest.main()
