@@ -314,14 +314,12 @@ all_includes = []
 include_no_matches_msg = """Include tag's filename spec \"{}\" matched no files."""
 
 
-def get_include_files(filename_spec, symbols, optional=False):
+def get_include_files(filename_spec, symbols):
     try:
         filename_spec = abs_filename_spec(eval_text(filename_spec, symbols))
     except XacroException as e:
         if e.exc and isinstance(e.exc, NameError) and symbols is None:
             raise XacroException('variable filename is supported with in-order option only')
-        elif e.exc.strerror == "No such file or directory" and optional is True:
-            return
         else:
             raise
 
@@ -369,10 +367,10 @@ def process_include(elt, macros, symbols, func):
 
     optional = True if optional == "True" else False
 
-    for filename in get_include_files(filename_spec, symbols, optional):
-        # extend filestack
-        oldstack = push_file(filename)
-        try:
+    try:
+        for filename in get_include_files(filename_spec, symbols):
+            # extend filestack
+            oldstack = push_file(filename)
             include = parse(None, filename).documentElement
 
             # recursive call to func
@@ -383,11 +381,11 @@ def process_include(elt, macros, symbols, func):
             # restore filestack
             restore_filestack(oldstack)
 
-        except XacroException as e:
-            if e.exc.strerror == "No such file or directory" and optional is True:
-                continue
-            else:
-                raise
+    except XacroException as e:
+        if e.exc.strerror == "No such file or directory" and optional is True:
+            pass
+        else:
+            raise
 
     remove_previous_comments(elt)
     # replace the include tag with the nodes of the included file(s)
