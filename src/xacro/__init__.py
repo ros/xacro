@@ -382,7 +382,7 @@ def process_include(elt, macros, symbols, func):
             restore_filestack(oldstack)
 
     except XacroException as e:
-        if e.exc.strerror == "No such file or directory" and optional is True:
+        if e.exc and isinstance(e.exc, IOError) and e.exc.strerror == "No such file or directory" and optional is True:
             pass
         else:
             raise
