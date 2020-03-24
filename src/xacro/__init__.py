@@ -415,25 +415,25 @@ def process_include(elt, macros, symbols, func):
 
     optional = True if optional == "True" else False
 
-    try:
-        for filename in get_include_files(filename_spec, symbols):
-            # extend filestack
-            oldstack = push_file(filename)
+    for filename in get_include_files(filename_spec, symbols):
+        # extend filestack
+        oldstack = push_file(filename)
+
+        try:
             include = parse(None, filename).documentElement
 
             # recursive call to func
             func(include, macros, symbols)
             included.append(include)
             import_xml_namespaces(elt.parentNode, include.attributes)
-
+        except XacroException as e:
+            if e.exc and isinstance(e.exc, IOError) and optional is True:
+                continue
+            else:
+                raise
+        finally:
             # restore filestack
             restore_filestack(oldstack)
-
-    except XacroException as e:
-        if e.exc and isinstance(e.exc, IOError) and e.exc.strerror == "No such file or directory" and optional is True:
-            pass
-        else:
-            raise
 
     remove_previous_comments(elt)
     # replace the include tag with the nodes of the included file(s)
