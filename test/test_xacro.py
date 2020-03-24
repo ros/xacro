@@ -1119,21 +1119,6 @@ class TestXacroInorder(TestXacro):
             self.assert_matches(self.quick_xacro(src, cli=['type:=%s' % i]),
                                 res.format(tag=i))
 
-    def test_yaml_exist_required(self):
-        src = '''
-<a xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <xacro:include filename="${load_yaml('non-existent.yaml')}"/>
-</a>'''
-        self.assertRaises(xacro.XacroException, self.quick_xacro, src)
-
-    def test_yaml_exist_optional(self):
-        src = '''
-<a xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <xacro:include filename="${load_yaml('non-existent.yaml')}" optional="True"/>
-</a>'''
-        res = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro"></a>'''
-        self.assert_matches(self.quick_xacro(src), res)
-
     def test_xacro_exist_required(self):
         src = '''
 <a xmlns:xacro="http://www.ros.org/wiki/xacro">
