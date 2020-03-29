@@ -2,6 +2,13 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.14.1 (2020-03-29)
+-------------------
+* [feature]     allow optional xacro includes (`#234 <https://github.com/ros/xacro/issues/234>`_)
+* [maintanence] Use setuptools instead of distutils (`#233 <https://github.com/ros/xacro/issues/233>`_)
+* [maintanence] fix Travis: export correct ROS_PYTHON_VERSION
+* Contributors: Alejandro Hernández Cordero, Robert Haschke
+
 1.14.0 (2019-12-08)
 -------------------
 * [maintanence] Remove deprecations
@@ -23,8 +30,7 @@ Changelog for package xacro
 -------------------
 * [feature] remove xmlns:xacro from processed file (`#207 <https://github.com/ros/xacro/issues/207>`_)
   - Remove all notions of xmlns:xacro from the resulting document.
-  - If the root node defines a xacro:targetNamespace attribute,
-    this will become the global xmlns namespace of the resulting document.
+  - If the root node defines a xacro:targetNamespace attribute, this will become the global xmlns namespace of the resulting document.
 * [feature] Add len() to allowed python functions (`#208 <https://github.com/ros/xacro/issues/208>`_)
 * [maintanence]
   - --in-order warning: reduce severity level to message
