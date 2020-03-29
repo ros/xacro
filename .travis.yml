@@ -28,8 +28,10 @@ before_script:
 # command to run tests
 script:
   - mkdir build && cd build
+  - export ROS_PYTHON_VERSION=$(python -c 'import sys; print(sys.version_info.major)')
   - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/tmp/install -DSETUPTOOLS_DEB_LAYOUT=OFF ..
   - make install
   - source /tmp/install/setup.bash
   - make test
   - catkin_test_results
+  - cat test_results/xacro/nosetests-test.xml
