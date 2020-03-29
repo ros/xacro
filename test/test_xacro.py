@@ -1148,7 +1148,7 @@ class TestXacro(TestXacroCommentsIgnored):
 <a xmlns:xacro="http://www.ros.org/wiki/xacro">
   <xacro:include filename="non-existent.xacro" optional="True"/>
 </a>'''
-        res = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro"></a>'''
+        res = '''<a></a>'''
         self.assert_matches(self.quick_xacro(src), res)
 
     def test_macro_default_param_evaluation_order(self):
