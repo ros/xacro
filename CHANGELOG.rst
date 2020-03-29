@@ -2,6 +2,11 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.0.2 (2020-03-29)
+------------------
+* Merge improvements of melodic and noetic branches into dashing-devel: see 1.14.1, 1.13.5 for details
+* Contributors: Robert Haschke
+
 2.0.1 (2019-10-06)
 ------------------
 * Revert requiring that all xacro commands are prefixed with 'xacro:' namespace
