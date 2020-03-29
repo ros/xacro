@@ -354,7 +354,7 @@ def import_xml_namespaces(parent, attributes):
 
 def process_include(elt, macros, symbols, func):
     included = []
-    filename_spec, namespace_spec = check_attrs(elt, ['filename'], ['ns'])
+    filename_spec, namespace_spec, optional = check_attrs(elt, ['filename'], ['ns', 'optional'])
     if namespace_spec:
         try:
             namespace_spec = eval_text(namespace_spec, symbols)
@@ -365,18 +365,26 @@ def process_include(elt, macros, symbols, func):
         except TypeError:
             raise XacroException('namespaces are supported with in-order option only')
 
+    optional = get_boolean_value(optional, None)
+
     for filename in get_include_files(filename_spec, symbols):
-        # extend filestack
-        oldstack = push_file(filename)
-        include = parse(None, filename).documentElement
+        try:
+            # extend filestack
+            oldstack = push_file(filename)
+            include = parse(None, filename).documentElement
 
-        # recursive call to func
-        func(include, macros, symbols)
-        included.append(include)
-        import_xml_namespaces(elt.parentNode, include.attributes)
-
-        # restore filestack
-        restore_filestack(oldstack)
+            # recursive call to func
+            func(include, macros, symbols)
+            included.append(include)
+            import_xml_namespaces(elt.parentNode, include.attributes)
+        except XacroException as e:
+            if e.exc and isinstance(e.exc, IOError) and optional is True:
+                continue
+            else:
+                raise
+        finally:
+            # restore filestack
+            restore_filestack(oldstack)
 
     remove_previous_comments(elt)
     # replace the include tag with the nodes of the included file(s)
@@ -831,7 +839,7 @@ def parse(inp, filename=None):
         except IOError as e:
             # do not report currently processed file as "in file ..."
             filestack.pop()
-            raise XacroException(e.strerror + ": " + e.filename)
+            raise XacroException(e.strerror + ": " + e.filename, exc=e)
 
     try:
         if isinstance(inp, _basestr):
