@@ -1038,7 +1038,9 @@ class TestXacro(TestXacroCommentsIgnored):
         <xacro:my_macro/>
         </a>'''
         res = '''<a><foo/></a>'''
-        self.assert_matches(self.quick_xacro(src), res)
+        with capture_stderr(self.quick_xacro, src) as (result, output):
+            self.assert_matches(result, res)
+            self.assertTrue("macro names must not contain prefix 'xacro:'" in output)
 
     def test_overwrite_globals(self):
         src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
@@ -1103,6 +1105,18 @@ class TestXacro(TestXacroCommentsIgnored):
   </xacro:if>
 </a>'''), '<a/>')
 
+    def test_include_from_macro(self):
+        src = '''
+    <a xmlns:xacro="http://www.ros.org/xacro">
+      <xacro:macro name="foo" params="file:=include1.xml"><xacro:include filename="${file}"/></xacro:macro>
+      <xacro:foo/>
+      <xacro:foo file="${abs_filename('include1.xml')}"/>
+      <xacro:include filename="subdir/foo.xacro"/>
+      <xacro:foo file="$(cwd)/subdir/include1.xml"/>
+    </a>'''
+        res = '''<a><inc1/><inc1/><subdir_inc1/><subdir_inc1/></a>'''
+        self.assert_matches(self.quick_xacro(src), res)
+
     def test_yaml_support(self):
         src = '''
 <a xmlns:xacro="http://www.ros.org/wiki/xacro">
@@ -1115,6 +1129,21 @@ class TestXacro(TestXacroCommentsIgnored):
         for i in ['inc1', 'inc2']:
             self.assert_matches(self.quick_xacro(src, cli=['type:=%s' % i]),
                                 res.format(tag=i))
+
+    def test_xacro_exist_required(self):
+        src = '''
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:include filename="non-existent.xacro"/>
+</a>'''
+        self.assertRaises(xacro.XacroException, self.quick_xacro, src)
+
+    def test_xacro_exist_optional(self):
+        src = '''
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:include filename="non-existent.xacro" optional="True"/>
+</a>'''
+        res = '''<a></a>'''
+        self.assert_matches(self.quick_xacro(src), res)
 
     def test_macro_default_param_evaluation_order(self):
         src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
@@ -1220,6 +1249,13 @@ ${u'🍔' * how_many}
         test_dir = os.path.abspath(os.path.dirname(__file__))
         input_path = os.path.join(test_dir, 'emoji.xacro')
         self.assert_matches(xacro.process(input_path), '<robot>🍔</robot>')
+
+    def test_invalid_syntax(self):
+        self.assertRaises(xacro.XacroException, self.quick_xacro, '<a>a${</a>')
+        self.assertRaises(xacro.XacroException, self.quick_xacro, '<a>${b</a>')
+        self.assertRaises(xacro.XacroException, self.quick_xacro, '<a>${{}}</a>')
+        self.assertRaises(xacro.XacroException, self.quick_xacro, '<a>a$(</a>')
+        self.assertRaises(xacro.XacroException, self.quick_xacro, '<a>$(b</a>')
 
 
 if __name__ == '__main__':

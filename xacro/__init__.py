@@ -94,7 +94,7 @@ def load_yaml(filename):
     f = open(filename)
     oldstack = push_file(filename)
     try:
-        return yaml.load(f)
+        return yaml.safe_load(f)
     finally:
         f.close()
         restore_filestack(oldstack)
@@ -111,8 +111,8 @@ global_symbols = {'__builtins__': {k: __builtins__[k] for k in
                                     'True', 'False', 'min', 'max', 'round']}}
 # also define all math symbols and functions
 global_symbols.update(math.__dict__)
-# allow to import dicts from yaml
-global_symbols.update(dict(load_yaml=load_yaml))
+# expose load_yaml and abs_filename
+global_symbols.update(dict(load_yaml=load_yaml, abs_filename=abs_filename_spec))
 
 
 class XacroException(Exception):
@@ -321,13 +321,15 @@ class QuickLexer(object):
     def next(self):
         result = self.top
         self.top = None
+        if not self.str:  # empty string
+            return result
         for i in range(len(self.res)):
             m = self.res[i].match(self.str)
             if m:
                 self.top = (i, m.group(0))
                 self.str = self.str[m.end():]
-                break
-        return result
+                return result
+        raise XacroException('invalid expression: ' + self.str)
 
 
 all_includes = []
@@ -396,7 +398,7 @@ def import_xml_namespaces(parent, attributes):
 
 def process_include(elt, macros, symbols, func):
     included = []
-    filename_spec, namespace_spec = check_attrs(elt, ['filename'], ['ns'])
+    filename_spec, namespace_spec, optional = check_attrs(elt, ['filename'], ['ns', 'optional'])
     if namespace_spec:
         try:
             namespace_spec = eval_text(namespace_spec, symbols)
@@ -407,18 +409,26 @@ def process_include(elt, macros, symbols, func):
         except TypeError:
             raise XacroException('namespaces are supported with in-order option only')
 
+    optional = get_boolean_value(optional, None)
+
     for filename in get_include_files(filename_spec, symbols):
-        # extend filestack
-        oldstack = push_file(filename)
-        include = parse(None, filename).documentElement
+        try:
+            # extend filestack
+            oldstack = push_file(filename)
+            include = parse(None, filename).documentElement
 
-        # recursive call to func
-        func(include, macros, symbols)
-        included.append(include)
-        import_xml_namespaces(elt.parentNode, include.attributes)
-
-        # restore filestack
-        restore_filestack(oldstack)
+            # recursive call to func
+            func(include, macros, symbols)
+            included.append(include)
+            import_xml_namespaces(elt.parentNode, include.attributes)
+        except XacroException as e:
+            if e.exc and isinstance(e.exc, IOError) and optional is True:
+                continue
+            else:
+                raise
+        finally:
+            # restore filestack
+            restore_filestack(oldstack)
 
     remove_previous_comments(elt)
     # replace the include tag with the nodes of the included file(s)
@@ -890,7 +900,7 @@ def parse(inp, filename=None):
         except IOError as e:
             # do not report currently processed file as "in file ..."
             filestack.pop()
-            raise XacroException(e.strerror + ": " + e.filename)
+            raise XacroException(e.strerror + ": " + e.filename, exc=e)
 
     try:
         if isinstance(inp, str):
