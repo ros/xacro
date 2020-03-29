@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0.2)
 project(xacro)
 
 find_package(catkin REQUIRED COMPONENTS roslint)
@@ -16,7 +16,7 @@ catkin_install_python(PROGRAMS scripts/xacro
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 ## For backwards compatibility we also install as xacro.py
-#  The roslaunch $(find ...) expects the script to be in the package directory, 
+#  The roslaunch $(find ...) expects the script to be in the package directory,
 #  and in catkin the package direcory is /share.
 install(PROGRAMS xacro.py DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
