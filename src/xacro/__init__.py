@@ -365,13 +365,12 @@ def process_include(elt, macros, symbols, func):
         except TypeError:
             raise XacroException('namespaces are supported with in-order option only')
 
-    optional = True if optional == "True" else False
+    optional = get_boolean_value(optional, None)
 
     for filename in get_include_files(filename_spec, symbols):
-        # extend filestack
-        oldstack = push_file(filename)
-
         try:
+            # extend filestack
+            oldstack = push_file(filename)
             include = parse(None, filename).documentElement
 
             # recursive call to func
