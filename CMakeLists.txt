@@ -18,7 +18,8 @@ catkin_install_python(PROGRAMS scripts/xacro
 ## For backwards compatibility we also install as xacro.py
 #  The roslaunch $(find ...) expects the script to be in the package directory,
 #  and in catkin the package direcory is /share.
-install(PROGRAMS xacro.py DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+catkin_install_python(PROGRAMS xacro.py
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
 if(CATKIN_ENABLE_TESTING)
   ## Add folders to be run by python nosetests
