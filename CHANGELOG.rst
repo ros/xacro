@@ -2,6 +2,11 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.14.2 (2020-05-21)
+-------------------
+* [maintanence] Remove deprecated xacro.py (`#239 <https://github.com/ros/xacro/issues/239>`_)
+* Contributors: Shane Loretz
+
 1.14.1 (2020-03-29)
 -------------------
 * [feature]     allow optional xacro includes (`#234 <https://github.com/ros/xacro/issues/234>`_)
