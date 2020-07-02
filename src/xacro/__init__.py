@@ -103,8 +103,7 @@ class YamlDictWrapper(object):
         result = self.__d.__getitem__(item)
         return YamlDictWrapper(result) if isinstance(result, dict) else result
 
-    def __getitem__(self, item):
-        return self.__d.__getitem__(item)
+    __getitem__ = __getattr__
 
 def load_yaml(filename):
     try:
