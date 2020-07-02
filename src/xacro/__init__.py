@@ -100,8 +100,11 @@ class YamlDictWrapper(object):
         self.__d = d
 
     def __getattr__(self, item):
-        result = self.__d.__getitem__(item)
-        return YamlDictWrapper(result) if isinstance(result, dict) else result
+        try:
+            result = self.__d.__getitem__(item)
+            return YamlDictWrapper(result) if isinstance(result, dict) else result
+        except KeyError:
+            raise XacroException("No such key: '{}'".format(item))
 
     __getitem__ = __getattr__
 
