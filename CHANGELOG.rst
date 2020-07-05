@@ -2,7 +2,7 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
+1.14.3 (2020-07-05)
 -------------------
 * [feature] Improve warnings
   - Unify meaning of verbosity > 0 (to print file location)
