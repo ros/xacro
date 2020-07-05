@@ -1,5 +1,4 @@
-dist: xenial
-sudo: required
+dist: bionic
 language: python
 python:
   - "2.7"
@@ -15,7 +14,7 @@ install:
   - sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
   - sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu `lsb_release -cs` main" > /etc/apt/sources.list.d/ros-latest.list'
   - sudo apt -qq update
-  - sudo apt -qq install -y ros-kinetic-catkin ros-kinetic-roslaunch ros-kinetic-rostest ros-kinetic-roslint
+  - sudo apt -qq install -y ros-melodic-catkin ros-melodic-roslaunch ros-melodic-rostest ros-melodic-roslint
 
 before_script:
   # stop the build if there are Python syntax errors or undefined names
@@ -23,7 +22,8 @@ before_script:
   # exit-zero treats all errors as warnings.  The GitHub editor is 127 chars wide
   - flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
   # prepare workspace
-  - source /opt/ros/kinetic/setup.bash
+  - source /opt/ros/melodic/setup.bash
+  - export ROS_PYTHON_VERSION=$(python -c "import sys; print(sys.version_info[0])")
 
 # command to run tests
 script:
