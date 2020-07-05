@@ -453,6 +453,11 @@ def process_include(elt, macros, symbols, func):
         except TypeError:
             raise XacroException('namespaces are supported with in-order option only')
 
+    if first_child_element(elt):
+        warning("Child elements of a <xacro:include> tag are ignored")
+        if verbosity > 0:
+            print_location(filestack)
+
     for filename in get_include_files(filename_spec, symbols):
         # extend filestack
         oldstack = push_file(filename)
