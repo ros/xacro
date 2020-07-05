@@ -2,6 +2,16 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-------------------
+* [feature] Improve warnings
+  - Unify meaning of verbosity > 0 (to print file location)
+  - Provide file location on warning in check_attrs()
+  - Issue warning on child elements of <xacro:include> tag
+* [feature] Allow dotted access to yaml-loaded dicts: d.key1.key2.key3 (`#245 <https://github.com/ros/xacro/issues/245>`_)
+* [maint]   Travis: Update distro to Bionic
+* Contributors: Robert Haschke, G.A. vd. Hoorn
+
 1.14.2 (2020-05-21)
 -------------------
 * [maintanence] Remove deprecated xacro.py (`#239 <https://github.com/ros/xacro/issues/239>`_)
@@ -128,7 +138,7 @@ Changelog for package xacro
 -------------------
 * fix #108: evaluate property blocks recursively too
 * improved macro parameter parsing
-* use a regular expression to parse a param spec with forwarding and default 
+* use a regular expression to parse a param spec with forwarding and default
 * allow for spaces in default string (within single quotes)
 * forwarding macro arguments from outer scope
 * switched to `^|` syntax
@@ -186,8 +196,7 @@ Changelog for package xacro
 * replaced debug option by verbosity options -q, -v
 * fixed evaluation time of default macro params
 * introduced Macro object to increase code readability
-* parse a macro's parameter list once at declaration time (instead of 
-  every instantiation)
+* parse a macro's parameter list once at declaration time (instead of every instantiation)
 * extended test_multiple_blocks() to check for both normal and reversed order
 * added unittest to increase code coverage
 * do not issue deprecation warning for <include> tags that are non-xacro
@@ -218,7 +227,7 @@ Changelog for package xacro
   <xacro:rename xacro:name="<new element name>"/>
 * moved unittests requiring --inorder processing to class TestXacroInorder
 * added unittest test_dynamic_macro_undefined()
-* improved error message when variable include filename is used 
+* improved error message when variable include filename is used
   without --inorder
 * stripped down unittest test_inorder_processing()
 * improved processing
@@ -402,9 +411,9 @@ Changelog for package xacro
   - allows for evaluation of standard math functions
   - other desired functions could be added in eval_self_contained
   - Values in Table symbols are not stored as strings but as typed values.
-* If text is required, a conversion with str() is performed, to ensure 
+* If text is required, a conversion with str() is performed, to ensure
   proper evaluation of expressions. Otherwise 3*"1" would evaluate to "111".
-* use __future__.division we can handle integer division evaluating to 
+* use __future__.division we can handle integer division evaluating to
   floating-point devision, as before
 * allow variable names for filename attribute in <xacro:include>
 * allow for ordered XML processing to avoid issues with multiply defined
@@ -412,7 +421,7 @@ Changelog for package xacro
   - enable the new behaviour by passing --inorder cmdline option
   - to improve code readibility and reusability, introduced functions
 * process_include(node), grab_macro(elt, macros), grab_property(elt, symbols)
-  containing 1:1 corresponding handling from process_includes, grab_macros, 
+  containing 1:1 corresponding handling from process_includes, grab_macros,
   and grab_properties
   - added corresponding test case test_inorder_processing()
 * dynamic macro names using <xacro:call macro=""/>
