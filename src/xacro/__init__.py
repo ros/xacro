@@ -151,6 +151,26 @@ class XacroException(Exception):
 
 
 verbosity = 1
+
+def check_attrs(tag, required, optional):
+    """
+    Helper routine to fetch required and optional attributes
+    and complain about any additional attributes.
+    :param tag (xml.dom.Element): DOM element node
+    :param required [str]: list of required attributes
+    :param optional [str]: list of optional attributes
+    """
+    result = reqd_attrs(tag, required)
+    result.extend(opt_attrs(tag, optional))
+    allowed = required + optional
+    extra = [a for a in tag.attributes.keys() if a not in allowed and not a.startswith("xmlns:")]
+    if extra:
+        warning("%s: unknown attribute(s): %s" % (tag.nodeName, ', '.join(extra)))
+        if verbosity > 0:
+            print_location(filestack)
+    return result
+
+
 # deprecate non-namespaced use of xacro tags (issues #41, #59, #60)
 def deprecated_tag(tag_name = None, _issued=[False]):
     if _issued[0]:

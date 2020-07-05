@@ -31,7 +31,6 @@
 # Maintainer: Morgan Quigley <morgan@osrfoundation.org>
 
 import xml.dom.minidom
-from .color import warning
 
 def first_child_element(elt):
     c = elt.firstChild
@@ -107,23 +106,6 @@ def reqd_attrs(tag, attrs):
     return result
 
 
-def check_attrs(tag, required, optional):
-    """
-    Helper routine to fetch required and optional attributes
-    and complain about any additional attributes.
-    :param tag (xml.dom.Element): DOM element node
-    :param required [str]: list of required attributes
-    :param optional [str]: list of optional attributes
-    """
-    result = reqd_attrs(tag, required)
-    result.extend(opt_attrs(tag, optional))
-    allowed = required + optional
-    extra = [a for a in tag.attributes.keys() if a not in allowed and not a.startswith("xmlns:")]
-    if extra:
-        warning("%s: unknown attribute(s): %s" % (tag.nodeName, ', '.join(extra)))
-    return result
-
-
 # Better pretty printing of xml
 # Taken from http://ronrothman.com/public/leftbraned/xml-dom-minidom-toprettyxml-and-silly-whitespace/
 def fixed_writexml(self, writer, indent="", addindent="", newl=""):
@@ -159,5 +141,3 @@ def fixed_writexml(self, writer, indent="", addindent="", newl=""):
         writer.write("/>%s" % newl)
 # replace minidom's function with ours
 xml.dom.minidom.Element.writexml = fixed_writexml
-
-
