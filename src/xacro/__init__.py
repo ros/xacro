@@ -176,9 +176,9 @@ def deprecated_tag(tag_name = None, _issued=[False]):
     if _issued[0]:
         return
 
+    _issued[0] = True
+    warning("Deprecated: xacro tag '{}' w/o 'xacro:' xml namespace prefix (will be forbidden in Noetic)".format(tag_name))
     if verbosity > 0:
-        _issued[0] = True
-        warning("Deprecated: xacro tag '{}' w/o 'xacro:' xml namespace prefix (will be forbidden in Noetic)".format(tag_name))
         print_location(filestack)
         message("""Use the following command to fix incorrect tag usage:
 find . -iname "*.xacro" | xargs sed -i 's#<\([/]\\?\)\(if\|unless\|include\|arg\|property\|macro\|insert_block\)#<\\1xacro:\\2#g'""")
