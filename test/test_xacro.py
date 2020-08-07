@@ -999,6 +999,18 @@ class TestXacro(TestXacroCommentsIgnored):
   <a list="[0, 2, 2]" tuple="(0, 2, 2)" dict="{'a': 0, 'c': 2, 'b': 2}"/>
 </a>''')
 
+    def test_literals_eval(self):
+        self.assert_matches(self.quick_xacro('''
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="f" value="1.23"/>
+  <xacro:property name="i" value="123"/>
+  <xacro:property name="s" value="1_2_3"/>
+  float=${f+1} int=${i+1} string=${s}
+</a>'''), '''
+<a>
+  float=2.23 int=124 string=1_2_3
+</a>''')
+
     def test_enforce_xacro_ns(self):
         self.assert_matches(self.quick_xacro('''
 <a xmlns:xacro="http://www.ros.org/wiki/xacro">
