@@ -1136,6 +1136,26 @@ class TestXacro(TestXacroCommentsIgnored):
             self.assert_matches(self.quick_xacro(src, cli=['type:=%s' % i]),
                                 res.format(tag=i))
 
+    def test_yaml_support_key_in_dict(self):
+        src = '''
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="settings" value="${load_yaml('settings.yaml')}"/>
+  <xacro:property name="bar" value="${'foo' if 'arms' in settings else 'baz'}"/>
+  ${bar}
+</a>'''
+        res = '''<a>foo</a>'''
+        self.assert_matches(self.quick_xacro(src), res)
+
+    def test_yaml_support_key_not_in_dict(self):
+        src = '''
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="settings" value="${load_yaml('settings.yaml')}"/>
+  <xacro:property name="bar" value="${settings['foo'] if 'foo' in settings else 'baz'}"/>
+  ${bar}
+</a>'''
+        res = '''<a>baz</a>'''
+        self.assert_matches(self.quick_xacro(src), res)
+
     def test_macro_default_param_evaluation_order(self):
         src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
 <xacro:macro name="foo" params="arg:=${2*foo}">
