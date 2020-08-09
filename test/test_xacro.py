@@ -993,6 +993,18 @@ class TestXacro(TestXacroCommentsIgnored):
   <a list="[0, 2, 2]" tuple="(0, 2, 2)" dict="{'a': 0, 'c': 2, 'b': 2}"/>
 </a>''')
 
+    def test_literals_eval(self):
+        self.assert_matches(self.quick_xacro('''
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="f" value="1.23"/>
+  <xacro:property name="i" value="123"/>
+  <xacro:property name="s" value="1_2_3"/>
+  float=${f+1} int=${i+1} string=${s}
+</a>'''), '''
+<a>
+  float=2.23 int=124 string=1_2_3
+</a>''')
+
     def test_enforce_xacro_ns(self):
         self.assert_matches(self.quick_xacro('''
 <a xmlns:xacro="http://www.ros.org/wiki/xacro">
@@ -1129,6 +1141,47 @@ class TestXacro(TestXacroCommentsIgnored):
         for i in ['inc1', 'inc2']:
             self.assert_matches(self.quick_xacro(src, cli=['type:=%s' % i]),
                                 res.format(tag=i))
+
+    def test_yaml_support_dotted(self):
+        src = '''
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="settings" value="${load_yaml('settings.yaml')}"/>
+  <xacro:property name="type" value="$(arg type)"/>
+  <xacro:include filename="${settings.arms[type].file}"/>
+  <xacro:call macro="${settings.arms[type].macro}"/>
+</a>'''
+        res = '''<a><{tag}/></a>'''
+        for i in ['inc1', 'inc2']:
+            self.assert_matches(self.quick_xacro(src, cli=['type:=%s' % i]),
+                                res.format(tag=i))
+
+    def test_yaml_support_dotted_key_error(self):
+        src = '''
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="settings" value="${load_yaml('settings.yaml')}"/>
+  <xacro:property name="bar" value="${settings.baz}"/>
+  ${bar}
+</a>'''
+        self.assertRaises(xacro.XacroException, self.quick_xacro, src)
+
+    def test_yaml_support_dotted_arith(self):
+        src = '''
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="settings" value="${load_yaml('settings.yaml')}"/>
+  <xacro:property name="bar" value="${settings.arms.inc2.props.port + 1}"/>
+  ${bar}
+</a>'''
+        res = '''<a>4243</a>'''
+        self.assert_matches(self.quick_xacro(src), res)
+
+    def test_yaml_support_key_in_dict(self):
+        src = '''
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="settings" value="${load_yaml('settings.yaml')}"/>
+  ${'arms' in settings} ${'baz' in settings}
+</a>'''
+        res = '''<a>True False</a>'''
+        self.assert_matches(self.quick_xacro(src), res)
 
     def test_xacro_exist_required(self):
         src = '''

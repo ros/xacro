@@ -41,8 +41,8 @@ import xml.dom.minidom
 from copy import deepcopy
 from .cli import process_args
 from .color import error, message, warning
-from .xmlutils import check_attrs, first_child_element, \
-    next_sibling_element, replace_node, reqd_attrs
+from .xmlutils import opt_attrs, reqd_attrs, first_child_element, \
+    next_sibling_element, replace_node
 
 
 # Dictionary of substitution args
@@ -84,6 +84,17 @@ def abs_filename_spec(filename_spec):
     return filename_spec
 
 
+class YamlDictWrapper(dict):
+    """Wrapper class providing dotted access to dict items"""
+    def __getattr__(self, item):
+        try:
+            result = super(YamlDictWrapper, self).__getitem__(item)
+            return YamlDictWrapper(result) if isinstance(result, dict) else result
+        except KeyError:
+            raise XacroException("No such key: '{}'".format(item))
+
+    __getitem__ = __getattr__
+
 def load_yaml(filename):
     try:
         import yaml
@@ -94,7 +105,7 @@ def load_yaml(filename):
     f = open(filename)
     oldstack = push_file(filename)
     try:
-        return yaml.safe_load(f)
+        return YamlDictWrapper(yaml.safe_load(f))
     finally:
         f.close()
         restore_filestack(oldstack)
@@ -134,6 +145,24 @@ class XacroException(Exception):
 
 
 verbosity = 1
+
+def check_attrs(tag, required, optional):
+    """
+    Helper routine to fetch required and optional attributes
+    and complain about any additional attributes.
+    :param tag (xml.dom.Element): DOM element node
+    :param required [str]: list of required attributes
+    :param optional [str]: list of optional attributes
+    """
+    result = reqd_attrs(tag, required)
+    result.extend(opt_attrs(tag, optional))
+    allowed = required + optional
+    extra = [a for a in tag.attributes.keys() if a not in allowed and not a.startswith("xmlns:")]
+    if extra:
+        warning("%s: unknown attribute(s): %s" % (tag.nodeName, ', '.join(extra)))
+        if verbosity > 0:
+            print_location(filestack)
+    return result
 
 
 # deprecate non-namespaced use of xacro tags (issues #41, #59, #60)
@@ -206,8 +235,12 @@ class Table(object):
             # remove single quotes from escaped string
             if len(value) >= 2 and value[0] == "'" and value[-1] == "'":
                 return value[1:-1]
-            # try to evaluate as number literal or boolean
-            # this is needed to handle numbers in property definitions as numbers, not strings
+            # Try to evaluate as number literal or boolean.
+            # This is needed to handle numbers in property definitions as numbers, not strings.
+            # python3 ignores/drops underscores in number literals (due to PEP515).
+            # Here, we want to handle literals with underscores as plain strings.
+            if '_' in value:
+                return value
             for f in [int, float, lambda x: get_boolean_value(x, None)]:  # order of types is important!
                 try:
                     return f(value)
@@ -410,6 +443,11 @@ def process_include(elt, macros, symbols, func):
             raise XacroException('namespaces are supported with in-order option only')
 
     optional = get_boolean_value(optional, None)
+
+    if first_child_element(elt):
+        warning("Child elements of a <xacro:include> tag are ignored")
+        if verbosity > 0:
+            print_location(filestack)
 
     for filename in get_include_files(filename_spec, symbols):
         try:

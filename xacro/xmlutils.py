@@ -31,7 +31,6 @@
 # Maintainer: Morgan Quigley <morgan@osrfoundation.org>
 
 import xml.dom.minidom
-from .color import warning
 
 
 def first_child_element(elt):
@@ -105,23 +104,6 @@ def reqd_attrs(tag, attrs):
     for (res, name) in zip(result, attrs):
         if res is None:
             raise RuntimeError("%s: missing attribute '%s'" % (tag.nodeName, name))
-    return result
-
-
-def check_attrs(tag, required, optional):
-    """
-    Helper routine to fetch required and optional attributes
-    and complain about any additional attributes.
-    :param tag (xml.dom.Element): DOM element node
-    :param required [str]: list of required attributes
-    :param optional [str]: list of optional attributes
-    """
-    result = reqd_attrs(tag, required)
-    result.extend(opt_attrs(tag, optional))
-    allowed = required + optional
-    extra = [a for a in tag.attributes.keys() if a not in allowed and not a.startswith("xmlns:")]
-    if extra:
-        warning("%s: unknown attribute(s): %s" % (tag.nodeName, ', '.join(extra)))
     return result
 
 
