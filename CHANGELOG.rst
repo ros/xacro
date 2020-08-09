@@ -2,6 +2,12 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.14.4 (2020-08-09)
+-------------------
+* [fix] Rework YamlDictWrapper to restore dict properties (`#250 <https://github.com/ros/xacro/issues/250>`_)
+* [fix] Ignore underscores when parsing literal numeric values (`#247 <https://github.com/ros/xacro/issues/247>`_)
+* Contributors: Robert Haschke
+
 1.14.3 (2020-07-05)
 -------------------
 * [feature] Improve warnings
