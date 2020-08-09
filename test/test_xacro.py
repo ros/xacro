@@ -1164,6 +1164,15 @@ class TestXacroInorder(TestXacro):
         res = '''<a>4243</a>'''
         self.assert_matches(self.quick_xacro(src), res)
 
+    def test_yaml_support_key_in_dict(self):
+        src = '''
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="settings" value="${load_yaml('settings.yaml')}"/>
+  ${'arms' in settings} ${'baz' in settings}
+</a>'''
+        res = '''<a>True False</a>'''
+        self.assert_matches(self.quick_xacro(src), res)
+
     def test_macro_default_param_evaluation_order(self):
         src='''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
 <xacro:macro name="foo" params="arg:=${2*foo}">
