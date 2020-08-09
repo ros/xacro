@@ -2,6 +2,11 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.13.7 (2020-08-09)
+-------------------
+* [fix] Rework YamlDictWrapper to restore dict properties (`#250 <https://github.com/ros/xacro/issues/250>`_)
+* Contributors: Robert Haschke
+
 1.13.6 (2020-07-05)
 -------------------
 * [feature] Improve warnings
