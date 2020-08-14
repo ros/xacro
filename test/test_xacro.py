@@ -14,6 +14,7 @@ import shutil
 import subprocess
 import re
 import ast
+import math
 try:
     from cStringIO import StringIO # Python 2.x
 except ImportError:
@@ -1171,6 +1172,15 @@ class TestXacroInorder(TestXacro):
   ${'arms' in settings} ${'baz' in settings}
 </a>'''
         res = '''<a>True False</a>'''
+        self.assert_matches(self.quick_xacro(src), res)
+
+    def test_yaml_custom_constructors(self):
+        src = '''
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="values" value="${load_yaml('constructors.yaml')}"/>
+  <values a="${values.a}" b="${values.b}" c="${values.c}"/>
+</a>'''
+        res = '''<a><values a="{}" b="{}" c="42"/></a>'''.format(math.pi, 0.5*math.pi)
         self.assert_matches(self.quick_xacro(src), res)
 
     def test_macro_default_param_evaluation_order(self):
