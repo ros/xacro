@@ -1,0 +1,3 @@
+a: !degrees 180
+b: !radians 0.5*pi
+c: 42

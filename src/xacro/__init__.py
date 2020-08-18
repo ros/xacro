@@ -105,9 +105,30 @@ class YamlDictWrapper(dict):
 
     __getitem__ = __getattr__
 
+
+def construct_angle_radians(loader, node):
+    """utility function to construct radian values from yaml"""
+    value = loader.construct_scalar(node).strip()
+    try:
+        return float(eval(value, global_symbols, global_symbols))
+    except SyntaxError as e:
+        raise XacroException("invalid expression: %s" % value)
+
+
+def construct_angle_degrees(loader, node):
+    """utility function for converting degrees into radians from yaml"""
+    value = loader.construct_scalar(node)
+    try:
+        return math.radians(float(value))
+    except ValueError:
+        raise XacroException("invalid degree value: %s" % value)
+
+
 def load_yaml(filename):
     try:
         import yaml
+        yaml.SafeLoader.add_constructor(u'!radians', construct_angle_radians)
+        yaml.SafeLoader.add_constructor(u'!degrees', construct_angle_degrees)
     except Exception:
         raise XacroException("yaml support not available; install python-yaml")
 
