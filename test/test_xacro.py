@@ -1183,6 +1183,15 @@ class TestXacroInorder(TestXacro):
         res = '''<a><values a="{}" b="{}" c="42"/></a>'''.format(math.pi, 0.5*math.pi)
         self.assert_matches(self.quick_xacro(src), res)
 
+    def test_yaml_custom_constructors_illegal_expr(self):
+        for file in ['constructors_bad1.yaml', 'constructors_bad2.yaml']:
+          src = '''
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="values" value="${{load_yaml({file})}}"/>
+  <values a="${{values.a}}" />
+</a>'''
+        self.assertRaises(xacro.XacroException, self.quick_xacro, src.format(file=file))
+
     def test_macro_default_param_evaluation_order(self):
         src='''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
 <xacro:macro name="foo" params="arg:=${2*foo}">
