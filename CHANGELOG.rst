@@ -2,6 +2,11 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.13.8 (2020-08-28)
+-------------------
+* Provide support for yaml constructors !degrees and !radians (`#252 <https://github.com/ros/xacro/issues/252>`_)
+* Contributors: Robert Haschke, G.A. vd. Hoorn
+
 1.13.7 (2020-08-09)
 -------------------
 * [fix] Rework YamlDictWrapper to restore dict properties (`#250 <https://github.com/ros/xacro/issues/250>`_)
