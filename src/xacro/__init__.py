@@ -94,16 +94,30 @@ def abs_filename_spec(filename_spec):
     return filename_spec
 
 
+class YamlListWrapper(list):
+    @staticmethod
+    def wrap(item):
+        if isinstance(item, dict):
+            return YamlDictWrapper(item)
+        elif isinstance(item, list):
+            return YamlListWrapper(item)
+        else: # scalar
+            return item
+
+    def __getitem__(self, idx):
+        return YamlListWrapper.wrap(super(YamlListWrapper, self).__getitem__(idx))
+
+
 class YamlDictWrapper(dict):
     """Wrapper class providing dotted access to dict items"""
     def __getattr__(self, item):
         try:
-            result = super(YamlDictWrapper, self).__getitem__(item)
-            return YamlDictWrapper(result) if isinstance(result, dict) else result
+            return YamlListWrapper.wrap(super(YamlDictWrapper, self).__getitem__(item))
         except KeyError:
             raise XacroException("No such key: '{}'".format(item))
 
     __getitem__ = __getattr__
+
 
 def load_yaml(filename):
     try:
@@ -115,8 +129,7 @@ def load_yaml(filename):
     f = open(filename)
     oldstack = push_file(filename)
     try:
-        result = yaml.safe_load(f)
-        return YamlDictWrapper(result) if isinstance(result, dict) else result
+        return YamlListWrapper.wrap(yaml.safe_load(f))
     finally:
         f.close()
         restore_filestack(oldstack)

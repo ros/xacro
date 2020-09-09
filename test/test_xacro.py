@@ -1189,13 +1189,13 @@ class TestXacro(TestXacroCommentsIgnored):
         res = '''<a>True False</a>'''
         self.assert_matches(self.quick_xacro(src), res)
 
-    def test_yaml_support_list_of_lists(self):
+    def test_yaml_support_list_of_x(self):
         src = '''
     <a xmlns:xacro="http://www.ros.org/wiki/xacro">
-      <xacro:property name="lists" value="${load_yaml('list_of_lists.yaml')}"/>
-      ${lists[0][1]} ${lists[1][0]}
+      <xacro:property name="list" value="${load_yaml('list.yaml')}"/>
+      ${list[0][1]} ${list[1][0]} ${list[2].a.A} ${list[2].a.B[0]} ${list[2].a.B[1]}
     </a>'''
-        res = '''<a>A2 B1</a>'''
+        res = '''<a>A2 B1 1 2 3</a>'''
         self.assert_matches(self.quick_xacro(src), res)
 
     def test_xacro_exist_required(self):
