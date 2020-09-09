@@ -115,7 +115,8 @@ def load_yaml(filename):
     f = open(filename)
     oldstack = push_file(filename)
     try:
-        return YamlDictWrapper(yaml.safe_load(f))
+        result = yaml.safe_load(f)
+        return YamlDictWrapper(result) if isinstance(result, dict) else result
     finally:
         f.close()
         restore_filestack(oldstack)
