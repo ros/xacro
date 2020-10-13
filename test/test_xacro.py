@@ -1174,6 +1174,15 @@ class TestXacroInorder(TestXacro):
         res = '''<a>True False</a>'''
         self.assert_matches(self.quick_xacro(src), res)
 
+    def test_yaml_support_list_of_x(self):
+        src = '''
+    <a xmlns:xacro="http://www.ros.org/wiki/xacro">
+      <xacro:property name="list" value="${load_yaml('list.yaml')}"/>
+      ${list[0][1]} ${list[1][0]} ${list[2].a.A} ${list[2].a.B[0]} ${list[2].a.B[1]} ${list[2].b[0]}
+    </a>'''
+        res = '''<a>A2 B1 1 2 3 4</a>'''
+        self.assert_matches(self.quick_xacro(src), res)
+
     def test_yaml_custom_constructors(self):
         src = '''
 <a xmlns:xacro="http://www.ros.org/wiki/xacro">
