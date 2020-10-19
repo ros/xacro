@@ -84,20 +84,57 @@ def abs_filename_spec(filename_spec):
     return filename_spec
 
 
+class YamlListWrapper(list):
+    """Wrapper class for yaml lists to allow recursive inheritance of wrapper property"""
+    @staticmethod
+    def wrap(item):
+        """This static method, used by both YamlListWrapper and YamlDictWrapper,
+           dispatches to the correct wrapper class depending on the type of yaml item"""
+        if isinstance(item, dict):
+            return YamlDictWrapper(item)
+        elif isinstance(item, list):
+            return YamlListWrapper(item)
+        else: # scalar
+            return item
+
+    def __getitem__(self, idx):
+        return YamlListWrapper.wrap(super(YamlListWrapper, self).__getitem__(idx))
+
+
 class YamlDictWrapper(dict):
     """Wrapper class providing dotted access to dict items"""
     def __getattr__(self, item):
         try:
-            result = super(YamlDictWrapper, self).__getitem__(item)
-            return YamlDictWrapper(result) if isinstance(result, dict) else result
+            return YamlListWrapper.wrap(super(YamlDictWrapper, self).__getitem__(item))
         except KeyError:
             raise XacroException("No such key: '{}'".format(item))
 
     __getitem__ = __getattr__
 
+
+def construct_angle_radians(loader, node):
+    """utility function to construct radian values from yaml"""
+    value = loader.construct_scalar(node).strip()
+    try:
+        return float(eval(value, global_symbols, global_symbols))
+    except SyntaxError as e:
+        raise XacroException("invalid expression: %s" % value)
+
+
+def construct_angle_degrees(loader, node):
+    """utility function for converting degrees into radians from yaml"""
+    value = loader.construct_scalar(node)
+    try:
+        return math.radians(float(value))
+    except ValueError:
+        raise XacroException("invalid degree value: %s" % value)
+
+
 def load_yaml(filename):
     try:
         import yaml
+        yaml.SafeLoader.add_constructor(u'!radians', construct_angle_radians)
+        yaml.SafeLoader.add_constructor(u'!degrees', construct_angle_degrees)
     except Exception:
         raise XacroException("yaml support not available; install python-yaml")
 
@@ -105,7 +142,7 @@ def load_yaml(filename):
     f = open(filename)
     oldstack = push_file(filename)
     try:
-        return YamlDictWrapper(yaml.safe_load(f))
+        return YamlListWrapper.wrap(yaml.safe_load(f))
     finally:
         f.close()
         restore_filestack(oldstack)

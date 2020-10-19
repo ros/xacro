@@ -2,6 +2,12 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.14.5 (2020-10-13)
+-------------------
+* [fix]     yaml loading: recursively wrap lists and dicts for dotted dict access (`#258 <https://github.com/ros/xacro/issues/258>`_)
+* [feature] Provide support for yaml constructors !degrees and !radians (`#252 <https://github.com/ros/xacro/issues/252>`_)
+* Contributors: Robert Haschke, G.A. vd. Hoorn
+
 2.0.3 (2020-08-09)
 ------------------
 * Merge improvements of melodic and noetic branches into dashing-devel: see 1.14.2 and 1.14.3 for details
