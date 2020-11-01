@@ -9,7 +9,7 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
 find_package(ament_cmake_pytest REQUIRED)
 ament_add_pytest_test(pytest .
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-  ENV AMENT_PREFIX_PATH=${CMAKE_CURRENT_BINARY_DIR}/test_ament_index
+  ENV AMENT_PREFIX_PATH=${CMAKE_CURRENT_BINARY_DIR}/test_ament_index:$ENV{AMENT_PREFIX_PATH}
   )
 
 add_test(NAME xacro_cmake
