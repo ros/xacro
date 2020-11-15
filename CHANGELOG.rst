@@ -2,6 +2,12 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.0.4 (2020-11-15)
+------------------
+* Merge improvements of noetic branch into dashing-devel: see 1.14.5 for details
+* Append test directory to existing AMENT_PREFIX_PATH (`#260 <https://github.com/ros/xacro/issues/260>`_)
+* Contributors: Chen Bainian, Robert Haschke, G.A. vd. Hoorn
+
 1.14.5 (2020-10-13)
 -------------------
 * [fix]     yaml loading: recursively wrap lists and dicts for dotted dict access (`#258 <https://github.com/ros/xacro/issues/258>`_)
