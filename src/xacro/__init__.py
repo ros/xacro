@@ -430,10 +430,11 @@ def process_include(elt, macros, symbols, func):
             namespace_spec = eval_text(namespace_spec, symbols)
             macros[namespace_spec] = ns_macros = MacroNameSpace()
             symbols[namespace_spec] = ns_symbols = PropertyNameSpace()
-            macros = ns_macros
-            symbols = ns_symbols
         except TypeError:
             raise XacroException('namespaces are supported with in-order option only')
+    else:
+        ns_macros = macros
+        ns_symbols = symbols
 
     optional = get_boolean_value(optional, None)
 
@@ -449,7 +450,7 @@ def process_include(elt, macros, symbols, func):
             include = parse(None, filename).documentElement
 
             # recursive call to func
-            func(include, macros, symbols)
+            func(include, ns_macros, ns_symbols)
             included.append(include)
             import_xml_namespaces(elt.parentNode, include.attributes)
         except XacroException as e:
