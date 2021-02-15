@@ -459,6 +459,14 @@ class TestXacro(TestXacroCommentsIgnored):
   <xacro:foo factor="2"/><a foo="${foo}"/></a>'''
         self.assert_matches(self.quick_xacro(src), '''<a><a foo="42"/></a>''')
 
+    def test_property_in_comprehension(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+          <xacro:property name="abc" value="${[1,2,3]}"/>
+          <xacro:property name="xyz" value="${[abc[i]*abc[i] for i in [0,1,2]]}"/>
+          ${xyz}
+        </a>'''
+        self.assert_matches(self.quick_xacro(src), '''<a>[1, 4, 9]</a>''')
+
     def test_math_ignores_spaces(self):
         src = '''<a><f v="${0.9 / 2 - 0.2}" /></a>'''
         self.assert_matches(self.quick_xacro(src), '''<a><f v="0.25" /></a>''')
