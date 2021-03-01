@@ -453,14 +453,13 @@ def process_include(elt, macros, symbols, func):
             func(include, ns_macros, ns_symbols)
             included.append(include)
             import_xml_namespaces(elt.parentNode, include.attributes)
+            # restore filestack
+            restore_filestack(oldstack)
         except XacroException as e:
             if e.exc and isinstance(e.exc, IOError) and optional is True:
                 continue
             else:
                 raise
-        finally:
-            # restore filestack
-            restore_filestack(oldstack)
 
     remove_previous_comments(elt)
     # replace the include tag with the nodes of the included file(s)

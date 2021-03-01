@@ -959,6 +959,12 @@ class TestXacro(TestXacroCommentsIgnored):
 <a xmlns:xacro="http://www.ros.org/wiki/xacro">
 <xacro:arg name="foo" default=""/>$(arg foo)</a>'''), '''<a/>''')
 
+    def test_broken_include_error_reporting(self):
+        self.assertRaises(xml.parsers.expat.ExpatError, self.quick_xacro,
+        '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+           <xacro:include filename="broken.xacro"/></a>''')
+        self.assertEqual(xacro.filestack, [None, './broken.xacro'])
+
     def test_broken_input_doesnt_create_empty_output_file(self):
         # run xacro on broken input file to make sure we don't create an
         # empty output file
