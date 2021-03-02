@@ -2,17 +2,15 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-2.0.4 (2020-11-15)
+2.0.5 (2021-03-02)
 ------------------
-* Merge improvements of noetic branch into dashing-devel: see 1.14.5 for details
-* Append test directory to existing AMENT_PREFIX_PATH (`#260 <https://github.com/ros/xacro/issues/260>`_)
-* Contributors: Chen Bainian, Robert Haschke, G.A. vd. Hoorn
-
-1.14.5 (2020-10-13)
--------------------
+* [fix]     Report correct filename for XML errors (`#268 <https://github.com/ros/xacro/issues/268>`_)
+* [fix]     Python3-compatible property Table (`#266 <https://github.com/ros/xacro/issues/266>`_)
+* [fix]     Use outer-scope symbols to resolve include filename in xacro:include (`#264 <https://github.com/ros/xacro/issues/264>`_)
+* [fix]     Append test directory to existing AMENT_PREFIX_PATH (`#260 <https://github.com/ros/xacro/issues/260>`_)
 * [fix]     yaml loading: recursively wrap lists and dicts for dotted dict access (`#258 <https://github.com/ros/xacro/issues/258>`_)
 * [feature] Provide support for yaml constructors !degrees and !radians (`#252 <https://github.com/ros/xacro/issues/252>`_)
-* Contributors: Robert Haschke, G.A. vd. Hoorn
+* Contributors: Chen Bainian, Robert Haschke, G.A. vd. Hoorn
 
 2.0.3 (2020-08-09)
 ------------------

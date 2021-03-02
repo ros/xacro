@@ -116,7 +116,7 @@ def construct_angle_radians(loader, node):
     """utility function to construct radian values from yaml"""
     value = loader.construct_scalar(node).strip()
     try:
-        return float(eval(value, global_symbols, global_symbols))
+        return float(eval(value, global_symbols))
     except SyntaxError as e:
         raise XacroException("invalid expression: %s" % value)
 
@@ -257,10 +257,10 @@ def eval_extension(s):
         raise XacroException('package not found:', exc=e)
 
 
-class Table(object):
+class Table(dict):
     def __init__(self, parent=None):
+        dict.__init__(self)
         self.parent = parent
-        self.table = {}
         self.unevaluated = set()  # set of unevaluated variables
         self.recursive = []  # list of currently resolved vars (to resolve recursive definitions)
         # the following variables are for debugging / checking only
@@ -292,24 +292,24 @@ class Table(object):
                 raise XacroException("recursive variable definition: %s" %
                                      " -> ".join(self.recursive + [key]))
             self.recursive.append(key)
-            self.table[key] = self._eval_literal(eval_text(self.table[key], self))
+            dict.__setitem__(self, key, self._eval_literal(eval_text(dict.__getitem__(self, key), self)))
             self.unevaluated.remove(key)
             self.recursive.remove(key)
 
         # return evaluated result
-        value = self.table[key]
+        value = dict.__getitem__(self, key)
         if (verbosity > 2 and self.parent is None) or verbosity > 3:
             print("{indent}use {key}: {value} ({loc})".format(
                 indent=self.depth * ' ', key=key, value=value, loc=filestack[-1]), file=sys.stderr)
         return value
 
     def __getitem__(self, key):
-        if key in self.table:
+        if dict.__contains__(self, key):
             return self._resolve_(key)
         elif self.parent:
             return self.parent[key]
         else:
-            raise KeyError(key)
+            return global_symbols[key]
 
     def _setitem(self, key, value, unevaluated):
         if key in global_symbols:
@@ -317,7 +317,7 @@ class Table(object):
             print_location(filestack)
 
         value = self._eval_literal(value)
-        self.table[key] = value
+        dict.__setitem__(self, key, value)
         if unevaluated and isinstance(value, str):
             # literal evaluation failed: re-evaluate lazily at first access
             self.unevaluated.add(key)
@@ -333,19 +333,19 @@ class Table(object):
 
     def __contains__(self, key):
         return \
-            key in self.table or \
+            dict.__contains__(self, key) or \
             (self.parent and key in self.parent)
 
     def __str__(self):
-        s = str(self.table)
-        if isinstance(self.parent, Table):
+        s = dict.__str__(self)
+        if self.parent is not None:
             s += "\n  parent: "
             s += str(self.parent)
         return s
 
     def root(self):
         p = self
-        while p.parent:
+        while p.parent is not None:
             p = p.parent
         return p
 
@@ -474,10 +474,11 @@ def process_include(elt, macros, symbols, func):
             namespace_spec = eval_text(namespace_spec, symbols)
             macros[namespace_spec] = ns_macros = MacroNameSpace()
             symbols[namespace_spec] = ns_symbols = PropertyNameSpace()
-            macros = ns_macros
-            symbols = ns_symbols
         except TypeError:
             raise XacroException('namespaces are supported with in-order option only')
+    else:
+        ns_macros = macros
+        ns_symbols = symbols
 
     optional = get_boolean_value(optional, None)
 
@@ -493,17 +494,16 @@ def process_include(elt, macros, symbols, func):
             include = parse(None, filename).documentElement
 
             # recursive call to func
-            func(include, macros, symbols)
+            func(include, ns_macros, ns_symbols)
             included.append(include)
             import_xml_namespaces(elt.parentNode, include.attributes)
+            # restore filestack
+            restore_filestack(oldstack)
         except XacroException as e:
             if e.exc and isinstance(e.exc, IOError) and optional is True:
                 continue
             else:
                 raise
-        finally:
-            # restore filestack
-            restore_filestack(oldstack)
 
     remove_previous_comments(elt)
     # replace the include tag with the nodes of the included file(s)
@@ -617,7 +617,7 @@ def grab_property(elt, table):
         target_table = table.root()
         unevaluated = False
     elif scope and scope == 'parent':
-        if table.parent:
+        if table.parent is not None:
             target_table = table.parent
             unevaluated = False
         else:
@@ -643,7 +643,7 @@ LEXER = QuickLexer(DOLLAR_DOLLAR_BRACE=r"^\$\$+(\{|\()",  # multiple $ in a row,
 def eval_text(text, symbols):
     def handle_expr(s):
         try:
-            return eval(eval_text(s, symbols), global_symbols, symbols)
+            return eval(eval_text(s, symbols), symbols)
         except Exception as e:
             # re-raise as XacroException to add more context
             raise XacroException(exc=e,
