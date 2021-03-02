@@ -2,6 +2,13 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.14.6 (2021-03-02)
+-------------------
+* [fix] Report correct filename for XML errors (`#268 <https://github.com/ros/xacro/issues/268>`_)
+* [fix] Python3-compatible property Table (`#266 <https://github.com/ros/xacro/issues/266>`_)
+* [fix] Use outer-scope symbols to resolve include filename in xacro:include (`#264 <https://github.com/ros/xacro/issues/264>`_)
+* Contributors: Robert Haschke
+
 1.14.5 (2020-10-13)
 -------------------
 * [fix]     yaml loading: recursively wrap lists and dicts for dotted dict access (`#258 <https://github.com/ros/xacro/issues/258>`_)
