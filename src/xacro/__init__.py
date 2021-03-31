@@ -784,6 +784,7 @@ def handle_macro_call(node, macros, symbols):
 
     # Expand the macro
     scoped = Table(symbols)  # new local name space for macro evaluation
+    scoped_macros = Table(macros)
     params = m.params[:]  # deep copy macro's params list
     for name, value in node.attributes.items():
         if name not in params:
@@ -823,7 +824,7 @@ def handle_macro_call(node, macros, symbols):
         raise XacroException("Undefined parameters [%s]" % ",".join(params), macro=m)
 
     try:
-        eval_all(body, macros, scoped)
+        eval_all(body, scoped_macros, scoped)
     except Exception as e:
         # fill in macro call history for nice error reporting
         if hasattr(e, 'macros'):
@@ -1045,7 +1046,7 @@ def process_doc(doc,
         process_includes(doc.documentElement)
         return
 
-    macros = {}
+    macros = Table()
     symbols = Table()
     if not in_order:
         # process includes, macros, and properties before evaluating stuff
