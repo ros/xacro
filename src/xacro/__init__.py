@@ -238,11 +238,17 @@ def eval_extension(s):
 class Table(dict):
     def __init__(self, parent=None):
         dict.__init__(self)
+        if parent is None:
+            parent = dict()  # Use empty dict to simplify lookup
         self.parent = parent
+        try:
+            self.root = parent.root  # short link to root dict / global_symbols
+            self.depth = self.parent.depth + 1  # for debugging only
+        except AttributeError:
+            self.root = parent
+            self.depth = 0
         self.unevaluated = set()  # set of unevaluated variables
         self.recursive = []  # list of currently resolved vars (to resolve recursive definitions)
-        # the following variables are for debugging / checking only
-        self.depth = self.parent.depth + 1 if self.parent else 0
 
     @staticmethod
     def _eval_literal(value):
@@ -276,7 +282,7 @@ class Table(dict):
 
         # return evaluated result
         value = dict.__getitem__(self, key)
-        if (verbosity > 2 and self.parent is None) or verbosity > 3:
+        if (verbosity > 2 and self.parent is self.root) or verbosity > 3:
             print("{indent}use {key}: {value} ({loc})".format(
                 indent=self.depth * ' ', key=key, value=value, loc=filestack[-1]), file=sys.stderr)
         return value
@@ -284,13 +290,11 @@ class Table(dict):
     def __getitem__(self, key):
         if dict.__contains__(self, key):
             return self._resolve_(key)
-        elif self.parent:
-            return self.parent[key]
         else:
-            return global_symbols[key]
+            return self.parent[key]
 
     def _setitem(self, key, value, unevaluated):
-        if key in global_symbols:
+        if key in self.root:
             warning("redefining global property: %s" % key)
             print_location(filestack)
 
@@ -302,7 +306,7 @@ class Table(dict):
         elif key in self.unevaluated:
             # all other types cannot be evaluated
             self.unevaluated.remove(key)
-        if (verbosity > 2 and self.parent is None) or verbosity > 3:
+        if (verbosity > 2 and self.parent is self.root) or verbosity > 3:
             print("{indent}set {key}: {value} ({loc})".format(
                 indent=self.depth * ' ', key=key, value=value, loc=filestack[-1]), file=sys.stderr)
 
@@ -311,8 +315,7 @@ class Table(dict):
 
     def __contains__(self, key):
         return \
-            dict.__contains__(self, key) or \
-            (self.parent and key in self.parent)
+            dict.__contains__(self, key) or (key in self.parent)
 
     def __str__(self):
         s = dict.__str__(self)
@@ -321,9 +324,9 @@ class Table(dict):
             s += str(self.parent)
         return s
 
-    def root(self):
+    def top(self):
         p = self
-        while p.parent is not None:
+        while p.parent is not p.root:
             p = p.parent
         return p
 
@@ -570,7 +573,7 @@ def grab_property(elt, table):
     replace_node(elt, by=None)
 
     if scope and scope == 'global':
-        target_table = table.root()
+        target_table = table.top()
         unevaluated = False
     elif scope and scope == 'parent':
         if table.parent is not None:
@@ -940,7 +943,7 @@ def process_doc(doc, mappings=None, **kwargs):
         restore_filestack([None])
 
     macros = {}
-    symbols = Table()
+    symbols = Table(global_symbols)
 
     # apply xacro:targetNamespace as global xmlns (if defined)
     targetNS = doc.documentElement.getAttribute('xacro:targetNamespace')
