@@ -783,14 +783,14 @@ def handle_macro_call(node, macros, symbols):
         return False  # no macro
 
     # Expand the macro
-    scoped = Table(symbols)  # new local name space for macro evaluation
+    scoped_symbols = Table(symbols)  # new local name space for macro evaluation
     scoped_macros = Table(macros)
     params = m.params[:]  # deep copy macro's params list
     for name, value in node.attributes.items():
         if name not in params:
             raise XacroException("Invalid parameter \"%s\"" % unicode(name), macro=m)
         params.remove(name)
-        scoped._setitem(name, eval_text(value, symbols), unevaluated=False)
+        scoped_symbols._setitem(name, eval_text(value, symbols), unevaluated=False)
         node.setAttribute(name, "")  # suppress second evaluation in eval_all()
 
     # Evaluate block parameters in node
@@ -803,7 +803,7 @@ def handle_macro_call(node, macros, symbols):
             if not block:
                 raise XacroException("Not enough blocks", macro=m)
             params.remove(param)
-            scoped[param] = block
+            scoped_symbols[param] = block
             block = next_sibling_element(block)
 
     if block is not None:
@@ -817,14 +817,14 @@ def handle_macro_call(node, macros, symbols):
         # get default
         name, default = m.defaultmap.get(param, (None,None))
         if name is not None or default is not None:
-            scoped._setitem(param, eval_default_arg(name, default, symbols, m), unevaluated=False)
+            scoped_symbols._setitem(param, eval_default_arg(name, default, symbols, m), unevaluated=False)
             params.remove(param)
 
     if params:
         raise XacroException("Undefined parameters [%s]" % ",".join(params), macro=m)
 
     try:
-        eval_all(body, scoped_macros, scoped)
+        eval_all(body, scoped_macros, scoped_symbols)
     except Exception as e:
         # fill in macro call history for nice error reporting
         if hasattr(e, 'macros'):
