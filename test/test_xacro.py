@@ -111,11 +111,11 @@ def nodes_match(a, b, ignore_nodes):
     while a or b:
         # ignore whitespace-only text nodes
         # we could have several text nodes in a row, due to replacements
-        while (a and 
+        while (a and
                ((a.nodeType in ignore_nodes) or
                 (a.nodeType == xml.dom.Node.TEXT_NODE and whitespace.sub('', a.data) == ""))):
             a = a.nextSibling
-        while (b and 
+        while (b and
                ((b.nodeType in ignore_nodes) or
                 (b.nodeType == xml.dom.Node.TEXT_NODE and whitespace.sub('', b.data) == ""))):
             b = b.nextSibling
@@ -1119,6 +1119,15 @@ class TestXacroInorder(TestXacro):
     </a>'''
         res = '''<a><inc1/><inc1/><subdir_inc1/><subdir_inc1/></a>'''
         self.assert_matches(self.quick_xacro(src), res)
+
+    def test_dotify(self):
+      src = '''
+    <a xmlns:xacro="http://www.ros.org/xacro">
+      <xacro:property name="settings" value="${dotify(dict(a=1, b=2))}"/>
+      ${settings.a + settings.b}
+    </a>'''
+      res = '''<a>3</a>'''
+      self.assert_matches(self.quick_xacro(src), res)
 
     def test_yaml_support(self):
         src = '''
