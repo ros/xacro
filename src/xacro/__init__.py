@@ -169,8 +169,8 @@ global_symbols = {'__builtins__': {k: __builtins__[k] for k in
                                     'True', 'False', 'min', 'max', 'round']}}
 # also define all math symbols and functions
 global_symbols.update(math.__dict__)
-# expose load_yaml and abs_filename
-global_symbols.update(dict(load_yaml=load_yaml, abs_filename=abs_filename_spec))
+# expose load_yaml, abs_filename, and dotify
+global_symbols.update(dict(load_yaml=load_yaml, abs_filename=abs_filename_spec, dotify=YamlDictWrapper))
 
 
 class XacroException(Exception):
@@ -295,7 +295,7 @@ class Table(dict):
 
     def _setitem(self, key, value, unevaluated):
         if key in self.root:
-            warning("redefining global property: %s" % key)
+            warning("redefining global symbol: %s" % key)
             print_location(filestack)
 
         value = self._eval_literal(value)

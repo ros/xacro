@@ -1187,6 +1187,15 @@ class TestXacro(TestXacroCommentsIgnored):
         res = '''<a><inc1/><inc1/><subdir_inc1/><subdir_inc1/></a>'''
         self.assert_matches(self.quick_xacro(src), res)
 
+    def test_dotify(self):
+      src = '''
+    <a xmlns:xacro="http://www.ros.org/xacro">
+      <xacro:property name="settings" value="${dotify(dict(a=1, b=2))}"/>
+      ${settings.a + settings.b}
+    </a>'''
+      res = '''<a>3</a>'''
+      self.assert_matches(self.quick_xacro(src), res)
+
     def test_yaml_support(self):
         src = '''
 <a xmlns:xacro="http://www.ros.org/wiki/xacro">
