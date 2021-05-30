@@ -192,6 +192,43 @@ def capture_stderr(function, *args, **kwargs):
     sys.stderr = old  # restore sys.stderr
 
 
+class TestTable(unittest.TestCase):
+    def test_top(self):
+        top = xacro.Table()
+        self.assertTrue(top.top() is top)
+
+        sub = xacro.Table(top)
+        self.assertTrue(sub.top() is top)
+
+    def test_contains(self):
+        top = xacro.Table(dict(a=1))
+        self.assertTrue('a' in top)
+
+        self.assertFalse('b' in top)
+        top['b'] = 2
+        self.assertTrue('b' in top)
+
+        sub = xacro.Table(top)
+        sub['c'] = 3
+        for key in ['a', 'b', 'c']:
+            self.assertTrue(key in sub)
+
+    def test_get(self):
+        top = xacro.Table(dict(a=1))
+        self.assertTrue(top['a'] == 1)
+        top['b'] = 2
+        self.assertTrue(top['b'] == 2)
+
+        sub = xacro.Table(top)
+        sub['c'] = 3
+        for i, key in enumerate(['a', 'b', 'c']):
+            self.assertTrue(sub[key] == i+1)
+
+        sub['a'] = 42
+        self.assertTrue(sub['a'] == 42)
+        self.assertTrue(sub.parent['a'] == 1)
+
+
 class TestMatchXML(unittest.TestCase):
     def test_normalize_whitespace_text(self):
         self.assertTrue(text_matches("", " \t\n\r"))
@@ -1143,6 +1180,15 @@ class TestXacro(TestXacroCommentsIgnored):
     </a>'''
         res = '''<a><inc1/><inc1/><subdir_inc1/><subdir_inc1/></a>'''
         self.assert_matches(self.quick_xacro(src), res)
+
+    def test_dotify(self):
+      src = '''
+    <a xmlns:xacro="http://www.ros.org/xacro">
+      <xacro:property name="settings" value="${dotify(dict(a=1, b=2))}"/>
+      ${settings.a + settings.b}
+    </a>'''
+      res = '''<a>3</a>'''
+      self.assert_matches(self.quick_xacro(src), res)
 
     def test_yaml_support(self):
         src = '''

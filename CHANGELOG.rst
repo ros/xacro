@@ -2,6 +2,12 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.0.6 (2021-05-30)
+------------------
+* [feature] Expose YamlDictWrapper as dotify() to allow dotted access to any dict (`#274 <https://github.com/ros/xacro/issues/274>`_)
+* [fix]     Scoped macro evaluation (`#272 <https://github.com/ros/xacro/issues/272>`_)
+* Contributors: Robert Haschke
+
 2.0.5 (2021-03-02)
 ------------------
 * [fix]     Report correct filename for XML errors (`#268 <https://github.com/ros/xacro/issues/268>`_)
