@@ -2,6 +2,11 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.13.11 (2021-05-30)
+--------------------
+* Expose YamlDictWrapper as dotify()
+* Contributors: Robert Haschke
+
 1.13.10 (2021-02-11)
 --------------------
 * Use outer-scope symbols to resolve include filename in xacro:include (`#264 <https://github.com/ros/xacro/issues/264>`_)
