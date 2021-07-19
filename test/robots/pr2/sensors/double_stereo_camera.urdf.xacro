@@ -55,7 +55,7 @@
 
     <!-- extensions -->
     <xacro:double_stereo_camera_gazebo_v0 name="${name}" />
-    
+
   </xacro:macro>
 
 </robot>

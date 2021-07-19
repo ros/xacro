@@ -3,7 +3,7 @@
       xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
       xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface"
       xmlns:xacro="http://ros.org/wiki/xacro">
-  
+
   <xacro:include filename="$(find xacro)/test/robots/pr2/sensors/kinect_camera.gazebo.xacro" />
 
   <xacro:macro name="kinect_camera_v0" params="name parent *origin">
@@ -52,4 +52,3 @@
   </xacro:macro>
 
 </root>
-

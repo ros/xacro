@@ -33,7 +33,7 @@
         <geometry>
           <mesh filename="package://pr2_description/meshes/torso_v0/torso_lift.dae"  />
         </geometry>
-        
+
         <material name="Grey2" />
       </visual>
 

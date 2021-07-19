@@ -22,4 +22,3 @@
     <xacro:microstrain_3dmgx2_imu_gazebo_v0 name="${name}" imu_topic="${imu_topic}" update_rate="${update_rate}" stdev="${stdev}" />
   </xacro:macro>
 </robot>
-

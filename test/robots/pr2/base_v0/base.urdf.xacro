@@ -69,7 +69,7 @@
         <geometry>
           <mesh filename="package://pr2_description/meshes/base_v0/wheel.dae" />
         </geometry>
-        
+
         <material name="Wheel_${suffix}" />
       </visual>
       <collision>
@@ -112,7 +112,7 @@
         <geometry>
           <mesh filename="package://pr2_description/meshes/base_v0/caster.stl" />
         </geometry>
-        
+
         <material name="Caster" />
       </visual>
 
@@ -160,7 +160,7 @@
         <geometry>
           <mesh filename="package://pr2_description/meshes/base_v0/base.dae" />
         </geometry>
-        
+
         <material name="White" />
       </visual>
 
@@ -186,7 +186,7 @@
         <geometry>
           <box size="0.01 0.01 0.01" />
         </geometry>
-        
+
         <material name="White" />
       </visual>
       <collision>
