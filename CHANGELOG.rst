@@ -2,6 +2,14 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.13.12 (2021-07-19)
+--------------------
+* Improve macro arg parsing (`#278 <https://github.com/ros/xacro/issues/278>`_) to support:
+  - $(substitution args)
+  - ${python expressions}
+  - single or double quoting of spaces
+* Contributors: Robert Haschke
+
 1.13.11 (2021-05-30)
 --------------------
 * Expose YamlDictWrapper as dotify()
