@@ -3,7 +3,7 @@
       xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
       xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface"
       xmlns:xacro="http://ros.org/wiki/xacro">
-  
+
   <xacro:include filename="$(find xacro)/test/robots/pr2/sensors/prosilica_gc2450_camera.gazebo.xacro" />
 
   <xacro:macro name="prosilica_cam_v0" params="frame_name parent *origin camera_name">

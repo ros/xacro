@@ -34,7 +34,7 @@
         <geometry>
           <mesh filename="package://pr2_description/meshes/head_v0/head_pan.dae"  />
         </geometry>
-        
+
         <material name="Blue" />
       </visual>
 
@@ -78,7 +78,7 @@
         <geometry>
           <mesh filename="package://pr2_description/meshes/head_v0/head_tilt.dae"  />
         </geometry>
-        
+
         <material name="Green" />
       </visual>
 
@@ -107,7 +107,7 @@
 
     <!-- Head plate frame -->
     <joint name="${name}_plate_frame_joint" type="fixed">
-      <origin xyz="0.0232 0 0.0645" rpy="0 0 0" />     
+      <origin xyz="0.0232 0 0.0645" rpy="0 0 0" />
       <parent link="${name}_tilt_link"/>
       <child link="${name}_plate_frame"/>
     </joint>
@@ -126,7 +126,7 @@
         <geometry>
           <box size="0.01 0.01 0.01" />
         </geometry>
-        
+
         <material name="Blue" />
       </visual>
 
@@ -140,7 +140,7 @@
 
     <!-- extensions -->
     <xacro:pr2_head_gazebo_v0 name="${name}" />
-    
+
   </xacro:macro>
 
 

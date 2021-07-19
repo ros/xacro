@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <root xmlns:xacro="http://ros.org/wiki/xacro">
-  
+
 <!-- this controller is pushed into a body scope (previously model scope)
      this will only work with added r36415 patch in simulator_gazebo stack
      otherwise projector will not work without removing the reference tag -->
@@ -20,7 +20,7 @@
       <alwaysOn>true</alwaysOn>
       <updateRate>15.0</updateRate>
       <textureName>stereo_projection_pattern_high_res_red.png</textureName>
-      <filterTextureName>stereo_projection_pattern_filter.png</filterTextureName>        
+      <filterTextureName>stereo_projection_pattern_filter.png</filterTextureName>
       <textureTopicName>${name}_controller/image</textureTopicName>
       <projectorTopicName>${name}_controller/projector</projectorTopicName>
     </plugin>

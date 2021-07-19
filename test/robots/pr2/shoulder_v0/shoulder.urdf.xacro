@@ -161,7 +161,7 @@
     <!-- extensions -->
     <xacro:pr2_upper_arm_roll_gazebo_v0 side="${side}" />
     <xacro:pr2_upper_arm_roll_transmission_v0 side="${side}" />
-    
+
   </xacro:macro>
 
 </robot>

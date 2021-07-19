@@ -18,7 +18,7 @@
   <xacro:property name="cal_r_forearm_roll_flag"   value="0.0" />
   <xacro:property name="cal_r_wrist_flex_flag"     value="0.0" />
   <xacro:property name="cal_r_wrist_roll_flag"     value="0.0" />
-  
+
   <!-- ********** Head ********** -->
   <!-- Head Location: Add to the transform from torso to head_pan_link (Nominally 0) -->
   <xacro:property name="cal_head_x" value="0.0" />
@@ -28,13 +28,13 @@
   <xacro:property name="cal_head_pitch" value="0.0" />
   <xacro:property name="cal_head_yaw" value="0.0" />
 
-  <!-- Flag Offsets -->  
+  <!-- Flag Offsets -->
   <xacro:property name="cal_head_pan_flag"  value="0.0" />
   <xacro:property name="cal_head_tilt_flag" value="0.0" />
 
   <xacro:property name="cal_head_pan_flag" value="0.0"/>
   <xacro:property name="cal_head_tilt_flag" value="0.0"/>
-  
+
   <!-- Casters -->
   <xacro:property name="cal_caster_fl" value="0.0" />
   <xacro:property name="cal_caster_fr" value="0.0" />
