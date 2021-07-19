@@ -228,8 +228,10 @@ class TestXacroFunctions(unittest.TestCase):
 
     def test_parse_macro_arg(self):
         for forward in ['', '^', '^|']:
-            defaults = ['', "f('some string','some other')", "f('a b')"]
-            if forward == '^': defaults = ['']
+            defaults = ['', "'single quoted'", '"double quoted"', '${2 * (prop_with_spaces + 1)}', '$(substitution arg)',
+                        "anything~w/o~space-'space allowed in quotes'(\"as here too\")", 'unquoted']
+            if forward == '^':
+                defaults = ['']  # default allowed allowed afer ^|
             for default in defaults:
                 seps = ['=', ':='] if forward or default else ['']
                 for sep in seps:
