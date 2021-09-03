@@ -741,6 +741,25 @@ class TestXacro(TestXacroCommentsIgnored):
   <foo function="1.0"/>
 </a>''')
 
+    # https://realpython.com/python-eval-function/#minimizing-the-security-issues-of-eval
+    def test_restricted_builtins(self):
+        self.assertRaises(xacro.XacroException, self.quick_xacro,
+                          '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">${__import__('math')}</a>''')
+
+    def test_restricted_builtins_nested(self):
+        self.assertRaises(xacro.XacroException, self.quick_xacro,
+                          '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+<xacro:macro name="foo" params="arg">
+  <xacro:property name="prop" value="${arg}"/>
+  ${__import__('math')}
+</xacro:macro>
+<xacro:foo/>
+</a>''')
+
+    def test_safe_eval(self):
+        self.assertRaises(xacro.XacroException, self.quick_xacro,
+                          '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">${"".__class__.__base__.__subclasses__()}</a>''')
+
     def test_consider_non_elements_if(self):
         self.assert_matches(self.quick_xacro('''
 <a xmlns:xacro="http://www.ros.org/wiki/xacro">
@@ -1161,6 +1180,16 @@ class TestXacro(TestXacroCommentsIgnored):
         src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro"><b xacro:targetNamespace="http://www.ros.org"/></a>'''
         res = '''<a><b/></a>'''
         self.assert_matches(self.quick_xacro(src), res)
+
+    def test_redefine_global_symbol(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+        <xacro:property name="str" value="sin"/>
+        ${str}</a>'''
+        res = '''<a>sin</a>'''
+        with capture_stderr(self.quick_xacro, src) as (result, output):
+            self.assert_matches(result, res)
+            print(output)
+            self.assertTrue("redefining global symbol: str" in output)
 
     def test_include_lazy(self):
         doc = ('''<a xmlns:xacro="http://www.ros.org/xacro">
