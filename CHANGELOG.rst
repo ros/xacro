@@ -2,6 +2,16 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.14.9 (2021-09-03)
+-------------------
+* Allow more builtin symbols: sorted, set
+* Don't import hidden symbols from math package
+* Fix eval security vulnerability
+  - safe_eval()
+  - unit tests validating the protection mechanism
+* Generalize yaml !degrees constructors: Enable expressions as well
+* Contributors: Robert Haschke
+
 1.14.8 (2021-07-19)
 -------------------
 * Improve macro arg parsing (`#278 <https://github.com/ros/xacro/issues/278>`_) to support:
