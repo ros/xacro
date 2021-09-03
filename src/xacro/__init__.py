@@ -129,11 +129,7 @@ def construct_angle_radians(loader, node):
 
 def construct_angle_degrees(loader, node):
     """utility function for converting degrees into radians from yaml"""
-    value = loader.construct_scalar(node)
-    try:
-        return math.radians(float(value))
-    except ValueError:
-        raise XacroException("invalid degree value: %s" % value)
+    return math.radians(construct_angle_radians(loader, node))
 
 
 def load_yaml(filename):
