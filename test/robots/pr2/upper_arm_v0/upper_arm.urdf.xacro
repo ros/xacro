@@ -125,7 +125,7 @@
     <xacro:pr2_elbow_flex_gazebo_v0 side="${side}" />
     <xacro:pr2_elbow_flex_transmission_v0 side="${side}" />
   </xacro:macro>
-  
+
   <!-- FA roll joint only -->
   <xacro:macro name="pr2_forearm_roll_v0" params="side parent reflect">
     <!-- forearm_roll_link is a fictitious link internal to elbow_flex_link, provides an attachment point for the actual forearm -->

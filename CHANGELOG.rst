@@ -2,6 +2,20 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.0.7 (2021-09-04)
+------------------
+* Allow more builtin symbols: sorted, set
+* Don't import hidden symbols from math package
+* Fix eval security vulnerability
+  - safe_eval()
+  - unit tests validating the protection mechanism
+* Generalize yaml !degrees constructors: Enable expressions as well
+* Improve macro arg parsing (`#278 <https://github.com/ros/xacro/issues/278>`_) to support:
+  - $(substitution args)
+  - ${python expressions}
+  - single or double quoting of spaces
+* Contributors: Robert Haschke
+
 2.0.6 (2021-05-30)
 ------------------
 * [feature] Expose YamlDictWrapper as dotify() to allow dotted access to any dict (`#274 <https://github.com/ros/xacro/issues/274>`_)

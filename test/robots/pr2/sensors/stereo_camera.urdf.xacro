@@ -27,7 +27,7 @@
     </joint>
     <!-- camera link is at center of the optical frame, but in x-forward notation -->
     <link name="${name}_link">
-      
+
       <inertial>
         <mass value="0.1" />
         <origin xyz="0 0 0" rpy="0 0 0" />

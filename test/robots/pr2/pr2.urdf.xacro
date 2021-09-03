@@ -4,7 +4,7 @@
        xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface"
        xmlns:xacro="http://ros.org/wiki/xacro"
        name="pr2" >
-  
+
   <!-- The following included files set up definitions of parts of the robot body -->
   <!-- misc common stuff? -->
   <xacro:include filename="$(find xacro)/test/robots/pr2/common.xacro" />
@@ -38,10 +38,10 @@
 
   <!-- The first use of a macro.  This one was defined in base.test/robots/pr2.xacro above.
        A macro like this will expand to a set of link and joint definitions, and to additional
-       Gazebo-related extensions (sensor plugins, etc).  The macro takes an argument, name, 
-       that equals "base", and uses it to generate names for its component links and joints 
-       (e.g., base_link).  The included origin block is also an argument to the macro.  By convention, 
-       the origin block defines where the component is w.r.t its parent (in this case the parent 
+       Gazebo-related extensions (sensor plugins, etc).  The macro takes an argument, name,
+       that equals "base", and uses it to generate names for its component links and joints
+       (e.g., base_link).  The included origin block is also an argument to the macro.  By convention,
+       the origin block defines where the component is w.r.t its parent (in this case the parent
        is the world frame). For more, see http://www.ros.org/wiki/xacro -->
   <xacro:pr2_base_v0 name="base"/>
 
@@ -57,9 +57,9 @@
   </xacro:pr2_head_v0>
 
   <!-- Camera package: double stereo, prosilica -->
-  <xacro:pr2_head_sensor_package_v0 name="sensor_mount" hd_frame_name="high_def" 
-         hd_camera_name="prosilica" 
-         stereo_name="double_stereo" 
+  <xacro:pr2_head_sensor_package_v0 name="sensor_mount" hd_frame_name="high_def"
+         hd_camera_name="prosilica"
+         stereo_name="double_stereo"
          parent="head_plate_frame">
     <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
   </xacro:pr2_head_sensor_package_v0>
@@ -67,24 +67,24 @@
   <!-- Projector -->
   <xacro:projector_wg6802418_v0 name="projector_wg6802418" parent="head_plate_frame" >
     <!-- Camera is slightly recessed from front, where is camera origin? Lens? -->
-    <origin xyz="0 0.110 0.0546" rpy="0 0 0" />        
+    <origin xyz="0 0.110 0.0546" rpy="0 0 0" />
   </xacro:projector_wg6802418_v0>
-  
+
   <!-- Base of Kinect/Prosilica Mount -->
   <xacro:kinect_prosilica_camera_swept_back_v0 name="head_mount" parent="head_plate_frame" >
     <origin xyz="-0.137376 0 0.091746" rpy="0 0 0" />
-    <!--  
-          Was -0.1 0 0.09225, -0.138 0 0.09225 looks good front back and sheet metal on bolt pattern, 
-          -0.138 0 0.06225 is where Prosilica FOV just clears the head.  
-          This is 30 mm (!) below the position in SolidWorks.  
+    <!--
+          Was -0.1 0 0.09225, -0.138 0 0.09225 looks good front back and sheet metal on bolt pattern,
+          -0.138 0 0.06225 is where Prosilica FOV just clears the head.
+          This is 30 mm (!) below the position in SolidWorks.
           Lowering the Prosilica by this amount in SW makes the FOV hit around the aluminum / plastic junction.
 
-          Turns out that head_plate_frame is in some random position in space.  
-          It is [0.0232 0 0.0645 from its parent, head_tilt_link. 
-          The distance from head_plate_frame to the head_kinect_prosilica is 137.376 mm X and 91.746 mm Z.  
-          So the origin should in fact be -0.137376 0 0.091746.  
-          John is changing the Prosilica FOV based on my numbers.  
-          Just need to roscd and svn up. 
+          Turns out that head_plate_frame is in some random position in space.
+          It is [0.0232 0 0.0645 from its parent, head_tilt_link.
+          The distance from head_plate_frame to the head_kinect_prosilica is 137.376 mm X and 91.746 mm Z.
+          So the origin should in fact be -0.137376 0 0.091746.
+          John is changing the Prosilica FOV based on my numbers.
+          Just need to roscd and svn up.
     -->
   </xacro:kinect_prosilica_camera_swept_back_v0>
 

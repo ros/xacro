@@ -38,7 +38,7 @@
         <geometry>
           <box size="0.01 0.01 0.01" />
         </geometry>
-        
+
         <material name="Blue" />
       </visual>
 
@@ -47,7 +47,7 @@
     <!-- Prosilica Camera -->
     <xacro:prosilica_cam_v0 frame_name="${hd_frame_name}" camera_name="${hd_camera_name}" parent="${name}_link" >
       <!-- camera focal point update from S. Stanford (called Kowa from Prosilica) 2011-08-18 -->
-      <origin xyz="0.046457 -0.110 0.054600" rpy="0 0 0" />        
+      <origin xyz="0.046457 -0.110 0.054600" rpy="0 0 0" />
     </xacro:prosilica_cam_v0>
 
     <!-- construct wide and narrow double stereo camera -->

@@ -114,20 +114,16 @@ class YamlDictWrapper(dict):
 
 def construct_angle_radians(loader, node):
     """utility function to construct radian values from yaml"""
-    value = loader.construct_scalar(node).strip()
+    value = loader.construct_scalar(node)
     try:
-        return float(eval(value, global_symbols))
-    except SyntaxError as e:
+        return float(safe_eval(value, global_symbols))
+    except SyntaxError:
         raise XacroException("invalid expression: %s" % value)
 
 
 def construct_angle_degrees(loader, node):
     """utility function for converting degrees into radians from yaml"""
-    value = loader.construct_scalar(node)
-    try:
-        return math.radians(float(value))
-    except ValueError:
-        raise XacroException("invalid degree value: %s" % value)
+    return math.radians(construct_angle_radians(loader, node))
 
 
 def load_yaml(filename):
@@ -154,13 +150,22 @@ def load_yaml(filename):
 # taking simple security measures to forbid access to __builtins__
 # only the very few symbols explicitly listed are allowed
 # for discussion, see: http://nedbatchelder.com/blog/201206/eval_really_is_dangerous.html
-global_symbols = {'__builtins__': {k: __builtins__[k] for k in
-                                   ['list', 'dict', 'map', 'len', 'str', 'float', 'int',
-                                    'True', 'False', 'min', 'max', 'round']}}
+global_symbols = {k: __builtins__[k] for k in
+                    ['list', 'dict', 'map', 'set', 'len', 'str', 'float', 'int',
+                     'True', 'False', 'min', 'max', 'round', 'sorted']}
 # also define all math symbols and functions
-global_symbols.update(math.__dict__)
+global_symbols.update({k: v for k, v in math.__dict__.items() if not k.startswith('_')})
 # expose load_yaml, abs_filename, and dotify
 global_symbols.update(dict(load_yaml=load_yaml, abs_filename=abs_filename_spec, dotify=YamlDictWrapper))
+
+
+def safe_eval(expr, globals, locals=None):
+    code = compile(expr.strip(), "<expression>", "eval")
+    invalid_names = [n for n in code.co_names if n.startswith("__")]
+    if invalid_names:
+        raise XacroException("Use of invalid name(s): ", ', '.join(invalid_names))
+    globals.update(__builtins__= {})  # disable default builtins
+    return eval(code, globals, locals)
 
 
 class XacroException(Exception):
@@ -532,8 +537,9 @@ def is_valid_name(name):
     return False
 
 
-re_macro_arg = re.compile(r'''\s*([^\s:=]+?):?=(\^\|?)?((?:(?:'[^']*')?[^\s'"]*?)*)(?:\s+|$)(.*)''')
-#                           space   param    :=   ^|   <--      default      -->   space    rest
+default_value = '''\$\{.*?\}|\$\(.*?\)|(?:'.*?'|\".*?\"|[^\s'\"]+)+|'''
+re_macro_arg = re.compile(r'^\s*([^\s:=]+?)\s*:?=\s*(\^\|?)?(' + default_value + ')(?:\s+|$)(.*)')
+#                          space(   param )(   :=  )(  ^|  )(        default      )( space )(rest)
 
 
 def parse_macro_arg(s):
@@ -646,7 +652,7 @@ LEXER = QuickLexer(DOLLAR_DOLLAR_BRACE=r"^\$\$+(\{|\()",  # multiple $ in a row,
 def eval_text(text, symbols):
     def handle_expr(s):
         try:
-            return eval(eval_text(s, symbols), symbols)
+            return safe_eval(eval_text(s, symbols), symbols)
         except Exception as e:
             # re-raise as XacroException to add more context
             raise XacroException(exc=e,

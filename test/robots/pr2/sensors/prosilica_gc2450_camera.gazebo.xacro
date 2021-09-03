@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <root xmlns:xacro="http://ros.org/wiki/xacro">
-  
+
 <xacro:macro name="prosilica_cam_gazebo_v0" params="camera_name frame_name">
   <gazebo reference="${frame_name}_frame">
     <sensor type="camera" name="${frame_name}_sensor">

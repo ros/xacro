@@ -26,8 +26,8 @@
       <inertial>
         <mass value="0.591" />
         <origin xyz="-0.001136 0.00167 -0.00713" rpy="0 0 0" />
-        <inertia ixx="0.001195273" ixy="0.000023087" ixz="0.000037467" 
-                 iyy="0.001083956" iyz="0.000034906" 
+        <inertia ixx="0.001195273" ixy="0.000023087" ixz="0.000037467"
+                 iyy="0.001083956" iyz="0.000034906"
                  izz="0.000795014" />
       </inertial>
 
@@ -36,7 +36,7 @@
         <geometry>
           <mesh filename="package://pr2_description/meshes/tilting_laser_v0/tilting_hokuyo.dae" />
         </geometry>
-        
+
         <material name="Red" />
       </visual>
 
