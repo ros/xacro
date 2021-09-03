@@ -160,7 +160,7 @@ global_symbols = {k: __builtins__[k] for k in
                     ['list', 'dict', 'map', 'len', 'str', 'float', 'int',
                      'True', 'False', 'min', 'max', 'round']}
 # also define all math symbols and functions
-global_symbols.update(math.__dict__)
+global_symbols.update({k: v for k, v in math.__dict__.items() if not k.startswith('_')})
 # expose load_yaml, abs_filename, and dotify
 global_symbols.update(dict(load_yaml=load_yaml, abs_filename=abs_filename_spec, dotify=YamlDictWrapper))
 
