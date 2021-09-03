@@ -1114,6 +1114,16 @@ class TestXacroInorder(TestXacro):
         super(TestXacroInorder, self).__init__(*args, **kwargs)
         self.in_order = True
 
+    def test_redefine_global_symbol(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+        <xacro:property name="str" value="sin"/>
+        ${str}</a>'''
+        res = '''<a>sin</a>'''
+        with capture_stderr(self.quick_xacro, src) as (result, output):
+            self.assert_matches(result, res)
+            print(output)
+            self.assertTrue("redefining global symbol: str" in output)
+
     def test_include_lazy(self):
         doc = ('''<a xmlns:xacro="http://www.ros.org/xacro">
         <xacro:if value="false"><xacro:include filename="non-existent"/></xacro:if></a>''')
