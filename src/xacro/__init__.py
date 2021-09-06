@@ -158,7 +158,7 @@ def load_yaml(filename):
 # for discussion, see: http://nedbatchelder.com/blog/201206/eval_really_is_dangerous.html
 global_symbols = {k: __builtins__[k] for k in
                     ['list', 'dict', 'map', 'set', 'len', 'str', 'float', 'int',
-                     'True', 'False', 'min', 'max', 'round', 'sorted']}
+                     'True', 'False', 'min', 'max', 'round', 'sorted', 'range']}
 # also define all math symbols and functions
 global_symbols.update({k: v for k, v in math.__dict__.items() if not k.startswith('_')})
 # expose load_yaml, abs_filename, and dotify
