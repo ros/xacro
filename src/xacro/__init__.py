@@ -660,8 +660,8 @@ def grab_property(elt, table):
             return
 
     if value is None:
-        name = '**' + name
-        value = elt  # debug
+        name = '*' + name
+        value = first_child_element(elt)
 
     replace_node(elt, by=None)
 
@@ -895,6 +895,14 @@ def remove_previous_comments(node):
             return
 
 
+def wrap_node(node):
+    impl = xml.dom.minidom.getDOMImplementation()
+    doc = impl.createDocument(None, "wrapper", None)
+    root = doc.documentElement
+    root.appendChild(node.cloneNode(deep=True))
+    return root
+
+
 def eval_all(node, macros, symbols):
     """Recursively evaluate node, expanding macros, replacing properties, and evaluating expressions"""
     # evaluate the attributes
@@ -929,11 +937,9 @@ def eval_all(node, macros, symbols):
                 else:
                     raise XacroException("Undefined block \"%s\"" % name)
 
-                # cloning block allows to insert the same block multiple times
-                block = block.cloneNode(deep=True)
-                # recursively evaluate block
-                eval_all(block, macros, symbols)
-                replace_node(node, by=block, content_only=content_only)
+                wrapper = wrap_node(block)  # wrap block into a dummy node
+                eval_all(wrapper, macros, symbols)  # to allow evaluation of the block itself
+                replace_node(node, by=first_child_element(wrapper), content_only=content_only)
 
             elif node.tagName == 'xacro:include':
                 process_include(node, macros, symbols, eval_all)
