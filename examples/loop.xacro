@@ -14,7 +14,7 @@
 
 	<xacro:loop items="${items}">
 		<body>
-			<item>item</item>
+			<item>item: ${item}</item>
 		</body>
 	</xacro:loop>
 </macro_library>

@@ -589,6 +589,8 @@ def parse_macro_arg(s):
         param, forward, default, rest = m.groups()
         if not default:
             default = None
+        elif param[0] == '*':
+            raise XacroException("Invalid default '{}' for block argument '{}'".format(default, param), macro=m)
         return param, (param if forward else None, default), rest
     else:
         # there is no default specified at all
@@ -799,33 +801,32 @@ def handle_macro_call(node, macros, symbols):
         scoped_symbols._setitem(name, eval_text(value, symbols), unevaluated=False)
         node.setAttribute(name, "")  # suppress second evaluation in eval_all()
 
-    # Evaluate block parameters in node
-    eval_all(node, macros, symbols)
-
-    # Fetch block parameters, in order
+    # Fetch block parameters (in order) or/and defaults for remaining arguments
     block = first_child_element(node)
     for param in params[:]:
-        if param[0] == '*':
-            if not block:
+        # get potential default
+        name, default = m.defaultmap.get(param, (None, None))
+        have_default = name is not None or default is not None
+
+        if param[0] == '*':  # block argument expected
+            if block:
+                params.remove(param)
+                scoped_symbols[param] = block
+                block = next_sibling_element(block)
+            elif have_default:
+                default = eval_default_arg(name, default, symbols, m)
+                assert(isinstance(default, xml.dom.minidom.Element))
+                scoped_symbols._setitem(param, default, unevaluated=False)
+                params.remove(param)
+            else:
                 raise XacroException("Not enough blocks", macro=m)
+        elif have_default:  # a default was specified
+            default = eval_default_arg(name, default, symbols, m)
+            scoped_symbols._setitem(param, default, unevaluated=False)
             params.remove(param)
-            scoped_symbols[param] = block
-            block = next_sibling_element(block)
 
     if block is not None:
         raise XacroException("Unused block \"%s\"" % block.tagName, macro=m)
-
-    # Try to load defaults for any remaining non-block parameters
-    for param in params[:]:
-        # block parameters are not supported for defaults
-        if param[0] == '*':
-            continue
-
-        # get default
-        name, default = m.defaultmap.get(param, (None, None))
-        if name is not None or default is not None:
-            scoped_symbols._setitem(param, eval_default_arg(name, default, symbols, m), unevaluated=False)
-            params.remove(param)
 
     if params:
         raise XacroException("Undefined parameters [%s]" % ",".join(params), macro=m)
