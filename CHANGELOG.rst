@@ -6,17 +6,19 @@ Changelog for package xacro
 -------------------
 * Allow more builtin symbols: sorted, set
 * Don't import hidden symbols from math package
-* Fix eval security vulnerability
-  - safe_eval()
+* Fix ``eval()`` security vulnerability
+
+  - ``safe_eval()``: Forbid symbol names starting with *double* underscore
   - unit tests validating the protection mechanism
-* Generalize yaml !degrees constructors: Enable expressions as well
+* Generalize yaml ``!degrees`` constructor: Enable expressions as well
 * Contributors: Robert Haschke
 
 1.14.8 (2021-07-19)
 -------------------
 * Improve macro arg parsing (`#278 <https://github.com/ros/xacro/issues/278>`_) to support:
-  - $(substitution args)
-  - ${python expressions}
+
+  - ``$(substitution args)``
+  - ``${python expressions}``
   - single or double quoting of spaces
 * Contributors: Robert Haschke
 
@@ -30,13 +32,13 @@ Changelog for package xacro
 -------------------
 * [fix] Report correct filename for XML errors (`#268 <https://github.com/ros/xacro/issues/268>`_)
 * [fix] Python3-compatible property Table (`#266 <https://github.com/ros/xacro/issues/266>`_)
-* [fix] Use outer-scope symbols to resolve include filename in xacro:include (`#264 <https://github.com/ros/xacro/issues/264>`_)
+* [fix] Use outer-scope symbols to resolve include filename in ``xacro:include`` (`#264 <https://github.com/ros/xacro/issues/264>`_)
 * Contributors: Robert Haschke
 
 1.14.5 (2020-10-13)
 -------------------
 * [fix]     yaml loading: recursively wrap lists and dicts for dotted dict access (`#258 <https://github.com/ros/xacro/issues/258>`_)
-* [feature] Provide support for yaml constructors !degrees and !radians (`#252 <https://github.com/ros/xacro/issues/252>`_)
+* [feature] Provide support for yaml constructors ``!degrees`` and ``!radians`` (`#252 <https://github.com/ros/xacro/issues/252>`_)
 * Contributors: Robert Haschke, G.A. vd. Hoorn
 
 1.14.4 (2020-08-09)
@@ -48,6 +50,7 @@ Changelog for package xacro
 1.14.3 (2020-07-05)
 -------------------
 * [feature] Improve warnings
+
   - Unify meaning of verbosity > 0 (to print file location)
   - Provide file location on warning in check_attrs()
   - Issue warning on child elements of <xacro:include> tag
@@ -70,6 +73,7 @@ Changelog for package xacro
 1.14.0 (2019-12-08)
 -------------------
 * [maintanence] Remove deprecations
+
   - Require all xacro commands to be prefixed with 'xacro:'
   - Remove options --legacy, --inorder, --check-order, --includes
 * Contributors: Robert Haschke
@@ -79,6 +83,7 @@ Changelog for package xacro
 * [feature] Expose abs_filename() (`#220 <https://github.com/ros/xacro/issues/220>`_)
 * [feature] Catch missing closing brace in $() and ${} expressions
 * [maintanence]
+
   - Replace deprecated yaml.load() -> yaml.safe_load()
   - Save macro names internally w/o 'xacro:' prefix
   - Correctly issue deprecation warning for non-prefixed xacro tags
@@ -87,11 +92,13 @@ Changelog for package xacro
 1.13.4 (2019-09-26)
 -------------------
 * [feature] remove xmlns:xacro from processed file (`#207 <https://github.com/ros/xacro/issues/207>`_)
+
   - Remove all notions of xmlns:xacro from the resulting document.
   - If the root node defines a xacro:targetNamespace attribute, this will become the global xmlns namespace of the resulting document.
 * [feature] Add len() to allowed python functions (`#208 <https://github.com/ros/xacro/issues/208>`_)
 * [maintanence]
-  - --in-order warning: reduce severity level to message
+
+  - ``--in-order`` warning: reduce severity level to message
   - fix and cleanup test of cmake extensions
   - adapt run_xacro() to run xacro from PATH
   - simplify import of substition_args
