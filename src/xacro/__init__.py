@@ -683,7 +683,7 @@ def grab_property(elt, table):
     assert(elt.tagName in ['property', 'xacro:property'])
     remove_previous_comments(elt)
 
-    name, value, default, scope = check_attrs(elt, ['name'], ['value', 'default', 'scope'])
+    name, value, default, scope, greedy = check_attrs(elt, ['name'], ['value', 'default', 'scope', 'greedy'])
     if not is_valid_name(name):
         raise XacroException('Property names must be valid python identifiers: ' + name)
     if name.startswith('__'):
@@ -718,7 +718,7 @@ def grab_property(elt, table):
             return # cannot store the value, no reason to evaluate it
     else:
         target_table = table
-        unevaluated = True
+        unevaluated = not get_boolean_value(eval_text(greedy or 'false', table), greedy)
 
     if not unevaluated and isinstance(value, _basestr):
         value = eval_text(value, table)
