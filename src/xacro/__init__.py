@@ -122,7 +122,7 @@ def construct_angle_radians(loader, node):
     """utility function to construct radian values from yaml"""
     value = loader.construct_scalar(node)
     try:
-        return float(safe_eval(value, global_symbols))
+        return float(safe_eval(value, _global_symbols))
     except SyntaxError:
         raise XacroException("invalid expression: %s" % value)
 
@@ -152,17 +152,60 @@ def load_yaml(filename):
         all_includes.append(filename)
 
 
-# global symbols dictionary
+# create global symbols dictionary
 # taking simple security measures to forbid access to __builtins__
 # only the very few symbols explicitly listed are allowed
 # for discussion, see: http://nedbatchelder.com/blog/201206/eval_really_is_dangerous.html
-global_symbols = {k: __builtins__[k] for k in
-                    ['list', 'dict', 'map', 'set', 'len', 'str', 'float', 'int',
-                     'True', 'False', 'min', 'max', 'round', 'sorted', 'range']}
-# also define all math symbols and functions
-global_symbols.update({k: v for k, v in math.__dict__.items() if not k.startswith('_')})
-# expose load_yaml, abs_filename, and dotify
-global_symbols.update(dict(load_yaml=load_yaml, abs_filename=abs_filename_spec, dotify=YamlDictWrapper))
+def create_global_symbols():
+    result = dict()
+
+    def deprecate(f, msg):
+        def wrapper(*args, **kwargs):
+            warning(msg)
+            return f(*args, **kwargs)
+
+        return wrapper if msg else f
+
+    def expose(*args, **kwargs):
+        # Extract args from kwargs
+        source, ns, deprecate_msg = (kwargs.pop(key, None) for key in ['source', 'ns', 'deprecate_msg'])
+
+        addons = dict()
+        if source is not None:
+            addons.update([(key, source[key]) for key in args])  # Add list of symbol names from source
+        else:
+            addons.update(*args)  # Add from list of (key, value) pairs
+        addons.update(**kwargs)  # Add key=value arguments
+
+        if ns is not None:  # Wrap dict into a namespace
+            try:  # Retrieve namespace target dict
+                target = result[ns]
+            except KeyError:  # or create if not existing yet
+                target = MacroNameSpace()
+                result.update([(ns, target)])
+            target.update(addons)  # Populate target dict
+
+            if deprecate_msg is not None:  # Also import directly, but with deprecation warning
+                result.update([(key, deprecate(f, deprecate_msg.format(name=key, ns=ns))) for key, f in addons.items()])
+        else:
+            result.update(addons)  # Import directly
+
+    deprecate_msg = 'Using {name}() directly is deprecated. Use {ns}.{name}() instead.'
+    # Expose some basic symbols directly
+    expose('list', 'dict', 'map', 'len', 'str', 'float', 'int', 'True', 'False', 'min', 'max', 'round',
+           source=__builtins__)
+    # More seldomly used symbols go into namespace python
+    expose('sorted', 'range', source=__builtins__, ns='python', deprecate_msg=deprecate_msg)
+    expose('any', 'sum', 'isinstance', source=__builtins__, ns='python')
+
+    # Expose all math symbols and functions into namespace math (and directly for backwards compatibility)
+    expose([(k, v) for k, v in math.__dict__.items() if not k.startswith('_')], ns='math', deprecate_msg='')
+
+    # Expose load_yaml, abs_filename, and dotify into namespace xacro (and directly with deprecation)
+    expose(load_yaml=load_yaml, abs_filename=abs_filename_spec, dotify=YamlDictWrapper,
+           ns='xacro', deprecate_msg=deprecate_msg)
+
+    return result
 
 
 def safe_eval(expr, globals, locals=None):
@@ -329,7 +372,7 @@ class Table(object):
         if do_check_order and key in self.used and key not in self.redefined:
             self.redefined[key] = filestack[-1]
 
-        if key in global_symbols:
+        if key in _global_symbols:
             warning("redefining global symbol: %s" % key)
             print_location(filestack)
 
@@ -694,7 +737,7 @@ LEXER = QuickLexer(DOLLAR_DOLLAR_BRACE=r"^\$\$+(\{|\()", # multiple $ in a row, 
 def eval_text(text, symbols):
     def handle_expr(s):
         try:
-            return safe_eval(eval_text(s, symbols), global_symbols, symbols)
+            return safe_eval(eval_text(s, symbols), _global_symbols, symbols)
         except Exception as e:
             # re-raise as XacroException to add more context
             raise XacroException(exc=e,
@@ -1135,6 +1178,10 @@ def process_file(input_file_name, **kwargs):
         doc.insertBefore(comment, first)
 
     return doc
+
+
+_global_symbols = create_global_symbols()
+
 
 def main():
     opts, input_file_name = process_args(sys.argv[1:])
