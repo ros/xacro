@@ -1108,6 +1108,16 @@ class TestXacro(TestXacroCommentsIgnored):
         res='''<a><b/></a>'''
         self.assert_matches(self.quick_xacro(src), res)
 
+    def test_xml_namespace_lifting(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro" xmlns:a="http://www.ros.org/a">
+  <xacro:macro name="test">
+    <xacro:include filename="namespace.xml"></xacro:include>
+  </xacro:macro>
+  <xacro:test />
+</a>'''
+        res = '''<a xmlns:a="http://www.ros.org/a" xmlns:b="http://www.ros.org/b" />'''
+        self.assert_matches(self.quick_xacro(src), res)
+
 # test class for in-order processing
 class TestXacroInorder(TestXacro):
     def __init__(self, *args, **kwargs):
