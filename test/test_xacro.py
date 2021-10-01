@@ -244,6 +244,18 @@ class TestXacroFunctions(unittest.TestCase):
         for ws in ['  ', ' \t ', ' \n ']:
             self.check_macro_arg(ws + 'foo' + ws + 'bar=42' + ws, 'foo', None, None, 'bar=42' + ws)
 
+    def test_tokenize(self):
+        tokens = ['ab', 'cd', 'ef']
+        for sep in [' ', ',', ';', ', ']:
+            self.assertEqual(xacro.tokenize(sep.join(tokens)), tokens)
+
+    def test_tokenize_keep_empty(self):
+        tokens = ' '.join(['ab', ' ', 'cd', 'ef'])
+        results = xacro.tokenize(tokens, sep=' ', skip_empty=False)
+        self.assertEqual(len(results), 5)  # intermediate space becomes '   ' split into 2 empty fields
+        self.assertEqual(' '.join(results), tokens)
+
+
 # base class providing some convenience functions
 class TestXacroBase(unittest.TestCase):
     def __init__(self, *args, **kwargs):

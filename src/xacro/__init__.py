@@ -152,6 +152,14 @@ def load_yaml(filename):
         all_includes.append(filename)
 
 
+def tokenize(s, sep=',; ', skip_empty=True):
+    results = re.split('[{}]'.format(sep), s)
+    if skip_empty:
+        return [item for item in results if item]
+    else:
+        return results
+
+
 # create global symbols dictionary
 # taking simple security measures to forbid access to __builtins__
 # only the very few symbols explicitly listed are allowed
@@ -217,7 +225,7 @@ def create_global_symbols():
 
     # Expose xacro's message functions
     expose([(f.__name__, message_adapter(f)) for f in [message, warning, error]], ns='xacro')
-    expose(fatal=fatal, ns='xacro')
+    expose(fatal=fatal, tokenize=tokenize, ns='xacro')
 
     return result
 
