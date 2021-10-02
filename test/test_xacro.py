@@ -1135,6 +1135,20 @@ class TestXacroInorder(TestXacro):
         super(TestXacroInorder, self).__init__(*args, **kwargs)
         self.in_order = True
 
+    def test_print_location(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+        <xacro:macro name="scope"><xacro:include filename="location.xacro"/></xacro:macro>
+        <xacro:scope/>
+        </a>'''
+        res = '''<a/>'''
+        self.quick_xacro(src)
+        with capture_stderr(self.quick_xacro, src) as (result, output):
+            self.assert_matches(result, res)
+            self.assertTrue(output == '''when instantiating macro: scope (???)
+in file: ./location.xacro
+included from: string
+''')
+
     def test_redefine_global_symbol(self):
         src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
         <xacro:property name="str" value="sin"/>

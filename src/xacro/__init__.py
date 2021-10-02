@@ -215,7 +215,7 @@ def create_global_symbols():
 
     def message_adapter(f):
         def wrapper(*args, **kwargs):
-            kwargs.update(file=sys.stderr)
+            kwargs.pop('file', None)  # Don't forward a file argument
             f(*args, **kwargs)
             return ''  # Return empty string instead of None
         return wrapper
@@ -223,9 +223,13 @@ def create_global_symbols():
     def fatal(*args):
         raise XacroException(' '.join(map(str, args)))
 
+    def location():
+        print_location(filestack)
+        return ''
+
     # Expose xacro's message functions
     expose([(f.__name__, message_adapter(f)) for f in [message, warning, error]], ns='xacro')
-    expose(fatal=fatal, tokenize=tokenize, ns='xacro')
+    expose(fatal=fatal, print_location=location, tokenize=tokenize, ns='xacro')
 
     return result
 
