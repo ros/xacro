@@ -57,25 +57,16 @@ except NameError: # python 3
 substitution_args_context = {}
 
 
-# Stack of currently processed files
-filestack = []
+# Stack of currently processed files / macros
+filestack = None
+macrostack = None
 
-def push_file(filename):
-    """
-    Push a new filename to the filestack.
-    Instead of directly modifying filestack, a deep-copy is created and modified,
-    while the old filestack is returned.
-    This allows to store the filestack that was active when a macro or property is defined
-    """
-    global filestack
-    oldstack = filestack
-    filestack = deepcopy(filestack)
-    filestack.append(filename)
-    return oldstack
 
-def restore_filestack(oldstack):
+def init_stacks(file):
     global filestack
-    filestack = oldstack
+    global macrostack
+    filestack = [file]
+    macrostack = []
 
 
 def abs_filename_spec(filename_spec):
@@ -142,12 +133,12 @@ def load_yaml(filename):
 
     filename = abs_filename_spec(filename)
     f = open(filename)
-    oldstack = push_file(filename)
+    filestack.append(filename)
     try:
         return YamlListWrapper.wrap(yaml.safe_load(f))
     finally:
         f.close()
-        restore_filestack(oldstack)
+        filestack.pop()
         global all_includes
         all_includes.append(filename)
 
@@ -223,13 +214,9 @@ def create_global_symbols():
     def fatal(*args):
         raise XacroException(' '.join(map(str, args)))
 
-    def location():
-        print_location(filestack)
-        return ''
-
     # Expose xacro's message functions
-    expose([(f.__name__, message_adapter(f)) for f in [message, warning, error]], ns='xacro')
-    expose(fatal=fatal, print_location=location, tokenize=tokenize, ns='xacro')
+    expose([(f.__name__, message_adapter(f)) for f in [message, warning, error, print_location]], ns='xacro')
+    expose(fatal=fatal, tokenize=tokenize, ns='xacro')
 
     return result
 
@@ -277,7 +264,7 @@ def check_attrs(tag, required, optional):
     if extra:
         warning("%s: unknown attribute(s): %s" % (tag.nodeName, ', '.join(extra)))
         if verbosity > 0:
-            print_location(filestack)
+            print_location()
     return result
 
 
@@ -289,7 +276,7 @@ def deprecated_tag(tag_name = None, _issued=[False]):
     _issued[0] = True
     warning("Deprecated: xacro tag '{}' w/o 'xacro:' xml namespace prefix (will be forbidden in Noetic)".format(tag_name))
     if verbosity > 0:
-        print_location(filestack)
+        print_location()
         message("""Use the following command to fix incorrect tag usage:
 find . -iname "*.xacro" | xargs sed -i 's#<\([/]\\?\)\(if\|unless\|include\|arg\|property\|macro\|insert_block\)#<\\1xacro:\\2#g'""")
         print(file=sys.stderr)
@@ -400,7 +387,7 @@ class Table(object):
 
         if key in _global_symbols:
             warning("redefining global symbol: %s" % key)
-            print_location(filestack)
+            print_location()
 
         value = self._eval_literal(value)
         self.table[key] = value
@@ -567,11 +554,11 @@ def process_include(elt, macros, symbols, func):
     if first_child_element(elt):
         warning("Child elements of a <xacro:include> tag are ignored")
         if verbosity > 0:
-            print_location(filestack)
+            print_location()
 
     for filename in get_include_files(filename_spec, symbols):
         # extend filestack
-        oldstack = push_file(filename)
+        filestack.append(filename)
         include = parse(None, filename).documentElement
 
         # recursive call to func
@@ -580,7 +567,7 @@ def process_include(elt, macros, symbols, func):
         import_xml_namespaces(elt.parentNode, include.attributes)
 
         # restore filestack
-        restore_filestack(oldstack)
+        filestack.pop()
 
     remove_previous_comments(elt)
     # replace the include tag with the nodes of the included file(s)
@@ -662,7 +649,7 @@ def grab_macro(elt, macros):
     # fetch existing or create new macro definition
     macro = macros.get(name, Macro())
     # append current filestack to history
-    macro.history.append(filestack)
+    macro.history.append(deepcopy(filestack))
     macro.body = elt
 
     # parse params and their defaults
@@ -861,6 +848,8 @@ def handle_macro_call(node, macros, symbols):
             return handle_dynamic_macro_call(node, macros, symbols)
         return False  # no macro
 
+    macrostack.append(m)
+
     # Expand the macro
     scoped = Table(symbols)  # new local name space for macro evaluation
     params = m.params[:]  # deep copy macro's params list
@@ -901,19 +890,13 @@ def handle_macro_call(node, macros, symbols):
     if params:
         raise XacroException("Undefined parameters [%s]" % ",".join(params), macro=m)
 
-    try:
-        eval_all(body, macros, scoped)
-    except Exception as e:
-        # fill in macro call history for nice error reporting
-        if hasattr(e, 'macros'):
-            e.macros.append(m)
-        else:
-            e.macros = [m]
-        raise
+    eval_all(body, macros, scoped)
 
     # Replaces the macro node with the expansion
     remove_previous_comments(node)
     replace_node(node, by=body, content_only=True)
+
+    macrostack.pop()
     return True
 
 
@@ -1116,7 +1099,8 @@ def process_doc(doc,
     allow_non_prefixed_tags = xacro_ns
 
     # if not yet defined: initialize filestack
-    if not filestack: restore_filestack([None])
+    if not filestack:
+        init_stacks(None)
 
     # inorder processing requires to process the whole document for deps too
     # because filenames might be specified via properties or macro parameters
@@ -1169,25 +1153,24 @@ def open_output(output_filename):
             raise XacroException("Failed to open output:", exc=e)
 
 
-def print_location(filestack, err=None, file=sys.stderr):
-    macros = getattr(err, 'macros', []) if err else []
+def print_location():
     msg = 'when instantiating macro:'
-    for m in macros:
+    for m in reversed(macrostack):
         name = m.body.getAttribute('name')
-        location = '(%s)' % m.history[-1][-1]
-        print(msg, name, location, file=file)
+        location = '({file})'.format(file = m.history[-1][-1] or '???')
+        print(msg, name, location, file=sys.stderr)
         msg = 'instantiated from:'
 
-    msg = 'in file:' if macros else 'when processing file:'
+    msg = 'in file:' if macrostack else 'when processing file:'
     for f in reversed(filestack):
         if f is None: f = 'string'
-        print(msg, f, file=file)
+        print(msg, f, file=sys.stderr)
         msg = 'included from:'
 
 def process_file(input_file_name, **kwargs):
     """main processing pipeline"""
     # initialize file stack for error-reporting
-    restore_filestack([input_file_name])
+    init_stacks(input_file_name)
     # parse the document into a xml.dom tree
     doc = parse(None, input_file_name)
     # perform macro replacement
@@ -1221,7 +1204,7 @@ def main():
     except xml.parsers.expat.ExpatError as e:
         error("XML parsing error: %s" % unicode(e), alt_text=None)
         if verbosity > 0:
-            print_location(filestack, e)
+            print_location()
             print(file=sys.stderr) # add empty separator line before error
             print("Check that:", file=sys.stderr)
             print(" - Your XML is well-formed", file=sys.stderr)
@@ -1234,7 +1217,7 @@ def main():
         if not msg: msg = repr(e)
         error(msg)
         if verbosity > 0:
-            print_location(filestack, e)
+            print_location()
         if verbosity > 1:
             print(file=sys.stderr)  # add empty separator line before error
             raise  # create stack trace

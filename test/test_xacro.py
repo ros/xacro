@@ -160,6 +160,12 @@ def capture_stderr(function, *args, **kwargs):
   sys.stderr = old  # restore sys.stderr
 
 
+class TestUtils(unittest.TestCase):
+    def test_capture_stderr(self, *args, **kwargs):
+        with capture_stderr(xacro.error, 'Hello World', alt_text='') as (result, output):
+            self.assertEqual(output, 'Hello World\n')
+
+
 class TestMatchXML(unittest.TestCase):
     def test_normalize_whitespace_text(self):
         self.assertTrue(text_matches("", " \t\n\r"))
@@ -275,6 +281,7 @@ class TestXacroBase(unittest.TestCase):
         args.update(kwargs)  # explicit function args have highest priority
 
         doc = xacro.parse(xml)
+        xacro.filestack = None  # Reset filestack
         xacro.process_doc(doc, **args)
         return doc
 
@@ -1128,6 +1135,20 @@ class TestXacro(TestXacroCommentsIgnored):
               self.assert_matches(result, res)
               self.assertTrue('colored text 2 3.14' in output)
         self.assertRaises(xacro.XacroException, self.quick_xacro, src.format(f='fatal'))
+
+    def test_error_reporting(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+        <xacro:include filename="raise.xacro"/>
+        <xacro:outer/>
+        </a>'''
+        with self.assertRaises(xacro.XacroException):
+            self.quick_xacro(src)
+        with capture_stderr(xacro.print_location) as (_, output):
+            expected = '''when instantiating macro: inner ({file})
+instantiated from: outer ({file})
+in file: string
+'''.format(file="./raise.xacro" if self.in_order else "???")
+            self.assertEqual(output, expected)
 
 # test class for in-order processing
 class TestXacroInorder(TestXacro):
