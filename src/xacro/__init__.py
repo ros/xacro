@@ -683,7 +683,7 @@ def grab_property(elt, table):
     assert(elt.tagName in ['property', 'xacro:property'])
     remove_previous_comments(elt)
 
-    name, value, default, scope, greedy = check_attrs(elt, ['name'], ['value', 'default', 'scope', 'greedy'])
+    name, value, default, scope, lazy_eval = check_attrs(elt, ['name'], ['value', 'default', 'scope', 'lazy_eval'])
     if not is_valid_name(name):
         raise XacroException('Property names must be valid python identifiers: ' + name)
     if name.startswith('__'):
@@ -706,24 +706,26 @@ def grab_property(elt, table):
 
     replace_node(elt, by=None)
 
+    # We use lazy evaluation by default
+    lazy_eval = get_boolean_value(eval_text(lazy_eval or 'true', table), lazy_eval)
+
     if scope and scope == 'global':
         target_table = table.root()
-        unevaluated = False
+        lazy_eval = False
     elif scope and scope == 'parent':
         if table.parent:
             target_table = table.parent
-            unevaluated = False
+            lazy_eval = False
         else:
             warning("%s: no parent scope at global scope " % name)
             return # cannot store the value, no reason to evaluate it
     else:
         target_table = table
-        unevaluated = not get_boolean_value(eval_text(greedy or 'false', table), greedy)
 
-    if not unevaluated and isinstance(value, _basestr):
-        value = eval_text(value, table)
+    if not lazy_eval and isinstance(value, _basestr):
+        value = eval_text(value, table)  # greedily eval value
 
-    target_table._setitem(name, value, unevaluated=unevaluated)
+    target_table._setitem(name, value, unevaluated=lazy_eval)
 
 
 # Fill the table of the properties
