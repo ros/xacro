@@ -793,13 +793,23 @@ class TestXacro(TestXacroCommentsIgnored):
 </robot>''')
 
     def test_recursive_definition(self):
-        self.assertRaises(xacro.XacroException,
-                          self.quick_xacro, '''\
+        with self.assertRaises(xacro.XacroException) as cm:
+            self.quick_xacro('''
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
   <xacro:property name="a" value="${a2}"/>
   <xacro:property name="a2" value="${2*a}"/>
   <a doubled="${a2}"/>
 </robot>''')
+        msg = str(cm.exception)
+        self.assertTrue(msg.startswith('circular variable definition: a2 -> a -> a2\n'
+                                       'Consider disabling lazy evaluation via lazy_eval="false"'))
+
+    def test_greedy_property_evaluation(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+        <xacro:property name="s" value="AbCd"/>
+        <xacro:property name="s" value="${s.lower()}" lazy_eval="false"/>
+        ${s}</a>'''
+        self.assert_matches(self.quick_xacro(src), '<a>abcd</a>')
 
     def test_multiple_recursive_evaluation(self):
         self.assert_matches(self.quick_xacro('''\
