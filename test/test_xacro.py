@@ -801,6 +801,13 @@ class TestXacro(TestXacroCommentsIgnored):
   <a doubled="${a2}"/>
 </robot>''')
 
+    def test_greedy_property_evaluation(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+        <xacro:property name="s" value="AbCd"/>
+        <xacro:property name="s" value="${s.lower()}" lazy_eval="false"/>
+        ${s}</a>'''
+        self.assert_matches(self.quick_xacro(src), '<a>abcd</a>')
+
     def test_multiple_recursive_evaluation(self):
         self.assert_matches(self.quick_xacro('''\
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
