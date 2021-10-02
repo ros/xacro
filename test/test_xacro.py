@@ -1108,6 +1108,15 @@ class TestXacro(TestXacroCommentsIgnored):
         res='''<a><b/></a>'''
         self.assert_matches(self.quick_xacro(src), res)
 
+    def test_message_functions(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">${{xacro.{f}('colored', 'text', 2, 3.14)}}</a>'''
+        res = '''<a/>'''
+        for f in ['message', 'warning', 'error']:
+          with capture_stderr(self.quick_xacro, src.format(f=f)) as (result, output):
+              self.assert_matches(result, res)
+              self.assertTrue('colored text 2 3.14' in output)
+        self.assertRaises(xacro.XacroException, self.quick_xacro, src.format(f='fatal'))
+
 # test class for in-order processing
 class TestXacroInorder(TestXacro):
     def __init__(self, *args, **kwargs):

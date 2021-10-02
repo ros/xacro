@@ -205,6 +205,20 @@ def create_global_symbols():
     expose(load_yaml=load_yaml, abs_filename=abs_filename_spec, dotify=YamlDictWrapper,
            ns='xacro', deprecate_msg=deprecate_msg)
 
+    def message_adapter(f):
+        def wrapper(*args, **kwargs):
+            kwargs.update(file=sys.stderr)
+            f(*args, **kwargs)
+            return ''  # Return empty string instead of None
+        return wrapper
+
+    def fatal(*args):
+        raise XacroException(' '.join(map(str, args)))
+
+    # Expose xacro's message functions
+    expose([(f.__name__, message_adapter(f)) for f in [message, warning, error]], ns='xacro')
+    expose(fatal=fatal, ns='xacro')
+
     return result
 
 
