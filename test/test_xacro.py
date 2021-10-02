@@ -301,6 +301,13 @@ class TestXacro(TestXacroCommentsIgnored):
         <xacro:property name="invalid.name"/></a>'''
         self.assertRaises(xacro.XacroException, self.quick_xacro, src)
 
+    def test_double_underscore_property_name_raises(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+        <xacro:property name="__hidden"/></a>'''
+        with self.assertRaises(xacro.XacroException) as cm:
+            self.quick_xacro(src)
+        self.assertEqual(str(cm.exception), 'Property names must not start with double underscore:__hidden')
+
     def test_dynamic_macro_names(self):
         src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
   <xacro:macro name="foo"><a>foo</a></xacro:macro>

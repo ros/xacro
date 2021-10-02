@@ -630,6 +630,8 @@ def grab_property(elt, table):
     name, value, default, scope = check_attrs(elt, ['name'], ['value', 'default', 'scope'])
     if not is_valid_name(name):
         raise XacroException('Property names must be valid python identifiers: ' + name)
+    if name.startswith('__'):
+        raise XacroException('Property names must not start with double underscore:' + name)
     if value is not None and default is not None:
         raise XacroException('Property cannot define both a default and a value: ' + name)
 
