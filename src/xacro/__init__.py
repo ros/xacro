@@ -357,8 +357,9 @@ class Table(object):
         # lazy evaluation
         if key in self.unevaluated:
             if key in self.recursive:
-                raise XacroException("recursive variable definition: %s" %
-                                     " -> ".join(self.recursive + [key]))
+                raise XacroException('circular variable definition: {}\n'
+                                     'Consider disabling lazy evaluation via lazy_eval="false"'
+                                     .format(" -> ".join(self.recursive + [key])))
             self.recursive.append(key)
             self.table[key] = self._eval_literal(eval_text(self.table[key], self))
             self.unevaluated.remove(key)
