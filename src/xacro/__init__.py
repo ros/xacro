@@ -894,8 +894,11 @@ def handle_macro_call(node, macros, symbols):
 
     eval_all(body, macros, scoped)
 
-    # Replaces the macro node with the expansion
+    # Remove any comments directly before the macro call
     remove_previous_comments(node)
+    # Lift all namespace attributes from the expanded body node to node's parent
+    import_xml_namespaces(node.parentNode, body.attributes)
+    # Replaces the macro node with the expansion
     replace_node(node, by=body, content_only=True)
 
     macrostack.pop()

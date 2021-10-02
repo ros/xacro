@@ -1157,6 +1157,17 @@ in file: string
 '''.format(file="./raise.xacro" if self.in_order else "???")
             self.assertEqual(output, expected)
 
+    def test_xml_namespace_lifting(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro" xmlns:a="http://www.ros.org/a">
+  <xacro:macro name="test">
+    <xacro:include filename="namespace.xml"></xacro:include>
+  </xacro:macro>
+  <xacro:test />
+</a>'''
+        res = '''<a xmlns:a="http://www.ros.org/a" xmlns:b="http://www.ros.org/b" />'''
+        self.assert_matches(self.quick_xacro(src), res)
+
+
 # test class for in-order processing
 class TestXacroInorder(TestXacro):
     def __init__(self, *args, **kwargs):
