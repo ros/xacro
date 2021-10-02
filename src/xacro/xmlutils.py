@@ -32,6 +32,7 @@
 
 import xml.dom.minidom
 
+
 def first_child_element(elt):
     c = elt.firstChild
     while c and c.nodeType != xml.dom.Node.ELEMENT_NODE:
@@ -115,8 +116,7 @@ def fixed_writexml(self, writer, indent="", addindent="", newl=""):
     writer.write(indent + "<" + self.tagName)
 
     attrs = self._get_attributes()
-    a_names = list(attrs.keys())
-    a_names.sort()
+    a_names = sorted(attrs.keys())
 
     for a_name in a_names:
         writer.write(" %s=\"" % a_name)
@@ -139,5 +139,7 @@ def fixed_writexml(self, writer, indent="", addindent="", newl=""):
         writer.write("%s</%s>%s" % (indent, self.tagName, newl))
     else:
         writer.write("/>%s" % newl)
+
+
 # replace minidom's function with ours
 xml.dom.minidom.Element.writexml = fixed_writexml
