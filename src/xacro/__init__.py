@@ -208,8 +208,11 @@ def create_global_symbols():
 
     def message_adapter(f):
         def wrapper(*args, **kwargs):
+            location = kwargs.pop('print_location', f.__name__ in ['warning', 'error'])
             kwargs.pop('file', None)  # Don't forward a file argument
             f(*args, **kwargs)
+            if location:
+                print_location()
             return ''  # Return empty string instead of None
         return wrapper
 
