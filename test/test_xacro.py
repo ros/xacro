@@ -1481,7 +1481,7 @@ ${u'🍔' * how_many}
         template = '<a xmlns:xacro="http://www.ros.org/wiki/xacro"><xacro:property name="p" {} /> ${{p}} </a>'
 
         def check(attributes, expected, **kwargs):
-            with self.subTest(msg='Checking ' + attributes):
+            # with self.subTest(msg='Checking ' + attributes):
                 with self.assertRaises(xacro.XacroException) as cm:
                     self.quick_xacro(template.format(attributes), **kwargs)
                 self.assertEqual(str(cm.exception), expected)
