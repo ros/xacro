@@ -446,7 +446,10 @@ class Table(object):
 class NameSpace(object):
     # dot access (namespace.property) is forwarded to getitem()
     def __getattr__(self, item):
-        return self.__getitem__(item)
+        try:
+            return self.__getitem__(item)
+        except KeyError:
+            raise NameError("name '{}' is not defined".format(item))
 
 
 class PropertyNameSpace(Table, NameSpace):
