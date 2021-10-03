@@ -32,17 +32,19 @@
 
 from __future__ import print_function, division
 
+import ast
 import glob
+import math
 import os
 import re
 import sys
-import ast
-import math
+import xml.dom.minidom
 
 from copy import deepcopy
-from .color import warning, error, message
-from .xmlutils import *
 from .cli import process_args
+from .color import error, message, warning
+from .xmlutils import opt_attrs, reqd_attrs, first_child_element, \
+    next_sibling_element, replace_node
 
 
 try:  # python 2
@@ -100,7 +102,6 @@ class YamlListWrapper(list):
 
 class YamlDictWrapper(dict):
     """Wrapper class providing dotted access to dict items"""
-
     def __getattr__(self, item):
         try:
             return YamlListWrapper.wrap(super(YamlDictWrapper, self).__getitem__(item))
@@ -129,7 +130,7 @@ def load_yaml(filename):
         import yaml
         yaml.SafeLoader.add_constructor(u'!radians', construct_angle_radians)
         yaml.SafeLoader.add_constructor(u'!degrees', construct_angle_degrees)
-    except:
+    except Exception:
         raise XacroException("yaml support not available; install python-yaml")
 
     filename = abs_filename_spec(filename)
@@ -227,7 +228,7 @@ def safe_eval(expr, globals, locals=None):
     invalid_names = [n for n in code.co_names if n.startswith("__")]
     if invalid_names:
         raise XacroException("Use of invalid name(s): ", ', '.join(invalid_names))
-    globals.update(__builtins__={})  # disable default builtins
+    globals.update(__builtins__= {})  # disable default builtins
     return eval(code, globals, locals)
 
 
@@ -489,7 +490,6 @@ class QuickLexer(object):
 
 
 all_includes = []
-
 include_no_matches_msg = """Include tag's filename spec \"{}\" matched no files."""
 
 
