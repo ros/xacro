@@ -711,6 +711,7 @@ def grab_property(elt, table):
 
     name, value, default, remove, scope, lazy_eval = \
         check_attrs(elt, ['name'], ['value', 'default', 'remove', 'scope', 'lazy_eval'])
+    name = eval_text(name, table)  # Allow name to be evaluated from expression
     if not is_valid_name(name):
         raise XacroException('Property names must be valid python identifiers: ' + name)
     if name.startswith('__'):
