@@ -410,6 +410,13 @@ class Table(object):
     def __setitem__(self, key, value):
         self._setitem(key, value, unevaluated=True)
 
+    def __delitem__(self, key):
+        # Remove all items up to root
+        p = self
+        while p is not None:
+            p.table.pop(key, None)
+            p = p.parent
+
     def __contains__(self, key):
         return \
             key in self.table or \
@@ -693,13 +700,20 @@ def grab_property(elt, table):
     assert(elt.tagName in ['property', 'xacro:property'])
     remove_previous_comments(elt)
 
-    name, value, default, scope, lazy_eval = check_attrs(elt, ['name'], ['value', 'default', 'scope', 'lazy_eval'])
+    name, value, default, remove, scope, lazy_eval = \
+        check_attrs(elt, ['name'], ['value', 'default', 'remove', 'scope', 'lazy_eval'])
     if not is_valid_name(name):
         raise XacroException('Property names must be valid python identifiers: ' + name)
     if name.startswith('__'):
         raise XacroException('Property names must not start with double underscore:' + name)
-    if value is not None and default is not None:
-        raise XacroException('Property cannot define both a default and a value: ' + name)
+    remove = get_boolean_value(eval_text(remove or 'false', table), remove)
+    if sum([value is not None, default is not None, remove]) > 1:
+        raise XacroException('Property attributes default, value, and remove are mutually exclusive: ' + name)
+
+    if remove and name in table:
+        del table[name]
+        replace_node(elt, by=None)
+        return
 
     if default is not None:
         if scope is not None:

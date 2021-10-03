@@ -1477,6 +1477,14 @@ ${u'🍔' * how_many}
         self.assertRaises(xacro.XacroException, self.quick_xacro, '<a>a$(</a>')
         self.assertRaises(xacro.XacroException, self.quick_xacro, '<a>$(b</a>')
 
+    def test_remove_property(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+	<xacro:property name="p" default="1st" />
+	<xacro:property name="p" remove="true" />
+	<xacro:property name="p" default="2nd" />
+	${p}</a>'''
+        self.assert_matches(self.quick_xacro(src), '<a>2nd</a>')
+
 
 if __name__ == '__main__':
     unittest.main()
