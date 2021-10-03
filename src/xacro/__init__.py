@@ -192,14 +192,17 @@ def create_global_symbols():
             result.update(addons)  # Import directly
 
     deprecate_msg = 'Using {name}() directly is deprecated. Use {ns}.{name}() instead.'
-    # Expose some basic symbols directly
+    # This is the list of symbols we have exposed for years now. Continue exposing them directly
     expose('list', 'dict', 'map', 'len', 'str', 'float', 'int', 'True', 'False', 'min', 'max', 'round',
            source=__builtins__)
-    # More seldomly used symbols go into namespace python
+    # These few were only recently added. The should move into python namespace, but (with a deprecation msg) stay global for now
     expose('sorted', 'range', source=__builtins__, ns='python', deprecate_msg=deprecate_msg)
-    expose('any', 'sum', 'isinstance', source=__builtins__, ns='python')
+    # Expose all builtin symbols into the python namespace. Thus the stay accessible if the global symbol was overriden
+    expose('list', 'dict', 'map', 'len', 'str', 'float', 'int', 'True', 'False', 'min', 'max', 'round',
+           'all', 'any', 'complex', 'divmod', 'enumerate', 'filter', 'frozenset', 'hash', 'isinstance', 'issubclass',
+           'ord', 'repr', 'reversed', 'slice', 'set', 'sum', 'tuple', 'type', 'zip', source=__builtins__, ns='python')
 
-    # Expose all math symbols and functions into namespace math (and directly for backwards compatibility)
+    # Expose all math symbols and functions into namespace math (and directly for backwards compatibility -- w/o deprecation)
     expose([(k, v) for k, v in math.__dict__.items() if not k.startswith('_')], ns='math', deprecate_msg='')
 
     # Expose load_yaml, abs_filename, and dotify into namespace xacro (and directly with deprecation)
