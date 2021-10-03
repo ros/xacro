@@ -759,8 +759,9 @@ def grab_properties(elt, table):
         next = next_sibling_element(elt)
         if elt.tagName in ['property', 'xacro:property'] \
                 and check_deprecated_tag(elt.tagName):
-            if "default" in elt.attributes.keys():
-                raise XacroException('default property value supported with in-order option only')
+            for name in ['default', 'remove']:
+                if name in elt.attributes.keys():
+                    raise XacroException('Property attribute {} supported with in-order option only'.format(name))
             grab_property(elt, table)
         else:
             grab_properties(elt, table)

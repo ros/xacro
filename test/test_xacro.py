@@ -1477,6 +1477,25 @@ ${u'🍔' * how_many}
         self.assertRaises(xacro.XacroException, self.quick_xacro, '<a>a$(</a>')
         self.assertRaises(xacro.XacroException, self.quick_xacro, '<a>$(b</a>')
 
+    def test_invalid_property_definitions(self):
+        template = '<a xmlns:xacro="http://www.ros.org/wiki/xacro"><xacro:property name="p" {} /> ${{p}} </a>'
+
+        def check(attributes, expected, **kwargs):
+            with self.subTest(msg='Checking ' + attributes):
+                with self.assertRaises(xacro.XacroException) as cm:
+                    self.quick_xacro(template.format(attributes), **kwargs)
+                self.assertEqual(str(cm.exception), expected)
+
+        expected = 'Property attributes default, value, and remove are mutually exclusive: p'
+        check('value="" default=""', expected)
+        check('value="" remove="true"', expected)
+        check('default="" remove="true"', expected)
+        self.assert_matches(self.quick_xacro(template.format('default="42" remove="false"')), '<a>42</a>')
+
+        expected = 'Property attribute {} supported with in-order option only'
+        for name in ['default', 'remove']:
+            check('{}="1"'.format(name), expected.format(name), in_order=False)
+
     def test_remove_property(self):
         src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
 	<xacro:property name="p" default="1st" />
