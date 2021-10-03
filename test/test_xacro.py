@@ -47,12 +47,20 @@ import subprocess
 import re
 import ast
 import math
+from contextlib import contextmanager
+
 try:
     from cStringIO import StringIO  # Python 2.x
 except ImportError:
     from io import StringIO  # Python 3.x
-from contextlib import contextmanager
 
+try:
+    from unittest import subTest
+except ImportError:
+    # subTest was introduced in 3.4 only. Provide a dummy fallback.
+    @contextmanager
+    def subTest(msg):
+        yield None
 
 # regex to match whitespace
 whitespace = re.compile(r'\s+')
@@ -1481,7 +1489,7 @@ ${u'🍔' * how_many}
         template = '<a xmlns:xacro="http://www.ros.org/wiki/xacro"><xacro:property name="p" {} /> ${{p}} </a>'
 
         def check(attributes, expected, **kwargs):
-            # with self.subTest(msg='Checking ' + attributes):
+            with subTest(msg='Checking ' + attributes):
                 with self.assertRaises(xacro.XacroException) as cm:
                     self.quick_xacro(template.format(attributes), **kwargs)
                 self.assertEqual(str(cm.exception), expected)
