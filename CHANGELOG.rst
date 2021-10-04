@@ -2,6 +2,49 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.14.10 (2021-10-02)
+--------------------
+* Allow property names to be evaluated from an expression
+  This allows to turn macros into a function that can compute an arbitrary property::
+
+    <xacro:macro name="square" params="name args">
+      <!-- Perform some complex computation and set the property within the parent's scope -->
+      <xacro:property name="${name}" value="${[float(x)**2 for x in args]}" scope="parent" />
+    </xacro:macro>
+    <xacro:square name="result" args="${python.range(5)}" />
+
+* Fix error reporting for invalid symbols in NameSpaces
+* Allow removal of a property definition (`#288 <https://github.com/ros/xacro/issues/288>`_)
+
+     <xacro:property name="prop" remove="true"/>
+
+* Allow greedy property evaluation (`#284 <https://github.com/ros/xacro/issues/284>`_)
+  This can be used, to redefine a property from its previous value, e.g. for normalization::
+
+     <xacro:property name="prop" value="${prop.lower()}" lazy_eval="false"/>
+
+* Correctly expose XML namespaces imported via ``xacro:include`` within a macro (`#287 <https://github.com/ros/xacro/issues/287>`_)
+* Throw when attempting to declare a property starting with *double* underscore (`#286 <https://github.com/ros/xacro/issues/286>`_)
+* Improve global symbols (`#283 <https://github.com/ros/xacro/issues/283>`_)
+
+  * Expose most builtin symbols of python
+  * Expose xacro functions into ``xacro`` namespace
+
+    * ``xacro.print_location()`` to print the current filestack
+    * ``tokenize(string, sep=',; ', skip_empty=True)`` to facilitate string tokenization
+    * ``message()``, ``warning()``, ``error()``, and ``fatal()`` to output messages on ``stderr``.
+      All but ``message()`` print the error location (macro call and file hierarchy) by default::
+
+      ${xacro.message('message', 'text', 2, 3.14, color=32, print_location=True)}
+      ${xacro.warning('warning')}
+      ${xacro.error('error', print_location=False)}
+      ${xacro.fatal('fatal')}
+
+  * Rework handling of file and macro stack, such that print_location() works from anywhere
+  * Unit tests: Reduce reported ``stdout``/``stderr`` output
+  * Rework definition of ``global_symbols`` to expose functions into namespaces python, math, xacro
+* Contributors: Robert Haschke
+
 1.14.9 (2021-09-03)
 -------------------
 * Allow more builtin symbols: sorted, set
@@ -235,8 +278,9 @@ Changelog for package xacro
 
 1.10.3 (2015-06-16)
 -------------------
-* deprecate --oldorder processing
-* added --check-order option to do a simple check for --inorder compatibility
+* deprecate ``--oldorder`` processing
+* added ``--check-order`` option to do a simple check for ``--inorder`` compatibility
+
   - Most probable incompatibility is redefining a property after its usage.
   - tested and reported with file location of (first) redefinition after usage.
 * moved command line processing to cli.py
@@ -289,6 +333,7 @@ Changelog for package xacro
   allows to include the former.
 * unittest: test_ignore_xacro_comments()
 * improved processing
+
   - recursive (instead of iterative) eval_all()
   - reusable process_include()
   - replace_node() function to replace xacro tag by some other content
@@ -300,6 +345,7 @@ Changelog for package xacro
 * replaced strip()=='' by more efficient isspace()
 * allow transitive definition of substition args
 * fixed evaluation of literals in property definitions
+
   - literals with preceding whitespace will be silently stripped (#83)
   - more complex evaluation test (perturbing spaces added)
 * fixed xacro namespaces in pr2 files to get rid of new inconsistency warning
