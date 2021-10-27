@@ -208,6 +208,7 @@ def create_global_symbols():
     # Expose load_yaml, abs_filename, and dotify into namespace xacro (and directly with deprecation)
     expose(load_yaml=load_yaml, abs_filename=abs_filename_spec, dotify=YamlDictWrapper,
            ns='xacro', deprecate_msg=deprecate_msg)
+    expose(arg=lambda name: substitution_args_context['arg'][name], ns='xacro')
 
     def message_adapter(f):
         def wrapper(*args, **kwargs):
@@ -1142,8 +1143,9 @@ def process_doc(doc,
     do_check_order = kwargs.get('do_check_order', do_check_order)
 
     # set substitution args
-    if mappings is not None:
-        substitution_args_context['arg'] = mappings
+    if mappings is None:
+        mappings = {}
+    substitution_args_context['arg'] = mappings
 
     global allow_non_prefixed_tags
     allow_non_prefixed_tags = xacro_ns
