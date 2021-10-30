@@ -857,7 +857,7 @@ def resolve_macro(fullname, macros):
         # traverse namespaces to actual macros dict
         for ns in namespaces:
             macros = macros[ns]
-        return macros[name]
+        return macros, macros[name]
 
     # try fullname and (namespaces, name) in this order
     try:
@@ -878,7 +878,7 @@ def handle_macro_call(node, macros, symbols):
         return False
 
     try:
-        m = resolve_macro(name, macros)
+        macros, m = resolve_macro(name, macros)
         if name is node.tagName:  # no xacro prefix provided?
             deprecated_tag(name)
         body = m.body.cloneNode(deep=True)
