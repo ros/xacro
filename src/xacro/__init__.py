@@ -1098,8 +1098,7 @@ def eval_all(node, macros, symbols):
 
                 eval_all(node, macros, symbols)
 
-        # TODO: Also evaluate content of COMMENT_NODEs?
-        elif node.nodeType == xml.dom.Node.TEXT_NODE:
+        elif node.nodeType == xml.dom.Node.TEXT_NODE or node.nodeType == xml.dom.Node.COMMENT_NODE:
             node.data = unicode(eval_text(node.data, symbols))
 
         node = next

@@ -43,11 +43,6 @@
       </collision>
     </link>
 
-    <!-- plugin for updating structure pose \
-    <xacro:kinect_prosilica_gazebo joint_name="${name}_kinect_prosilica_joint"
-                                   link_name="${name}_kinect_prosilica_link" />
-    -->
-
     <!-- kinect ir sensor physical attachment -->
     <joint name="${name}_kinect_ir_joint" type="fixed">
       <origin xyz="-0.032267 0.0125 0.136453" rpy="0 0 0"/>

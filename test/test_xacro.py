@@ -1223,6 +1223,13 @@ in file: string
         res = '''<a xmlns:a="http://www.ros.org/a" xmlns:b="http://www.ros.org/b" />'''
         self.assert_matches(self.quick_xacro(src), res)
 
+    def test_comments(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+        <xacro:property name="name" value="foo"/>
+        <!-- ${name} --></a>'''
+        res = '''<a><!-- foo --></a>'''
+        self.assert_matches(self.quick_xacro(src), res)
+
 
 # test class for in-order processing
 class TestXacroInorder(TestXacro):
