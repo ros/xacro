@@ -268,9 +268,9 @@ class TestXacroFunctions(unittest.TestCase):
         macros = dict(content)
         macros.update(ns1=ns1)
 
-        self.assertEqual(xacro.resolve_macro('simple', macros), 'simple')
-        self.assertEqual(xacro.resolve_macro('ns1.simple', macros), 'simple1')
-        self.assertEqual(xacro.resolve_macro('ns1.ns2.simple', macros), 'simple2')
+        self.assertEqual(xacro.resolve_macro('simple', macros), (macros, 'simple'))
+        self.assertEqual(xacro.resolve_macro('ns1.simple', macros), (ns1, 'simple1'))
+        self.assertEqual(xacro.resolve_macro('ns1.ns2.simple', macros), (ns2, 'simple2'))
 
     def check_macro_arg(self, s, param, forward, default, rest):
         p, v, r = xacro.parse_macro_arg(s)
