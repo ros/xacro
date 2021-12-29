@@ -10,8 +10,10 @@ install(FILES scripts/completion.bash DESTINATION share/${PROJECT_NAME}/environm
 ament_python_install_package(${PROJECT_NAME} SCRIPTS_DESTINATION lib/${PROJECT_NAME})
 
 # install entry-point script(s) in bin as well
-install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/ament_cmake_python/${PROJECT_NAME}/scripts/xacro
-        DESTINATION bin)
+install(
+    DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/ament_cmake_python/${PROJECT_NAME}/scripts/
+    DESTINATION bin/
+    USE_SOURCE_PERMISSIONS)
 
 if(BUILD_TESTING)
   ## run linters as defined in package.xml
