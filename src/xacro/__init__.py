@@ -848,23 +848,24 @@ def handle_dynamic_macro_call(node, macros, symbols):
         raise XacroException("unknown macro name '%s' in xacro:call" % name)
 
 
-def resolve_macro(fullname, macros):
+def resolve_macro(fullname, macros, symbols):
     # split name into namespaces and real name
     namespaces = fullname.split('.')
     name = namespaces.pop(-1)
 
-    def _resolve(namespaces, name, macros):
-        # traverse namespaces to actual macros dict
+    def _resolve(namespaces, name, macros, symbols):
+        # traverse namespaces to actual macros+symbols dicts
         for ns in namespaces:
             macros = macros[ns]
-        return macros, macros[name]
+            symbols = symbols[ns]
+        return macros, symbols, macros[name]
 
     # try fullname and (namespaces, name) in this order
     try:
-        return _resolve([], fullname, macros)
+        return _resolve([], fullname, macros, symbols)
     except KeyError:
         if namespaces:
-            return _resolve(namespaces, name, macros)
+            return _resolve(namespaces, name, macros, symbols)
         else:
             raise
 
@@ -878,7 +879,7 @@ def handle_macro_call(node, macros, symbols):
         return False
 
     try:
-        macros, m = resolve_macro(name, macros)
+        macros, symbols, m = resolve_macro(name, macros, symbols)
         if name is node.tagName:  # no xacro prefix provided?
             deprecated_tag(name)
         body = m.body.cloneNode(deep=True)

@@ -260,17 +260,17 @@ class TestXacroFunctions(unittest.TestCase):
         self.assertFalse(xacro.is_valid_name('invalid.too'))  # dot separates fields
 
     def test_resolve_macro(self):
-        # define three nested macro dicts with the same macro names (keys)
+        # define three nested dicts with the same names (keys)
         content = {'simple': 'simple'}
         ns2 = dict({k: v + '2' for k, v in content.items()})
         ns1 = dict({k: v + '1' for k, v in content.items()})
         ns1.update(ns2=ns2)
-        macros = dict(content)
-        macros.update(ns1=ns1)
+        ns = dict(content)
+        ns.update(ns1=ns1)
 
-        self.assertEqual(xacro.resolve_macro('simple', macros), (macros, 'simple'))
-        self.assertEqual(xacro.resolve_macro('ns1.simple', macros), (ns1, 'simple1'))
-        self.assertEqual(xacro.resolve_macro('ns1.ns2.simple', macros), (ns2, 'simple2'))
+        self.assertEqual(xacro.resolve_macro('simple', ns, ns), (ns, ns, 'simple'))
+        self.assertEqual(xacro.resolve_macro('ns1.simple', ns, ns), (ns1, ns1, 'simple1'))
+        self.assertEqual(xacro.resolve_macro('ns1.ns2.simple', ns, ns), (ns2, ns2, 'simple2'))
 
     def check_macro_arg(self, s, param, forward, default, rest):
         p, v, r = xacro.parse_macro_arg(s)
@@ -1283,6 +1283,12 @@ included from: string
       <xacro:foo file="$(cwd)/subdir/include1.xml"/>
     </a>'''
         res = '''<a><inc1/><inc1/><subdir_inc1/><subdir_inc1/></a>'''
+        self.assert_matches(self.quick_xacro(src), res)
+
+    def test_namespace_propagation(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+          <xacro:include filename="include3.xacro" ns="C"/><xacro:C.foo/></a>'''
+        res = '''<a><inc3 included="inner"/><inner/></a>'''
         self.assert_matches(self.quick_xacro(src), res)
 
     def test_dotify(self):
