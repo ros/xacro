@@ -182,7 +182,7 @@ def create_global_symbols():
             try:  # Retrieve namespace target dict
                 target = result[ns]
             except KeyError:  # or create if not existing yet
-                target = MacroNameSpace()
+                target = NameSpace()
                 result.update([(ns, target)])
             target.update(addons)  # Populate target dict
 
@@ -407,23 +407,16 @@ class Table(dict):
         return p
 
 
-class NameSpace(object):
+class NameSpace(Table):
+    def __init__(self, parent=None):
+        super(NameSpace, self).__init__(parent)
+
     # dot access (namespace.property) is forwarded to getitem()
     def __getattr__(self, item):
         try:
             return self.__getitem__(item)
         except KeyError:
             raise NameError("name '{}' is not defined".format(item))
-
-
-class PropertyNameSpace(Table, NameSpace):
-    def __init__(self, parent=None):
-        super(PropertyNameSpace, self).__init__(parent)
-
-
-class MacroNameSpace(dict, NameSpace):
-    def __init__(self, *args, **kwargs):
-        super(MacroNameSpace, self).__init__(*args, **kwargs)
 
 
 class QuickLexer(object):
@@ -510,8 +503,8 @@ def process_include(elt, macros, symbols, func):
     if namespace_spec:
         try:
             namespace_spec = eval_text(namespace_spec, symbols)
-            macros[namespace_spec] = ns_macros = MacroNameSpace()
-            symbols[namespace_spec] = ns_symbols = PropertyNameSpace()
+            macros[namespace_spec] = ns_macros = NameSpace()
+            symbols[namespace_spec] = ns_symbols = NameSpace()
         except TypeError:
             raise XacroException('namespaces are supported with in-order option only')
     else:
