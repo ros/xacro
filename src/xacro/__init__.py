@@ -830,7 +830,7 @@ def handle_macro_call(node, macros, symbols):
     if params:
         raise XacroException("Undefined parameters [%s]" % ",".join(params), macro=m)
 
-    eval_all(body, macros, scoped_symbols)
+    eval_all(body, scoped_macros, scoped_symbols)
 
     # Remove any comments directly before the macro call
     remove_previous_comments(node)

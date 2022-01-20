@@ -690,6 +690,27 @@ class TestXacro(TestXacroCommentsIgnored):
 </a>'''
         self.assert_matches(self.quick_xacro(src), res)
 
+    def test_macro_has_new_scope(self):
+        src = '''<root xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="prop" value="outer"/>
+  <xacro:macro name="foo">
+    <outer prop="${prop}"/>
+    <xacro:property name="prop" value="inner"/>
+    <xacro:macro name="foo">
+      <inner prop="${prop}"/>
+    </xacro:macro>
+    <xacro:foo/>
+  </xacro:macro>
+  <xacro:foo/>
+  <xacro:foo/>
+</root>'''
+        res = '''<root>
+  <outer prop="outer"/>
+  <inner prop="inner"/>
+  <outer prop="outer"/>
+  <inner prop="inner"/>
+</root>'''
+
     def test_boolean_if_statement(self):
         self.assert_matches(self.quick_xacro('''
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
@@ -1546,10 +1567,10 @@ ${u'🍔' * how_many}
 
     def test_remove_property(self):
         src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
-	<xacro:property name="p" default="1st" />
-	<xacro:property name="p" remove="true" />
-	<xacro:property name="p" default="2nd" />
-	${p}</a>'''
+  <xacro:property name="p" default="1st" />
+  <xacro:property name="p" remove="true" />
+  <xacro:property name="p" default="2nd" />
+  ${p}</a>'''
         self.assert_matches(self.quick_xacro(src), '<a>2nd</a>')
 
 
