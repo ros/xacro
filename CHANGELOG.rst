@@ -2,6 +2,19 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.14.11 (2022-01-20)
+--------------------
+* Fix resolving of macros and properties declared and used in/from a namespace (`#297 <https://github.com/ros/xacro/issues/297>`_, `#306 <https://github.com/ros/xacro/issues/306>`_)
+
+  Macros and properties that are declared within a namespaced include shouldn't require the namespace prefix when used within the namespace.
+* Perform expression evaluation in comments (`#300 <https://github.com/ros/xacro/issues/300>`_)
+* Expose ``xacro.arg()`` to facilitate access to substitution args
+* Fix scoped macro evaluation
+
+  * Replace ``[Macro|Property]NameSpace`` with common ``NameSpace`` class derived from ``Table``
+  * Use the scoped macro Table
+* Contributors: Robert Haschke
+
 1.14.10 (2021-10-02)
 --------------------
 * Allow property names to be evaluated from an expression
