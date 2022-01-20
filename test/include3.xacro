@@ -1,0 +1,8 @@
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+	<xacro:include filename="./inner.xacro" />
+	<xacro:property name="var" value="3"/>
+	<xacro:macro name="foo">
+		<xacro:element xacro:name="inc${var}" included="${included}"/>
+		<xacro:included/>
+	</xacro:macro>
+</a>
