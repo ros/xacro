@@ -2,6 +2,12 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.13.16 (2022-01-30)
+--------------------
+* Issue a warning only for evaluation errors in comments
+* Add LICENSE file
+* Contributors: Robert Haschke
+
 1.13.15 (2022-01-20)
 --------------------
 * Fix resolving of macros and properties declared and used in/from a namespace (`#297 <https://github.com/ros/xacro/issues/297>`_, `#306 <https://github.com/ros/xacro/issues/306>`_)
