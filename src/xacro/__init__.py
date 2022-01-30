@@ -889,7 +889,7 @@ def remove_previous_comments(node):
             return
 
 
-def eval_all(node, macros, symbols):
+def eval_all(node, macros, symbols, comment_warning_issued=[False]):
     """Recursively evaluate node, expanding macros, replacing properties, and evaluating expressions"""
     # evaluate the attributes
     for name, value in node.attributes.items():
@@ -982,8 +982,21 @@ def eval_all(node, macros, symbols):
             else:
                 eval_all(node, macros, symbols)
 
-        elif node.nodeType == xml.dom.Node.TEXT_NODE or node.nodeType == xml.dom.Node.COMMENT_NODE:
+        elif node.nodeType == xml.dom.Node.TEXT_NODE:
             node.data = unicode(eval_text(node.data, symbols))
+        elif node.nodeType == xml.dom.Node.COMMENT_NODE:
+            try:
+                node.data = unicode(eval_text(node.data, symbols))
+            except Exception as e:
+                if not comment_warning_issued[0]:
+                    comment_warning_issued[0] = True
+                    msg = unicode(e)
+                    if not msg:
+                        msg = repr(e)
+                    warning("Error resolving an expression in a comment (skipping evaluation):")
+                    warning(msg)
+                    if verbosity > 0:
+                        print_location()
 
         node = next
 
