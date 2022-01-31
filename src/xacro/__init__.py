@@ -570,7 +570,7 @@ def process_include(elt, macros, symbols, func):
         try:
             namespace_spec = eval_text(namespace_spec, symbols)
             macros[namespace_spec] = ns_macros = MacroNameSpace()
-            symbols[namespace_spec] = ns_symbols = PropertyNameSpace()
+            symbols[namespace_spec] = ns_symbols = PropertyNameSpace(parent=symbols)
         except TypeError:
             raise XacroException('namespaces are supported with in-order option only')
     else:

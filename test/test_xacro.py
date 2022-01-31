@@ -1273,6 +1273,23 @@ included from: string
   </xacro:if>
 </a>'''), '<a/>')
 
+    # https://github.com/ros/xacro/issues/307
+    def test_property_resolution_with_namespaced_include(self):
+      src = '''<a version="1.0" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:include filename="./include2.xacro" ns="B"/>
+  <xacro:property name="ext" value="main"/>
+  <xacro:property name="var" value="main"/>
+  <xacro:B.bar arg="${ext}"/>
+  <xacro:B.bar arg="${var}"/>
+  <xacro:B.bar arg="${inner}"/>
+</a>'''
+      res = '''<a version="1.0">
+  <a arg="main" ext="main" var="2"/>
+  <a arg="2" ext="main" var="2"/>
+  <a arg="int" ext="main" var="2"/>
+</a>'''
+      self.assert_matches(self.quick_xacro(src), res)
+
     def test_include_from_macro(self):
         src = '''
     <a xmlns:xacro="http://www.ros.org/xacro">
