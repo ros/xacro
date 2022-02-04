@@ -1317,6 +1317,25 @@ included from: string
         res = '''<a>3</a>'''
         self.assert_matches(self.quick_xacro(src), res)
 
+    def test_property_scope_parent_namespaced(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="prop" value="root"/>
+  <root prop="${prop}"/>
+
+  <xacro:include filename="A.xacro" ns="A"/>
+  <root prop="${prop}" A.prop="${A.prop}" A.B.prop="${A.B.prop}" />
+
+  <xacro:A.B.set/>
+  <root prop="${prop}"/>
+</a>'''
+        res = '''<a>
+  <root prop="root"/>
+  <A prop="B"/>
+  <root A.B.prop="b" A.prop="B" prop="root"/>
+  <root prop="macro"/>
+</a>'''
+        self.assert_matches(self.quick_xacro(src), res)
+
     def test_yaml_support(self):
         src = '''
 <a xmlns:xacro="http://www.ros.org/wiki/xacro">

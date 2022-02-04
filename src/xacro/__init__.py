@@ -748,9 +748,13 @@ def grab_property(elt, table):
         target_table = table.root()
         lazy_eval = False
     elif scope and scope == 'parent':
-        if table.parent:
+        if table.parent is not None:
             target_table = table.parent
             lazy_eval = False
+            if not isinstance(table, PropertyNameSpace):  # in macro scope
+                # ... skip all namespaces to reach caller's scope
+                while isinstance(target_table, PropertyNameSpace):
+                    target_table = target_table.parent
         else:
             warning("%s: no parent scope at global scope " % name)
             return  # cannot store the value, no reason to evaluate it
