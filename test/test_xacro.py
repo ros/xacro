@@ -37,6 +37,7 @@ from __future__ import print_function
 
 import ast
 from contextlib import contextmanager
+import itertools
 import math
 import os.path
 import re
@@ -1224,11 +1225,26 @@ in file: string
         self.assert_matches(self.quick_xacro(src), res)
 
     def test_comments(self):
+        original = '<!-- ${name} -->'
+        processed = '<!-- foo -->'
+        enabler = '<!-- xacro:eval-comments{suffix} -->'
+        disabler = enabler.format(suffix=":off")
+
         src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
         <xacro:property name="name" value="foo"/>
-        <!-- ${name} --></a>'''
-        res = '''<a><!-- foo --></a>'''
-        self.assert_matches(self.quick_xacro(src), res)
+        {enabler}{comment}{text}{comment}</a>'''
+        result = '<a>{c1}{text}{c2}</a>'
+        for enable, suffix, text in itertools.product([False, True], ["", ":on", ":off"], ["", " ", " text ", "<tag/>", disabler]):
+          src_params = dict(comment=original, text=text,
+                            enabler=enabler.format(suffix=suffix) if enable else "")
+          enabled = enable and suffix != ":off"
+          res_params = dict(c1=processed if enabled else original, text="" if text == disabler else text,
+                            c2=processed if enabled and not text.strip() and text != disabler else original)
+          try:
+            self.assert_matches(self.quick_xacro(src.format(**src_params)), result.format(**res_params))
+          except AssertionError as e:
+            print("When evaluating\n{}".format(src.format(**src_params)))
+            raise
 
 
 # test class for in-order processing
