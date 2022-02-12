@@ -505,7 +505,7 @@ def process_include(elt, macros, symbols, func):
         try:
             namespace_spec = eval_text(namespace_spec, symbols)
             macros[namespace_spec] = ns_macros = NameSpace()
-            symbols[namespace_spec] = ns_symbols = NameSpace()
+            symbols[namespace_spec] = ns_symbols = NameSpace(parent=symbols)
         except TypeError:
             raise XacroException('namespaces are supported with in-order option only')
     else:
@@ -667,6 +667,10 @@ def grab_property(elt, table):
         if table.parent is not None:
             target_table = table.parent
             lazy_eval = False
+            if not isinstance(table, NameSpace):  # in macro scope
+                # ... skip all namespaces to reach caller's scope
+                while isinstance(target_table, NameSpace):
+                    target_table = target_table.parent
         else:
             warning("%s: no parent scope at global scope " % name)
             return  # cannot store the value, no reason to evaluate it
@@ -889,7 +893,7 @@ def remove_previous_comments(node):
             return
 
 
-def eval_all(node, macros, symbols, comment_warning_issued=[False]):
+def eval_all(node, macros, symbols):
     """Recursively evaluate node, expanding macros, replacing properties, and evaluating expressions"""
     # evaluate the attributes
     for name, value in node.attributes.items():
@@ -906,9 +910,11 @@ def eval_all(node, macros, symbols, comment_warning_issued=[False]):
         pass
 
     node = node.firstChild
+    eval_comments = False
     while node:
         next = node.nextSibling
         if node.nodeType == xml.dom.Node.ELEMENT_NODE:
+            eval_comments = False  # any tag automatically disables comment evaluation
             if node.tagName == 'xacro:insert_block':
                 name, = check_attrs(node, ['name'], [])
 
@@ -984,19 +990,17 @@ def eval_all(node, macros, symbols, comment_warning_issued=[False]):
 
         elif node.nodeType == xml.dom.Node.TEXT_NODE:
             node.data = unicode(eval_text(node.data, symbols))
+            if node.data.strip():
+                eval_comments = False # non-empty text disables comment evaluation
+
         elif node.nodeType == xml.dom.Node.COMMENT_NODE:
-            try:
+            if "xacro:eval-comments" in node.data:
+                eval_comments = "xacro:eval-comments:off" not in node.data
+                replace_node(node, by=None) # drop this comment
+            elif eval_comments:
                 node.data = unicode(eval_text(node.data, symbols))
-            except Exception as e:
-                if not comment_warning_issued[0]:
-                    comment_warning_issued[0] = True
-                    msg = unicode(e)
-                    if not msg:
-                        msg = repr(e)
-                    warning("Error resolving an expression in a comment (skipping evaluation):")
-                    warning(msg)
-                    if verbosity > 0:
-                        print_location()
+            else:
+                pass # leave comment as is
 
         node = next
 

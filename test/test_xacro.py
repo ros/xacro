@@ -37,6 +37,7 @@ from __future__ import print_function
 
 import ast
 from contextlib import contextmanager
+import itertools
 import math
 import os.path
 import re
@@ -1304,11 +1305,26 @@ in file: string
         self.assert_matches(self.quick_xacro(src), res)
 
     def test_comments(self):
+        original = '<!-- ${name} -->'
+        processed = '<!-- foo -->'
+        enabler = '<!-- xacro:eval-comments{suffix} -->'
+        disabler = enabler.format(suffix=":off")
+
         src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
         <xacro:property name="name" value="foo"/>
-        <!-- ${name} --></a>'''
-        res = '''<a><!-- foo --></a>'''
-        self.assert_matches(self.quick_xacro(src), res)
+        {enabler}{comment}{text}{comment}</a>'''
+        result = '<a>{c1}{text}{c2}</a>'
+        for enable, suffix, text in itertools.product([False, True], ["", ":on", ":off"], ["", " ", " text ", "<tag/>", disabler]):
+          src_params = dict(comment=original, text=text,
+                            enabler=enabler.format(suffix=suffix) if enable else "")
+          enabled = enable and suffix != ":off"
+          res_params = dict(c1=processed if enabled else original, text="" if text == disabler else text,
+                            c2=processed if enabled and not text.strip() and text != disabler else original)
+          try:
+            self.assert_matches(self.quick_xacro(src.format(**src_params)), result.format(**res_params))
+          except AssertionError as e:
+            print("When evaluating\n{}".format(src.format(**src_params)))
+            raise
 
     def test_print_location(self):
         src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
@@ -1346,6 +1362,23 @@ included from: string
   </xacro:if>
 </a>'''), '<a/>')
 
+    # https://github.com/ros/xacro/issues/307
+    def test_property_resolution_with_namespaced_include(self):
+      src = '''<a version="1.0" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:include filename="./include2.xacro" ns="B"/>
+  <xacro:property name="ext" value="main"/>
+  <xacro:property name="var" value="main"/>
+  <xacro:B.bar arg="${ext}"/>
+  <xacro:B.bar arg="${var}"/>
+  <xacro:B.bar arg="${inner}"/>
+</a>'''
+      res = '''<a version="1.0">
+  <a arg="main" ext="main" var="2"/>
+  <a arg="2" ext="main" var="2"/>
+  <a arg="int" ext="main" var="2"/>
+</a>'''
+      self.assert_matches(self.quick_xacro(src), res)
+
     def test_include_from_macro(self):
         src = '''
     <a xmlns:xacro="http://www.ros.org/xacro">
@@ -1372,6 +1405,25 @@ included from: string
     </a>'''
       res = '''<a>3</a>'''
       self.assert_matches(self.quick_xacro(src), res)
+
+    def test_property_scope_parent_namespaced(self):
+        src = '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="prop" value="root"/>
+  <root prop="${prop}"/>
+
+  <xacro:include filename="A.xacro" ns="A"/>
+  <root prop="${prop}" A.prop="${A.prop}" A.B.prop="${A.B.prop}" />
+
+  <xacro:A.B.set/>
+  <root prop="${prop}"/>
+</a>'''
+        res = '''<a>
+  <root prop="root"/>
+  <A prop="B"/>
+  <root A.B.prop="b" A.prop="B" prop="root"/>
+  <root prop="macro"/>
+</a>'''
+        self.assert_matches(self.quick_xacro(src), res)
 
     def test_yaml_support(self):
         src = '''
