@@ -1,0 +1,7 @@
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+	<xacro:property name="prop" value="b" />
+	<xacro:property name="prop" scope="parent" value="B"/>
+	<xacro:macro name="set" params="">
+		<xacro:property name="prop" scope="parent" value="macro"/>
+	</xacro:macro>
+</a>
