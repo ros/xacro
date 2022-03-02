@@ -2,5 +2,5 @@
 
 **Xacro is an XML macro language**
 
-With Xacro, you can construct shorter and more readable XML files by using macros that expand to larger XML expressions.
-Documentation can be found in the wiki: http://wiki.ros.org/xacro
+With `xacro`, you can construct shorter and more readable XML files by using macros that expand to larger XML expressions.
+Recent documentation can be found in the [wiki](https://github.com/ros/xacro/wiki). For older releases, have a look at the [ROS wiki](http://wiki.ros.org/xacro).
