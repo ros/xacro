@@ -1415,6 +1415,14 @@ included from: string
         res = '''<a>A2 B1 1 2 3 4</a>'''
         self.assert_matches(self.quick_xacro(src), res)
 
+    def test_yaml_support_dotted_list_iterator(self):
+        src = '''
+    <a xmlns:xacro="http://www.ros.org/wiki/xacro">
+      ${[2*item.val.x for item in xacro.load_yaml('list2.yaml')]}
+    </a>'''
+        res = '''<a>[2, 4]</a>'''
+        self.assert_matches(self.quick_xacro(src), res)
+
     def test_yaml_custom_constructors(self):
         src = '''
 <a xmlns:xacro="http://www.ros.org/wiki/xacro">
