@@ -99,6 +99,10 @@ class YamlListWrapper(list):
     def __getitem__(self, idx):
         return YamlListWrapper.wrap(super(YamlListWrapper, self).__getitem__(idx))
 
+    def __iter__(self):
+        for item in super(YamlListWrapper, self).__iter__():
+            yield YamlListWrapper.wrap(item)
+
 
 class YamlDictWrapper(dict):
     """Wrapper class providing dotted access to dict items"""
