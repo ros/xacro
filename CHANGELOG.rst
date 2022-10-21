@@ -2,6 +2,11 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.13.18 (2022-10-21)
+--------------------
+* Dotted YAML access from list iterator (`#318 <https://github.com/ros/xacro/issues/318>`_)
+* Contributors: Robert Haschke
+
 1.13.17 (2022-02-12)
 --------------------
 * Only optionally activate comment evaluation (`#310 <https://github.com/ros/xacro/issues/310>`_)
