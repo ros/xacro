@@ -1,0 +1,4 @@
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+	<xacro:include filename="B.xacro" ns="B"/>
+	<A prop="${prop}"/>
+</a>

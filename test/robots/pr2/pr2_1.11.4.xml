@@ -1450,10 +1450,6 @@
       </geometry>
     </collision>
   </link>
-  <!-- plugin for updating structure pose \
-    <xacro:kinect_prosilica_gazebo joint_name="${name}_kinect_prosilica_joint"
-                                   link_name="${name}_kinect_prosilica_link" />
-    -->
   <!-- kinect ir sensor physical attachment -->
   <joint name="head_mount_kinect_ir_joint" type="fixed">
     <origin rpy="0 0 0" xyz="-0.032267 0.0125 0.136453"/>
@@ -2450,7 +2446,6 @@
     <mu2 value="500.0"/>
     <kp value="1000000.0"/>
     <kd value="1.0"/>
-    <!-- for "${prefix}_l_finger_joint"-->
   </gazebo>
   <gazebo reference="r_gripper_l_finger_joint">
     <stopKd value="1.0"/>
@@ -3383,7 +3378,6 @@
     <mu2 value="500.0"/>
     <kp value="1000000.0"/>
     <kd value="1.0"/>
-    <!-- for "${prefix}_l_finger_joint"-->
   </gazebo>
   <gazebo reference="l_gripper_l_finger_joint">
     <stopKd value="1.0"/>

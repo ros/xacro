@@ -29,7 +29,6 @@
       <mu2 value="${finger_mu}" />
       <kp value="1000000.0" />
       <kd value="1.0" />
-      <!-- for "${prefix}_l_finger_joint"-->
     </gazebo>
     <gazebo reference="${prefix}_l_finger_joint">
       <stopKd value="${finger_stop_kd}" />

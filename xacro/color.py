@@ -38,8 +38,13 @@ def is_tty(stream):  # taken from catkin_tools/common.py
 
 
 def colorize(msg, color, file=sys.stderr, alt_text=None):
+    try:
+        color = _ansi[color]
+    except KeyError:
+        pass
+
     if color and is_tty(file):
-        return '\033[%dm%s\033[0m' % (_ansi[color], msg)
+        return '\033[%dm%s\033[0m' % (color, msg)
     elif alt_text:
         return '%s%s' % (alt_text, msg)
     else:
