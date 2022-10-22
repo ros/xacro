@@ -754,10 +754,6 @@ def handle_dynamic_macro_call(node, macros, symbols):
 
 
 def resolve_macro(fullname, macros, symbols):
-    # split name into namespaces and real name
-    namespaces = fullname.split('.')
-    name = namespaces.pop(-1)
-
     def _resolve(namespaces, name, macros, symbols):
         # traverse namespaces to actual macros+symbols dicts
         for ns in namespaces:
@@ -769,6 +765,9 @@ def resolve_macro(fullname, macros, symbols):
     try:
         return _resolve([], fullname, macros, symbols)
     except KeyError:
+        # split name into namespaces and real name
+        namespaces = fullname.split('.')
+        name = namespaces.pop(-1)
         if namespaces:
             return _resolve(namespaces, name, macros, symbols)
         else:
