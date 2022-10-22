@@ -2,6 +2,36 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.0.8 (2022-10-22)
+------------------
+* Install xacro using console_script entrypoint (`#304 <https://github.com/ros/xacro/issues/304>`_)
+* Provide xacro.process() returning the processed file (`#229 <https://github.com/ros/xacro/issues/229>`_)
+* Dotted YAML access from list iterator (`#318 <https://github.com/ros/xacro/issues/318>`_)
+* Optionally allow comment evaluation (`#310 <https://github.com/ros/xacro/issues/310>`_)
+
+  Comment evaluation can be enabled with a special comment:
+
+  - ``<!-- xacro:eval-comments -->`` or
+  - ``<!-- xacro:eval-comments:on -->``
+
+  It remains active for the following comments until:
+
+  - the current XML tag's scope is left (or a new tag entered)
+  - another tag or non-whitespace text is processed
+  - it becomes explicitly disabled via: ``<!-- xacro:eval-comments:off -->``
+
+* Fix property resolution with namespace usage (`#308 <https://github.com/ros/xacro/issues/308>`_)
+
+  - Allow access to properties in parent scopes again (fixes `#305 <https://github.com/ros/xacro/issues/305#issuecomment-1016811150>`_)
+  - Pick correct scope when defining a property into the parent (fixes `#307 <https://github.com/ros/xacro/issues/307>`_)
+
+    Setting a property within the parent scope may occur in two contexts:
+
+    1. From within a macro. In that case, one wants to set the property in the caller's scope.
+    2. From within the included file. In that case, one wants to set the property in the includer's scope.
+
+* Contributors: Chen Bainian, Gonzalo de Pedro, Gonzo, Jacob Perron, Melvin Wang, Robert Haschke, vandanamandlik
+
 2.0.7 (2021-09-04)
 ------------------
 * Allow more builtin symbols: sorted, set
