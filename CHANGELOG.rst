@@ -2,6 +2,11 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.0.9 (2023-02-27)
+------------------
+* Evaluate ``arg`` value as str/unicode (`#322 <https://github.com/ros/xacro/issues/322>`_)
+* Contributors: Robert Haschke
+
 2.0.8 (2022-10-22)
 ------------------
 * Install xacro using console_script entrypoint (`#304 <https://github.com/ros/xacro/issues/304>`_)
