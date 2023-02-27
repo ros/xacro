@@ -939,7 +939,7 @@ def eval_all(node, macros, symbols):
             elif node.tagName == 'xacro:arg':
                 name, default = check_attrs(node, ['name', 'default'], [])
                 if name not in substitution_args_context['arg']:
-                    substitution_args_context['arg'][name] = eval_text(default, symbols)
+                    substitution_args_context['arg'][name] = str(eval_text(default, symbols))
 
                 remove_previous_comments(node)
                 replace_node(node, by=None)
