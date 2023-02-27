@@ -2,6 +2,11 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.13.19 (2023-02-27)
+--------------------
+* Evaluate ``arg`` value as str/unicode (`#322 <https://github.com/ros/xacro/issues/322>`_)
+* Contributors: Robert Haschke
+
 1.13.18 (2022-10-21)
 --------------------
 * Dotted YAML access from list iterator (`#318 <https://github.com/ros/xacro/issues/318>`_)
