@@ -2,6 +2,11 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.13.20 (2023-05-24)
+--------------------
+* Fix hasattr support of YamlDictWrapper (`#324 <https://github.com/ros/xacro/issues/324>`_)
+* Contributors: Alec Tiefenthal
+
 1.13.19 (2023-02-27)
 --------------------
 * Evaluate ``arg`` value as str/unicode (`#322 <https://github.com/ros/xacro/issues/322>`_)
