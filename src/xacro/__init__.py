@@ -110,7 +110,7 @@ class YamlDictWrapper(dict):
         try:
             return YamlListWrapper.wrap(super(YamlDictWrapper, self).__getitem__(item))
         except KeyError:
-            raise XacroException("No such key: '{}'".format(item))
+            raise AttributeError("The yaml dictionary has no key '{}'".format(item))
 
     __getitem__ = __getattr__
 
