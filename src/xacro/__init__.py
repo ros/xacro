@@ -109,8 +109,8 @@ class YamlDictWrapper(dict):
     def __getattr__(self, item):
         try:
             return YamlListWrapper.wrap(super(YamlDictWrapper, self).__getitem__(item))
-        except KeyError:
-            raise XacroException("No such key: '{}'".format(item))
+        except KeyError:  # raise AttributeError instead to support hasattr()
+            raise AttributeError("The yaml dictionary has no key '{}'".format(item))
 
     __getitem__ = __getattr__
 
