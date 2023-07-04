@@ -77,9 +77,16 @@ ${_xacro_err}")
 
   separate_arguments(_xacro_deps_result)
 
+  ## HACK: ament package resolution doesn't work at build time yet
+  # - Augment AMENT_PREFIX_PATH to include ${PROJECT_BINARY_DIR}/ament_cmake_index
+  # - Create a symlink from there to the actual source directory to find source files
+  set(PROJECT_BUILD_INDEX "${PROJECT_BINARY_DIR}/ament_cmake_index")
+  execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory "${PROJECT_BUILD_INDEX}/share")
+  execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink "${PROJECT_SOURCE_DIR}" "${PROJECT_BUILD_INDEX}/share/${PROJECT_NAME}")
+
   ## command to actually call xacro
   add_custom_command(OUTPUT ${output}
-    COMMAND xacro -o ${abs_output} ${input} ${_XACRO_REMAP}
+    COMMAND ${CMAKE_COMMAND} -E env AMENT_PREFIX_PATH="${PROJECT_BUILD_INDEX}:${AMENT_PREFIX_PATH}" xacro -o ${abs_output} ${input} ${_XACRO_REMAP}
     DEPENDS ${input} ${_xacro_deps_result} ${_XACRO_DEPENDS}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMENT "xacro: generating ${output} from ${input}"
