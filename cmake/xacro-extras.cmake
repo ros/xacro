@@ -46,7 +46,6 @@ function(xacro_add_xacro_file input)
       message(FATAL_ERROR "no <output> specified for: " ${input})
     endif()
   endif()
-  # message(STATUS "output: ${output}")
 
   ## determine absolute output target location
   if(IS_ABSOLUTE ${output})
@@ -54,7 +53,6 @@ function(xacro_add_xacro_file input)
   else()
     set(abs_output ${CMAKE_CURRENT_BINARY_DIR}/${output})
   endif()
-  # message(STATUS "abs_output: ${abs_output}")
 
   ## export abs_output to parent scope in variable ${_XACRO_OUTPUT}
   if(NOT _XACRO_OUTPUT)
@@ -132,7 +130,6 @@ function(xacro_add_files)
 
   # have INSTALL option, but no TARGET: fallback to default target
   if(_XACRO_INSTALL AND NOT _XACRO_TARGET)
-    # message(STATUS "xacro: no TARGET specified, using default")
     set(_XACRO_TARGET _xacro_auto_generate)
   endif()
 
