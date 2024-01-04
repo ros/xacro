@@ -1,0 +1,42 @@
+{
+    "name": "ROS 2 Foxy Development Container",
+    "privileged": true,
+    "remoteUser": "dev",
+    "build": {
+        "dockerfile": "../Dockerfile",
+        "context": "../..",
+        "args": {
+            "ROS_DISTRO": "foxy",
+            "GID": "1000",
+            "UID": "1000"
+        }
+    },
+    "workspaceFolder": "/home/dev/ros_ws",
+    "workspaceMount": "source=${localWorkspaceFolder},target=/home/dev/ros_ws/src,type=bind",
+    "runArgs": [
+        "--net=host",
+    ],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "charliermarsh.ruff",
+                "ms-vscode.cpptools-extension-pack",
+                "ms-iot.vscode-ros",
+                "smilerobotics.urdf",
+                "redhat.vscode-xml",
+                "redhat.vscode-yaml",
+                "yzhang.markdown-all-in-one",
+            ],
+            "settings": {
+                "files.associations": {
+                    "*.rviz": "yaml",
+                    "*.srdf": "xml",
+                    "*.urdf": "xml",
+                    "*.xacro": "xml"
+                }
+            }
+        }
+    },
+    "postCreateCommand": "src/.devcontainer/post-create.sh"
+}
