@@ -197,12 +197,12 @@ def create_global_symbols():
 
     deprecate_msg = 'Using {name}() directly is deprecated. Use {ns}.{name}() instead.'
     # This is the list of symbols we have exposed for years now. Continue exposing them directly
-    expose('list', 'dict', 'map', 'len', 'str', 'float', 'int', 'True', 'False', 'min', 'max', 'round',
+    expose('list', 'dict', 'map', 'len', 'str', 'float', 'int', 'True', 'False', 'min', 'max', 'round', 'abs',
            source=__builtins__)
     # These few were only recently added. The should move into python namespace, but (with a deprecation msg) stay global for now
     expose('sorted', 'range', source=__builtins__, ns='python', deprecate_msg=deprecate_msg)
     # Expose all builtin symbols into the python namespace. Thus the stay accessible if the global symbol was overriden
-    expose('list', 'dict', 'map', 'len', 'str', 'float', 'int', 'True', 'False', 'min', 'max', 'round',
+    expose('list', 'dict', 'map', 'len', 'str', 'float', 'int', 'True', 'False', 'min', 'max', 'round', 'abs',
            'all', 'any', 'complex', 'divmod', 'enumerate', 'filter', 'frozenset', 'hash', 'isinstance', 'issubclass',
            'ord', 'repr', 'reversed', 'slice', 'set', 'sum', 'tuple', 'type', 'zip', source=__builtins__, ns='python')
 
