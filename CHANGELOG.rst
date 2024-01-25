@@ -2,6 +2,11 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.14.17 (2024-01-25)
+--------------------
+* Expose python.abs()
+* Contributors: Robert Haschke
+
 1.14.16 (2023-05-24)
 --------------------
 * Fix hasattr support of YamlDictWrapper (`#324 <https://github.com/ros/xacro/issues/324>`_)
