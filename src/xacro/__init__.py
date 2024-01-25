@@ -203,7 +203,7 @@ def create_global_symbols():
     expose('sorted', 'range', source=__builtins__, ns='python', deprecate_msg=deprecate_msg)
     # Expose all builtin symbols into the python namespace. Thus the stay accessible if the global symbol was overriden
     expose('list', 'dict', 'map', 'len', 'str', 'float', 'int', 'True', 'False', 'min', 'max', 'round',
-           'all', 'any', 'complex', 'divmod', 'enumerate', 'filter', 'frozenset', 'hash', 'isinstance', 'issubclass',
+           'abs', 'all', 'any', 'complex', 'divmod', 'enumerate', 'filter', 'frozenset', 'hash', 'isinstance', 'issubclass',
            'ord', 'repr', 'reversed', 'slice', 'set', 'sum', 'tuple', 'type', 'zip', source=__builtins__, ns='python')
 
     # Expose all math symbols and functions into namespace math (and directly for backwards compatibility -- w/o deprecation)
