@@ -1502,6 +1502,11 @@ included from: string
 </a>'''
         self.assertRaises(xacro.XacroException, self.quick_xacro, src.format(file=file))
 
+    def test_yaml_hasattr_support(self):
+        yaml = xacro.load_yaml('settings.yaml')
+        self.assertTrue(hasattr(yaml, 'arms'))
+        self.assertFalse(hasattr(yaml, 'this_key_does_not_exist'))
+
     def test_xacro_exist_required(self):
         src = '''
 <a xmlns:xacro="http://www.ros.org/wiki/xacro">
