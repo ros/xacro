@@ -1502,7 +1502,7 @@ included from: string
   <xacro:property name="values" value="${xacro.load_yaml('constructors.yaml')}"/>
   <values no_tag="${values.no_tag}" angles="${values.angles}" lengths="${values.lengths}"/>
 </a>'''
-        res = '''<a><values no_tag="42" angles="{}" lengths="{}"/></a>'''.format([math.pi]*5, [25.0]*9)
+        res = '''<a><values no_tag="42" angles="{}" lengths="{}"/></a>'''.format([math.pi]*2, [25.0]*4)
         self.assert_matches(self.quick_xacro(src), res)
 
     def test_yaml_custom_constructors_illegal_expr(self):
