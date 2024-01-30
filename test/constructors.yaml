@@ -1,3 +1,9 @@
-a: !degrees 2*90
-b: !radians 0.5*pi
-c: 42
+no_tag: 42
+angles:
+  - !radians pi
+  - !degrees 2*90
+lengths:
+  - !meters 5.0*5.0
+  - !millimeters 25.0*1000.0
+  - !foot 25.0/0.3048
+  - !inches 25.0/0.0254
