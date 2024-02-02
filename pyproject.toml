@@ -3,22 +3,19 @@ requires = ["setuptools"]
 
 [project]
 name = "xacro"
-dynamic = ["version"]
-description = "With xacro, you can construct shorter and more readable XML files by using macros that expand to larger XML expressions."
+version = "2.0.10"
+description = "xacro is a macro language for XML"
 readme = "README.md"
 license = {file = "LICENSE"}
-dependencies = [
-  "pyyaml",
-]
-requires-python = ">= 3.10"
+dependencies = ["pyyaml"]
+requires-python = ">= 3.8"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["xacro*"]
+include = ["xacro"]
 exclude = []
 namespaces = false
 
 [project.urls]
 Documentation = "https://github.com/ros/xacro/wiki"
 Repository = "https://github.com/ros/xacro"
-
