@@ -555,8 +555,8 @@ def is_valid_name(name):
     return False
 
 
-default_value = '''\$\{.*?\}|\$\(.*?\)|(?:'.*?'|\".*?\"|[^\s'\"]+)+|'''
-re_macro_arg = re.compile(r'^\s*([^\s:=]+?)\s*:?=\s*(\^\|?)?(' + default_value + ')(?:\s+|$)(.*)')
+default_value = r'''\$\{.*?\}|\$\(.*?\)|(?:'.*?'|\".*?\"|[^\s'\"]+)+|'''
+re_macro_arg = re.compile(r'^\s*([^\s:=]+?)\s*:?=\s*(\^\|?)?(' + default_value + r')(?:\s+|$)(.*)')
 #                          space(   param )(   :=  )(  ^|  )(        default      )( space )(rest)
 
 
