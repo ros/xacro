@@ -320,6 +320,11 @@ def resolve_args(arg_str, context=None, filename=None):
         'find': _find,
     }
     resolved = _resolve_args(arg_str, context, commands)
+    # then resolve 'find' as it requires the subsequent path to be expanded already
+    commands = {
+        "find": _find,
+    }
+    resolved = _resolve_args(resolved, context, commands)
     return resolved
 
 
