@@ -596,6 +596,8 @@ def parse_macro_arg(s):
         param, forward, default, rest = m.groups()
         if not default:
             default = None
+        elif param[0] == '*':
+            raise XacroException("Invalid default '{}' for block argument '{}'".format(default, param), macro=m)
         return param, (param if forward else None, default), rest
     else:
         # there is no default specified at all
@@ -665,8 +667,8 @@ def grab_property(elt, table):
             return
 
     if value is None:
-        name = '**' + name
-        value = elt  # debug
+        name = '*' + name
+        value = first_child_element(elt)
 
     replace_node(elt, by=None)
 
@@ -810,33 +812,32 @@ def handle_macro_call(node, macros, symbols):
         scoped_symbols._setitem(name, eval_text(value, symbols), unevaluated=False)
         node.setAttribute(name, "")  # suppress second evaluation in eval_all()
 
-    # Evaluate block parameters in node
-    eval_all(node, macros, symbols)
-
-    # Fetch block parameters, in order
+    # Fetch block parameters (in order) or/and defaults for remaining arguments
     block = first_child_element(node)
     for param in params[:]:
-        if param[0] == '*':
-            if not block:
+        # get potential default
+        name, default = m.defaultmap.get(param, (None, None))
+        have_default = name is not None or default is not None
+
+        if param[0] == '*':  # block argument expected
+            if block:
+                params.remove(param)
+                scoped_symbols[param] = block
+                block = next_sibling_element(block)
+            elif have_default:
+                default = eval_default_arg(name, default, symbols, m)
+                assert(isinstance(default, xml.dom.minidom.Element))
+                scoped_symbols._setitem(param, default, unevaluated=False)
+                params.remove(param)
+            else:
                 raise XacroException("Not enough blocks", macro=m)
+        elif have_default:  # a default was specified
+            default = eval_default_arg(name, default, symbols, m)
+            scoped_symbols._setitem(param, default, unevaluated=False)
             params.remove(param)
-            scoped_symbols[param] = block
-            block = next_sibling_element(block)
 
     if block is not None:
         raise XacroException("Unused block \"%s\"" % block.tagName, macro=m)
-
-    # Try to load defaults for any remaining non-block parameters
-    for param in params[:]:
-        # block parameters are not supported for defaults
-        if param[0] == '*':
-            continue
-
-        # get default
-        name, default = m.defaultmap.get(param, (None, None))
-        if name is not None or default is not None:
-            scoped_symbols._setitem(param, eval_default_arg(name, default, symbols, m), unevaluated=False)
-            params.remove(param)
 
     if params:
         raise XacroException("Undefined parameters [%s]" % ",".join(params), macro=m)
@@ -905,6 +906,14 @@ def remove_previous_comments(node):
             return
 
 
+def wrap_node(node):
+    impl = xml.dom.minidom.getDOMImplementation()
+    doc = impl.createDocument(None, "wrapper", None)
+    root = doc.documentElement
+    root.appendChild(node.cloneNode(deep=True))
+    return root
+
+
 def eval_all(node, macros, symbols):
     """Recursively evaluate node, expanding macros, replacing properties, and evaluating expressions"""
     # evaluate the attributes
@@ -941,11 +950,9 @@ def eval_all(node, macros, symbols):
                 else:
                     raise XacroException("Undefined block \"%s\"" % name)
 
-                # cloning block allows to insert the same block multiple times
-                block = block.cloneNode(deep=True)
-                # recursively evaluate block
-                eval_all(block, macros, symbols)
-                replace_node(node, by=block, content_only=content_only)
+                wrapper = wrap_node(block)  # wrap block into a dummy node
+                eval_all(wrapper, macros, symbols)  # to allow evaluation of the block itself
+                replace_node(node, by=first_child_element(wrapper), content_only=content_only)
 
             elif node.tagName == 'xacro:include':
                 process_include(node, macros, symbols, eval_all)
