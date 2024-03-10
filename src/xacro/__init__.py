@@ -33,6 +33,8 @@
 from __future__ import print_function, division
 
 import ast
+import collections
+import enum
 import glob
 import math
 import os
@@ -115,25 +117,32 @@ class YamlDictWrapper(dict):
     __getitem__ = __getattr__
 
 
-def construct_angle_radians(loader, node):
-    """utility function to construct radian values from yaml"""
-    value = loader.construct_scalar(node)
-    try:
-        return float(safe_eval(value, _global_symbols))
-    except SyntaxError:
-        raise XacroException("invalid expression: %s" % value)
+class ConstructUnits(enum.Enum):
+    """utility enumeration to construct a values with a unit from yaml"""
+    __ConstructUnitsValue = collections.namedtuple('__ConstructUnitsValue', ['tag', 'conversion_constant'])
+    # Angles [base: radians]
+    angle_radians    = __ConstructUnitsValue(u'!radians', 1.0)
+    angle_degrees    = __ConstructUnitsValue(u'!degrees', math.pi/180.0)
+    # Length [base: meters]
+    length_meters      = __ConstructUnitsValue(u'!meters', 1.0)
+    length_millimeters = __ConstructUnitsValue(u'!millimeters', 0.001)
+    length_foot        = __ConstructUnitsValue(u'!foot', 0.3048)
+    length_inches      = __ConstructUnitsValue(u'!inches', 0.0254)
 
-
-def construct_angle_degrees(loader, node):
-    """utility function for converting degrees into radians from yaml"""
-    return math.radians(construct_angle_radians(loader, node))
+    def constructor(self, loader, node):
+        """utility function to construct a values with a unit from yaml"""
+        value = loader.construct_scalar(node)
+        try:
+            return float(safe_eval(value, _global_symbols))*self.value.conversion_constant
+        except SyntaxError:
+            raise XacroException("invalid expression: %s" % value)
 
 
 def load_yaml(filename):
     try:
         import yaml
-        yaml.SafeLoader.add_constructor(u'!radians', construct_angle_radians)
-        yaml.SafeLoader.add_constructor(u'!degrees', construct_angle_degrees)
+        for unit in ConstructUnits:
+            yaml.SafeLoader.add_constructor(unit.value.tag, unit.constructor)
     except Exception:
         raise XacroException("yaml support not available; install python-yaml")
 
