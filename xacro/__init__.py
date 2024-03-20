@@ -285,14 +285,14 @@ def eval_extension(s):
     if s == '$(cwd)':
         return os.getcwd()
     try:
-        from .substitution_args import resolve_args, ArgException, PackageNotFoundError
+        from .substitution_args import resolve_args, ArgException
         return resolve_args(s, context=substitution_args_context)
     except ImportError as e:
         raise XacroException("substitution args not supported: ", exc=e)
     except ArgException as e:
         raise XacroException("Undefined substitution argument", exc=e)
-    except PackageNotFoundError as e:
-        raise XacroException("package not found:", exc=e)
+    except Exception as e:
+        raise XacroException(f"Argument resolution failed: exception={type(e)}: {e}", exc=e)
 
 
 class Table(dict):
