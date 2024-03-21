@@ -292,7 +292,7 @@ def eval_extension(s):
     except ArgException as e:
         raise XacroException("Undefined substitution argument", exc=e)
     except Exception as e:
-        raise XacroException(f"Argument resolution failed: exception={type(e)}: {e}", exc=e)
+        raise XacroException(f"{type(e)}: {e}", exc=e)
 
 
 class Table(dict):
