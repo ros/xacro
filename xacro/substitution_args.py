@@ -137,7 +137,7 @@ def _dirname(resolved, a, args, context):
 
 
 def _eval_find(pkg):
-    from ament_index_python.packages import get_package_share_directory, PackageNotFoundError
+    from ament_index_python.packages import get_package_share_directory
     return get_package_share_directory(pkg)
 
 
