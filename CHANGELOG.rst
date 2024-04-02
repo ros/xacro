@@ -2,6 +2,15 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.0.11 (2024-04-02)
+-------------------
+* Allow substitution args without ROS (`#340 <https://github.com/ros/xacro/issues/340>`_)
+* Add more unit tags for yaml files  (`#331 <https://github.com/ros/xacro/issues/331>`_)
+* Resolve $(find ...) as a result of a substitution argument (`#339 <https://github.com/ros/xacro/issues/339>`_)
+* Mark regexes as raw strings (`#336 <https://github.com/ros/xacro/issues/336>`_)
+* Add pyproject.toml for direct installation via pip (`#329 <https://github.com/ros/xacro/issues/329>`_)
+* Contributors: Adam Heins, Bruno-Pier, Carlo Rizzardo, Lukas Huber, Robert Haschke
+
 2.0.10 (2024-01-25)
 -------------------
 * Expose python.abs()
