@@ -1488,9 +1488,9 @@ included from: string
         src = '''
 <a xmlns:xacro="http://www.ros.org/wiki/xacro">
   <xacro:property name="values" value="${xacro.load_yaml('constructors.yaml')}"/>
-  <values a="${values.a}" b="${values.b}" c="${values.c}"/>
+  <values no_tag="${values.no_tag}" angles="${values.angles}" lengths="${values.lengths}"/>
 </a>'''
-        res = '''<a><values a="{}" b="{}" c="42"/></a>'''.format(math.pi, 0.5*math.pi)
+        res = '''<a><values no_tag="42" angles="{}" lengths="{}"/></a>'''.format([math.pi]*2, [25.0]*4)
         self.assert_matches(self.quick_xacro(src), res)
 
     def test_yaml_custom_constructors_illegal_expr(self):
