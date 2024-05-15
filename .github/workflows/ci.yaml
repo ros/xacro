@@ -14,7 +14,7 @@ jobs:
     env:
       ROS_DISTRO: ${{ matrix.ros }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: industrial_ci
         uses: ros-industrial/industrial_ci@master
