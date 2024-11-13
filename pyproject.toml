@@ -1,9 +1,10 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools", "setuptools_scm"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "xacro"
-version = "2.0.10"
+dynamic = ["version"]
 description = "xacro is a macro language for XML"
 readme = "README.md"
 license = {file = "LICENSE"}
@@ -18,6 +19,8 @@ where = ["."]
 include = ["xacro"]
 exclude = []
 namespaces = false
+
+[tool.setuptools_scm]
 
 [project.urls]
 Documentation = "https://github.com/ros/xacro/wiki"
