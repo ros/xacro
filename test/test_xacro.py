@@ -57,19 +57,22 @@ except ImportError:
     def subTest(msg):
         yield None
 
-# Determine if we are running the test under bazel and switch directory
 try:
+    # Determine if we are running the test under bazel and switch to runfiles directory
     from python.runfiles import runfiles
+
     data_path = runfiles.Create().Rlocation("_main/test")
     os.chdir(data_path)
+
+    # Set the executable path
     XACRO_EXECUTABLE = runfiles.Create().Rlocation("_main/xacro_main")
     BAZEL_TEST = True
 except ImportError:
     XACRO_EXECUTABLE = 'xacro'
+    BAZEL_TEST = False
 
 # regex to match whitespace
 whitespace = re.compile(r'\s+')
-
 
 def text_values_match(a, b):
     # generic comparison
