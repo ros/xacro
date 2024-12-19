@@ -1,13 +1,10 @@
 name: Bazel CI
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+on: [push, pull_request, workflow_dispatch]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
+
 jobs:
   test:
     uses: bazel-contrib/.github/.github/workflows/bazel.yaml@v7
