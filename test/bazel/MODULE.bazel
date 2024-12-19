@@ -1,0 +1,5 @@
+bazel_dep(name = "xacro")
+local_path_override(
+    module_name = "xacro",
+    path = "../..",
+)
