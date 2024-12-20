@@ -46,6 +46,17 @@ from .color import error, message, warning
 from .xmlutils import opt_attrs, reqd_attrs, first_child_element, \
     next_sibling_element, replace_node
 
+try:
+    # Determine if we are running under bazel,
+    # If so, attempt to load `//` prefixed bazel paths first
+
+    # This import will only succeed when running under bazel
+    from python.runfiles import runfiles
+    from .bazel_support import open_bazel
+    OPEN_IMPLEMENTATION = open_bazel
+except:
+    # Otherwise, default to default open
+    OPEN_IMPLEMENTATION = open
 
 # Dictionary of substitution args
 substitution_args_context = {}
@@ -137,7 +148,7 @@ def load_yaml(filename):
         raise XacroException("yaml support not available; install python-yaml")
 
     filename = abs_filename_spec(filename)
-    f = open(filename)
+    f = OPEN_IMPLEMENTATION(filename)
     filestack.append(filename)
     try:
         return YamlListWrapper.wrap(yaml.safe_load(f))
@@ -1018,7 +1029,7 @@ def parse(inp, filename=None):
     f = None
     if inp is None:
         try:
-            inp = f = open(filename)
+            inp = f = OPEN_IMPLEMENTATION(filename)
         except IOError as e:
             # do not report currently processed file as "in file ..."
             filestack.pop()
@@ -1076,7 +1087,7 @@ def open_output(output_filename):
                 pass
 
         try:
-            return open(output_filename, 'w')
+            return OPEN_IMPLEMENTATION(output_filename, 'w')
         except IOError as e:
             raise XacroException("Failed to open output:", exc=e)
 

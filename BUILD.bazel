@@ -16,7 +16,6 @@ license(
     license_text = "LICENSE",
 )
 
-
 write_file(
     name = "write_xacro_main",
     # This is the same as scripts/xacro from upstream, except that we lose the
@@ -35,6 +34,7 @@ py_library(
   visibility = ["//visibility:public"],
   deps = [
     "@pypi//pyyaml:pkg",
+    "@rules_python//python/runfiles",
   ]
 )
 

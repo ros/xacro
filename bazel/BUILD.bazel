@@ -9,8 +9,8 @@ compile_pip_requirements(
 )
 
 bzl_library(
-  name = "build_defs_bzl",
-  srcs = ["build_defs.bzl"],
+  name = "defs",
+  srcs = ["defs.bzl"],
   visibility = ["//visibility:public"],
 )
 

@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<root xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="myarg" default="true"/>
+  <xacro:if value="$(arg myarg)">
+    <sphere radius="1"/>
+  </xacro:if>
+</root>
