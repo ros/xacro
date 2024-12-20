@@ -12,10 +12,10 @@ jobs:
       folders: |
         [
           ".",
-          "test/bazel",
+          "bazel/integration_test",
         ]
       exclude: |
         [
           {"folder": ".", "bzlmodEnabled": false},
-          {"folder": "test/bazel", "bzlmodEnabled": false},
+          {"folder": "bazel/integration_test", "bzlmodEnabled": false},
         ]
