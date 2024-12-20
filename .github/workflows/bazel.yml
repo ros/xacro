@@ -1,9 +1,6 @@
 name: Bazel CI
-on: [push, pull_request, workflow_dispatch]
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+on: [push, pull_request, workflow_dispatch]
 
 jobs:
   test:
@@ -14,6 +11,9 @@ jobs:
           ".",
           "bazel/integration_test",
         ]
+      # Explicitly exclude build/test configurations where bzlmod is disabled.
+      # Since xacro only supports bzlmod, these will always fail.
+      # Remove these exclusions when workspace support is dropped.
       exclude: |
         [
           {"folder": ".", "bzlmodEnabled": false},
