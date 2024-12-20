@@ -27,12 +27,14 @@ write_file(
 
 py_library(
     name = "xacro_lib",
-    srcs = glob(
-        [
-            "xacro/**/*.py",
-        ],
-        allow_empty = False,
-    ),
+    srcs = [
+        "xacro/__init__.py",
+        "xacro/bazel_support.py",
+        "xacro/cli.py",
+        "xacro/color.py",
+        "xacro/substitution_args.py",
+        "xacro/xmlutils.py",
+    ],
     imports = ["."],
     visibility = ["//visibility:public"],
     deps = [

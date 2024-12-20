@@ -5,14 +5,16 @@ XacroInfo = provider(
     fields = ["result", "data"],
 )
 
+XACRO_EXTENSION = ".xacro"
+
 def _xacro_impl(ctx):
     if ctx.outputs.out:
         out = ctx.outputs.out
     else:
         src = ctx.file.src.basename
-        if not src.endswith(".xacro"):
+        if not src.endswith(XACRO_EXTENSION):
             fail("xacro_file src should be named *.xacro not {}".format(src))
-        out = ctx.actions.declare_file(src[:-6])
+        out = ctx.actions.declare_file(src[:-len(XACRO_EXTENSION)])
 
     # The list of arguments we pass to the script.
     args = [ctx.file.src.path, "-o", out.path] + ctx.attr.extra_args
@@ -43,7 +45,7 @@ def _xacro_impl(ctx):
         ),
     ]
 
-_xacro_rule = rule(
+xacro_file = rule(
     attrs = {
         "src": attr.label(
             mandatory = True,
@@ -62,38 +64,8 @@ _xacro_rule = rule(
         ),
     },
     implementation = _xacro_impl,
+    provides = [XacroInfo, DefaultInfo],
 )
-
-def xacro_file(
-        name,
-        src = None,
-        out = None,
-        data = [],
-        tags = [],
-        deps = [],
-        extra_args = [],
-        visibility = None):
-    """Runs xacro on a single input file, creating a single output file.
-
-    Xacro is the ROS XML macro tool; http://wiki.ros.org/xacro.
-
-    Args:
-      name: The xml output file of this rule.
-      src: The single xacro input file of this rule.
-      out: Optional output file name
-      data: Optional supplemental files required by the src file.
-      extra_args: Optional arguments to be interpreted by xacro
-    """
-    _xacro_rule(
-        name = name,
-        src = src,
-        out = out,
-        data = data,
-        tags = tags,
-        deps = deps,
-        extra_args = extra_args,
-        visibility = visibility,
-    )
 
 def xacro_filegroup(
         name,
@@ -115,11 +87,11 @@ def xacro_filegroup(
     """
     outs = []
     for src in srcs:
-        if not src.endswith(".xacro"):
+        if not src.endswith(XACRO_EXTENSION):
             fail("xacro_filegroup srcs should be named *.xacro not {}".format(
                 src,
             ))
-        out = src[:-6]
+        out = src[:-len(XACRO_EXTENSION)]
         outs.append(out)
         xacro_file(
             name = out,
