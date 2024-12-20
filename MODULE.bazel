@@ -14,8 +14,8 @@ python.toolchain(
 
 pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
 pip.parse(
-    hub_name = "pypi",
+    hub_name = "xacro_python_dependencies",
     python_version = "3.11",
     requirements_lock = "//bazel:requirements_lock.txt",
 )
-use_repo(pip, "pypi")
+use_repo(pip, "xacro_python_dependencies")
