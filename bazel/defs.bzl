@@ -94,3 +94,42 @@ def xacro_file(
         extra_args = extra_args,
         visibility = visibility,
     )
+
+def xacro_filegroup(
+        name,
+        srcs = [],
+        data = [],
+        tags = [],
+        visibility = None):
+    """Runs xacro on several input files, creating a filegroup of the output.
+
+    The output filenames will match the input filenames but with the ".xacro"
+    suffix removed.
+
+    Xacro is the ROS XML macro tool; http://wiki.ros.org/xacro.
+
+    Args:
+      name: The name of the filegroup label.
+      srcs: The xacro input files of this rule.
+      data: Optional supplemental files required by the srcs.
+    """
+    outs = []
+    for src in srcs:
+        if not src.endswith(".xacro"):
+            fail("xacro_filegroup srcs should be named *.xacro not {}".format(
+                src,
+            ))
+        out = src[:-6]
+        outs.append(out)
+        xacro_file(
+            name = out,
+            src = src,
+            data = data,
+            tags = tags,
+            visibility = ["//visibility:private"],
+        )
+    native.filegroup(
+        name = name,
+        srcs = outs,
+        visibility = visibility,
+    )

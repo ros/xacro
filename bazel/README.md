@@ -20,7 +20,6 @@ xacro_file(
 )
 ```
 
-
 A more complex example:
 
 ```
@@ -50,3 +49,18 @@ Note in the case of the more complex example, you can use bazel-specified filena
 ```
 
 ## xacro_filegroup
+
+Allows you to transform multiple xacro files into a generated filegroup
+
+```
+xacro_filegroup(
+    name = "samples",
+    srcs = [
+        "sample1.xml.xacro",
+        "sample2.xml.xacro",
+    ],
+    data = [
+        "box.xml",
+    ],
+)
+```
