@@ -34,7 +34,7 @@ xacro_file(
   out = "my_complex_model.xml",
   # Depend on the XML file that we generated in the previous step
   deps = [":sample1"],
-  # Set extra substitution args via the command line 
+  # Set extra substitution args via the command line
   extra_args = ["special_argument:=foo"]
 )
 ```
