@@ -3,18 +3,18 @@ load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
 
 xacro_file(
   name = "sample1",
-  src = "sample1.xml.xacro",
+  src = "inputs/sample1.xml.xacro",
 )
 
 xacro_file(
   name = "sample2",
-  src = "sample2.xml.xacro",
-  data = ["box.xml"]
+  src = "inputs/sample2.xml.xacro",
+  data = ["inputs/box.xml"]
 )
 
 xacro_file(
   name = "complex_example",
-  src = "complex.xml.xacro",
+  src = "inputs/complex.xml.xacro",
   out = "my_complex_model.xml",
   deps = [":sample1"],
   extra_args = ["special_argument:=foo"]
@@ -22,13 +22,13 @@ xacro_file(
 
 xacro_file(
   name = "conditional_default",
-  src = "conditional.xml.xacro",
+  src = "inputs/conditional.xml.xacro",
   out = "conditional_default.xml"
 )
 
 xacro_file(
   name = "conditional_false",
-  src = "conditional.xml.xacro",
+  src = "inputs/conditional.xml.xacro",
   out = "conditional_false.xml",
   extra_args = ["myarg:=false"]
 )
