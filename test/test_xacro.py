@@ -74,6 +74,7 @@ except ImportError:
 # regex to match whitespace
 whitespace = re.compile(r'\s+')
 
+
 def text_values_match(a, b):
     # generic comparison
     if whitespace.sub(' ', a).strip() == whitespace.sub(' ', b).strip():
@@ -405,19 +406,16 @@ class TestXacroCommentsIgnored(TestXacroBase):
         super(TestXacroCommentsIgnored, self).__init__(*args, **kwargs)
         self.ignore_nodes = [xml.dom.Node.COMMENT_NODE]
 
+    @unittest.skipIf(BAZEL_TEST, "Bazel build does not support $(find pkg)")
     def test_pr2(self):
-        if BAZEL_TEST:
-            # This has an unspecified test dependency on ament_index_python
-            return
-
         # run xacro on the pr2 tree snapshot
         test_dir = os.path.abspath(os.path.dirname(__file__))
         pr2_xacro_path = os.path.join(test_dir, 'robots', 'pr2', 'pr2.urdf.xacro')
         pr2_golden_parse_path = os.path.join(test_dir, 'robots', 'pr2', 'pr2_1.11.4.xml')
         self.assert_matches(
             xml.dom.minidom.parse(pr2_golden_parse_path),
-
             self.quick_xacro(open(pr2_xacro_path)))
+
 
 # standard test class (including the test from TestXacroCommentsIgnored)
 class TestXacro(TestXacroCommentsIgnored):
@@ -568,11 +566,8 @@ class TestXacro(TestXacroCommentsIgnored):
         src = '''<a><f v="${0.9 / 2 - 0.2}" /></a>'''
         self.assert_matches(self.quick_xacro(src), '''<a><f v="0.25" /></a>''')
 
+    @unittest.skipIf(BAZEL_TEST, "Bazel build does not support $(find pkg)")
     def test_substitution_args_find(self):
-        if BAZEL_TEST:
-            # Bazel implementation does not have $(find)
-            return
-
         resolved = self.quick_xacro('''<a>$(find xacro)/test/test_xacro.py</a>''').firstChild.firstChild.data
         self.assertEqual(os.path.realpath(resolved), os.path.realpath(__file__))
 
