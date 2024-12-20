@@ -1,6 +1,6 @@
-load("@rules_python//python:defs.bzl", "py_binary", "py_test", "py_library")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_license//rules:license.bzl", "license")
+load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
 
 package(
     default_applicable_licenses = [":license"],
@@ -18,31 +18,34 @@ license(
 
 write_file(
     name = "write_xacro_main",
+    out = "xacro_main.py",
     # This is the same as scripts/xacro from upstream, except that we lose the
     # unused shebang line and we use a filename that is not subject to import
     # path conflicts.
     content = ["import xacro; xacro.main()"],
-    out = "xacro_main.py"
 )
 
 py_library(
-  name = "xacro_lib",
-  srcs = glob([
-    "xacro/**/*.py"
-  ], allow_empty = False),
-  imports = ["."],
-  visibility = ["//visibility:public"],
-  deps = [
-    "@pypi//pyyaml:pkg",
-    "@rules_python//python/runfiles",
-  ]
+    name = "xacro_lib",
+    srcs = glob(
+        [
+            "xacro/**/*.py",
+        ],
+        allow_empty = False,
+    ),
+    imports = ["."],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@pypi//pyyaml:pkg",
+        "@rules_python//python/runfiles",
+    ],
 )
 
 py_binary(
-  name = "xacro_main",
-  srcs = ["xacro_main.py"],
-  main = "xacro_main.py",
-  deps = [":xacro_lib"],
+    name = "xacro_main",
+    srcs = ["xacro_main.py"],
+    main = "xacro_main.py",
+    deps = [":xacro_lib"],
 )
 
 alias(
@@ -52,26 +55,26 @@ alias(
 )
 
 TEST_RESOURCES = glob([
-  "test/*.xacro",
-  "test/*.xml",
-  "test/*.yaml",
-  "test/subdir/**",
-  "test/robots/**",
+    "test/*.xacro",
+    "test/*.xml",
+    "test/*.yaml",
+    "test/subdir/**",
+    "test/robots/**",
 ])
 
 filegroup(
-  name = "test_data",
-  srcs = TEST_RESOURCES,
-  data = TEST_RESOURCES,
+    name = "test_data",
+    srcs = TEST_RESOURCES,
+    data = TEST_RESOURCES,
 )
 
 py_test(
-  name = "test_xacro",
-  srcs = ["test/test_xacro.py"],
-  main = "test/test_xacro.py",
-  data = [":test_data"],
-  deps = [
-    ":xacro_main",
-    "@rules_python//python/runfiles",
-  ]
+    name = "test_xacro",
+    srcs = ["test/test_xacro.py"],
+    data = [":test_data"],
+    main = "test/test_xacro.py",
+    deps = [
+        ":xacro_main",
+        "@rules_python//python/runfiles",
+    ],
 )

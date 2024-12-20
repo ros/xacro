@@ -9,9 +9,12 @@ compile_pip_requirements(
 )
 
 bzl_library(
-  name = "defs",
-  srcs = ["defs.bzl"],
-  visibility = ["//visibility:public"],
+    name = "defs",
+    srcs = ["defs.bzl"],
+    visibility = ["//visibility:public"],
 )
 
-exports_files(["requirements.in", "requirements_lock.txt"])
+exports_files([
+    "requirements.in",
+    "requirements_lock.txt",
+])
