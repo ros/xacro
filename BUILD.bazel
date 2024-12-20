@@ -38,7 +38,7 @@ py_library(
     imports = ["."],
     visibility = ["//visibility:public"],
     deps = [
-        "@pypi//pyyaml:pkg",
+        "@xacro_python_dependencies//pyyaml:pkg",
         "@rules_python//python/runfiles",
     ],
 )
