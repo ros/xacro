@@ -137,13 +137,7 @@ def _dirname(resolved, a, args, context):
 
 
 def _eval_find(pkg):
-    try:
-        from ament_index_python.packages import get_package_share_directory
-    except ModuleNotFoundError:
-        raise SubstitutionException(
-            '$(find pkg) requires ament_index_python, but it was not found'
-        )
-
+    from ament_index_python.packages import get_package_share_directory
     return get_package_share_directory(pkg)
 
 
