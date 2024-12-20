@@ -1,7 +1,5 @@
 load("@rules_python//python:defs.bzl", "py_binary", "py_test", "py_library")
-load("@rules_python//python:pip.bzl", "compile_pip_requirements")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
-load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
 load("@rules_license//rules:license.bzl", "license")
 
 package(
@@ -18,12 +16,6 @@ license(
     license_text = "LICENSE",
 )
 
-# This rule adds a convenient way to update the requirements file.
-compile_pip_requirements(
-    name = "requirements",
-    src = "requirements.in",
-    requirements_txt = "requirements_lock.txt",
-)
 
 write_file(
     name = "write_xacro_main",
@@ -82,10 +74,4 @@ py_test(
     ":xacro_main",
     "@rules_python//python/runfiles",
   ]
-)
-
-bzl_library(
-  name = "build_defs_bzl",
-  srcs = ["build_defs.bzl"],
-  visibility = ["//visibility:public"],
 )
