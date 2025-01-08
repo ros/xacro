@@ -2,6 +2,13 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.0.12 (2025-01-08)
+-------------------
+* Python 3.13 introduced new attr argument to _write_data (`#353 <https://github.com/ros/xacro/issues/353>`_)
+* pyproject.toml: Automatically determine version from git
+* Add function python.vars() (`#348 <https://github.com/ros/xacro/issues/348>`_)
+* Contributors: Robert Haschke
+
 2.0.11 (2024-04-02)
 -------------------
 * Allow substitution args without ROS (`#340 <https://github.com/ros/xacro/issues/340>`_)
