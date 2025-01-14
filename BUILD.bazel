@@ -29,7 +29,6 @@ py_library(
     name = "xacro_lib",
     srcs = [
         "xacro/__init__.py",
-        "xacro/bazel_support.py",
         "xacro/cli.py",
         "xacro/color.py",
         "xacro/substitution_args.py",
@@ -38,8 +37,8 @@ py_library(
     imports = ["."],
     visibility = ["//visibility:public"],
     deps = [
-        "@xacro_python_dependencies//pyyaml:pkg",
         "@rules_python//python/runfiles",
+        "@xacro_python_dependencies//pyyaml:pkg",
     ],
 )
 

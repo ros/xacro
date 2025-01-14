@@ -53,6 +53,7 @@ substitution_args_context = {}
 filestack = None
 macrostack = None
 
+root_dir = os.curdir
 
 def init_stacks(file):
     global filestack
@@ -523,6 +524,7 @@ def process_include(elt, macros, symbols, func):
         try:
             # extend filestack
             filestack.append(filename)
+            print(filename)
             include = parse(None, filename).documentElement
 
             # recursive call to func
@@ -1013,10 +1015,11 @@ def parse(inp, filename=None):
     :return:xml.dom.minidom.Document
     :raise: xml.parsers.expat.ExpatError
     """
+    global root_dir
     f = None
     if inp is None:
         try:
-            inp = f = open(filename)
+            inp = f = open(os.path.join(root_dir, filename))
         except IOError as e:
             # do not report currently processed file as "in file ..."
             filestack.pop()
@@ -1099,6 +1102,11 @@ def process_file(input_file_name, **kwargs):
     """main processing pipeline"""
     # initialize file stack for error-reporting
     init_stacks(input_file_name)
+
+    global root_dir
+    if 'root_dir' in kwargs:
+        root_dir = kwargs['root_dir']
+
     # parse the document into a xml.dom tree
     doc = parse(None, input_file_name)
     # perform macro replacement

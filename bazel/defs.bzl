@@ -2,43 +2,52 @@
 
 XacroInfo = provider(
     "Provider holding the result of a xacro generation step.",
-    fields = ["result", "data"],
+    fields = ["result"],
 )
 
 XACRO_EXTENSION = ".xacro"
 
 def _xacro_impl(ctx):
-    if ctx.outputs.out:
-        out = ctx.outputs.out
-    else:
-        src = ctx.file.src.basename
-        if not src.endswith(XACRO_EXTENSION):
-            fail("xacro_file src should be named *.xacro not {}".format(src))
-        out = ctx.actions.declare_file(src[:-len(XACRO_EXTENSION)])
+    # Use declared output or derive from source name
+    out = ctx.outputs.out or ctx.actions.declare_file(ctx.file.src.basename[:-len(XACRO_EXTENSION)])
 
-    # The list of arguments we pass to the script.
-    args = [ctx.file.src.path, "-o", out.path] + ctx.attr.extra_args
+    # Gather inputs for the xacro command
+    direct_inputs = [ctx.file.src] + ctx.files.data
+    dep_inputs = [dep[XacroInfo].result for dep in ctx.attr.deps]
+    all_inputs = direct_inputs + dep_inputs
 
-    # Action to call the script.
-    all_inputs = [ctx.file.src] + ctx.files.data + [dep[XacroInfo].result for dep in ctx.attr.deps]
+    # Create a temporary directory
+    temp_dir = "TMP_XACRO/" + ctx.label.name
+
+    symlink_paths = []
+    for input in all_inputs:
+        symlink_path = ctx.actions.declare_file(temp_dir + "/" + input.basename)
+        ctx.actions.symlink(
+            output = symlink_path,
+            target_file = input,
+        )
+        symlink_paths.append(symlink_path)
+
+    arguments = [
+        "-o",
+        out.path,
+        "--root-dir",
+        ctx.bin_dir.path + "/" + temp_dir,
+        ctx.file.src.basename,
+    ]
+    arguments += ["{}:={}".format(arg, val) for arg, val in ctx.attr.arguments.items()]
+
     ctx.actions.run(
-        inputs = all_inputs,
+        inputs = symlink_paths,
         outputs = [out],
-        arguments = args,
-        env = {"XACRO_INPUTS": "\n".join([file.path for file in all_inputs])},
-        progress_message = "Running xacro: %s -> %s" % (ctx.file.src.short_path, out.short_path),
+        arguments = arguments,
         executable = ctx.executable._xacro,
+        progress_message = "Running xacro: %s -> %s" % (ctx.file.src.short_path, out.short_path),
+        mnemonic = "Xacro",
     )
-
-    xacro_data = depset(
-        direct = [out] + ctx.files.data + [d[XacroInfo].result for d in ctx.attr.deps],
-        transitive = [d[XacroInfo].data for d in ctx.attr.deps],
-    )
-
-    runfiles = ctx.runfiles(files = xacro_data.to_list())
 
     return [
-        XacroInfo(result = out, data = xacro_data),
+        XacroInfo(result = out),
         DefaultInfo(
             files = depset([out]),
             data_runfiles = ctx.runfiles(files = [out]),
@@ -55,7 +64,7 @@ xacro_file = rule(
         "data": attr.label_list(
             allow_files = True,
         ),
-        "extra_args": attr.string_list(),
+        "arguments": attr.string_dict(),
         "deps": attr.label_list(providers = [XacroInfo]),
         "_xacro": attr.label(
             default = "@xacro//:xacro",

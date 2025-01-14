@@ -16,7 +16,7 @@ xacro_file(
     name = "complex_example",
     src = "inputs/complex.xml.xacro",
     out = "my_complex_model.xml",
-    extra_args = ["special_argument:=foo"],
+    arguments = {"special_argument": "foo"},
     deps = [":sample1"],
 )
 
@@ -30,7 +30,7 @@ xacro_file(
     name = "conditional_false",
     src = "inputs/conditional.xml.xacro",
     out = "conditional_false.xml",
-    extra_args = ["myarg:=false"],
+    arguments = {"myarg": "false"},
 )
 
 diff_test(
