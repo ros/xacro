@@ -53,7 +53,10 @@ substitution_args_context = {}
 filestack = None
 macrostack = None
 
+# Allow the user to override the root directory that relative
+# paths will be resolved to
 root_dir = os.curdir
+
 
 def init_stacks(file):
     global filestack
@@ -1015,10 +1018,10 @@ def parse(inp, filename=None):
     :return:xml.dom.minidom.Document
     :raise: xml.parsers.expat.ExpatError
     """
-    global root_dir
     f = None
     if inp is None:
         try:
+            global root_dir
             inp = f = open(os.path.join(root_dir, filename))
         except IOError as e:
             # do not report currently processed file as "in file ..."
@@ -1103,10 +1106,6 @@ def process_file(input_file_name, **kwargs):
     # initialize file stack for error-reporting
     init_stacks(input_file_name)
 
-    global root_dir
-    if 'root_dir' in kwargs:
-        root_dir = kwargs['root_dir']
-
     # parse the document into a xml.dom tree
     doc = parse(None, input_file_name)
     # perform macro replacement
@@ -1129,6 +1128,10 @@ _global_symbols = create_global_symbols()
 
 
 def _process(input_file_name, opts):
+    if 'root_dir' in opts and opts['root_dir']:
+        global root_dir
+        root_dir = opts['root_dir']
+
     try:
         # open and process file
         doc = process_file(input_file_name, **opts)
