@@ -46,8 +46,10 @@ from .color import error, message, warning
 from .xmlutils import opt_attrs, reqd_attrs, first_child_element, \
     next_sibling_element, replace_node
 
+
 # Dictionary of substitution args
 substitution_args_context = {}
+
 
 # Stack of currently processed files / macros
 filestack = None
@@ -527,7 +529,6 @@ def process_include(elt, macros, symbols, func):
         try:
             # extend filestack
             filestack.append(filename)
-            print(filename)
             include = parse(None, filename).documentElement
 
             # recursive call to func
@@ -1105,7 +1106,6 @@ def process_file(input_file_name, **kwargs):
     """main processing pipeline"""
     # initialize file stack for error-reporting
     init_stacks(input_file_name)
-
     # parse the document into a xml.dom tree
     doc = parse(None, input_file_name)
     # perform macro replacement
