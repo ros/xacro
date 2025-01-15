@@ -1141,6 +1141,46 @@ class TestXacro(TestXacroCommentsIgnored):
 
         self.assertTrue(output_file_created)
 
+    def test_set_root_directory(self):
+        # Run xacro in one directory, but specify the directory to resolve
+        # filenames in.
+        tmp_dir_name = tempfile.mkdtemp()  # create directory we can trash
+
+        output_path = os.path.join(tmp_dir_name, "out")
+
+        # Generate a pair of files to be parsed by xacro, outside of the
+        # test directory, to ensure the root-dir argument works
+        file_foo = os.path.join(tmp_dir_name, 'foo.xml.xacro')
+        file_bar = os.path.join(tmp_dir_name, 'bar.xml.xacro')
+        with open(file_foo, 'w') as f:
+            f.write('''<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+	<xacro:include filename="bar.xml.xacro"/>
+</robot>
+''')
+        with open(file_bar, 'w') as f:
+            f.write('''<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+    <link name="my_link"/>
+</robot>
+''')
+
+        # Run xacro with no --root-dir arg, which will then use the
+        # current path as the path to resolveto
+        self.run_xacro('foo.xml.xacro', '-o', output_path)
+        output_file_created = os.path.isfile(output_path)
+        self.assertFalse(output_file_created)
+
+        # Run xacro with --root-dir arg set to the new temp directory
+        self.run_xacro('foo.xml.xacro',
+                       '--root-dir', tmp_dir_name,
+                       '-o', output_path)
+
+        output_file_created = os.path.isfile(output_path)
+        shutil.rmtree(tmp_dir_name)  # clean up after ourselves
+
+        self.assertTrue(output_file_created)
+
     def test_iterable_literals_plain(self):
         self.assert_matches(self.quick_xacro('''
 <a xmlns:xacro="http://www.ros.org/wiki/xacro">
