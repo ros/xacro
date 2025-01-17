@@ -1022,7 +1022,6 @@ def parse(inp, filename=None):
     f = None
     if inp is None:
         try:
-            global root_dir
             inp = f = open(os.path.join(root_dir, filename))
         except IOError as e:
             # do not report currently processed file as "in file ..."
