@@ -101,6 +101,8 @@ def process_args(argv, require_input=True):
                       help="print file dependencies")
     parser.add_option("--inorder", "-i", action="store_true", dest="in_order",
                       help="processing in read order (default, can be omitted)")
+    parser.add_option("--root-dir", dest="root_dir", metavar="DIR", default=None,
+                      help="set the root directory to resolve relative paths to")
 
     # verbosity options
     parser.add_option("-q", action="store_const", dest="verbosity", const=0,

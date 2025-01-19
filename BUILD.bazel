@@ -1,0 +1,81 @@
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@rules_license//rules:license.bzl", "license")
+load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
+
+package(
+    default_applicable_licenses = [":license"],
+)
+
+licenses(["notice"])
+
+license(
+    name = "license",
+    license_kinds = [
+        "@rules_license//licenses/spdx:BSD-3-Clause",
+    ],
+    license_text = "LICENSE",
+)
+
+write_file(
+    name = "write_xacro_main",
+    out = "xacro_main.py",
+    # This is the same as scripts/xacro from upstream, except that we lose the
+    # unused shebang line and we use a filename that is not subject to import
+    # path conflicts.
+    content = ["import xacro; xacro.main()"],
+)
+
+py_library(
+    name = "xacro_lib",
+    srcs = [
+        "xacro/__init__.py",
+        "xacro/cli.py",
+        "xacro/color.py",
+        "xacro/substitution_args.py",
+        "xacro/xmlutils.py",
+    ],
+    imports = ["."],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@rules_python//python/runfiles",
+        "@xacro_python_dependencies//pyyaml:pkg",
+    ],
+)
+
+py_binary(
+    name = "xacro_main",
+    srcs = ["xacro_main.py"],
+    main = "xacro_main.py",
+    deps = [":xacro_lib"],
+)
+
+alias(
+    name = "xacro",
+    actual = ":xacro_main",
+    visibility = ["//visibility:public"],
+)
+
+TEST_RESOURCES = glob([
+    "test/*.xacro",
+    "test/*.xml",
+    "test/*.yaml",
+    "test/subdir/**",
+    "test/robots/**",
+])
+
+filegroup(
+    name = "test_data",
+    srcs = TEST_RESOURCES,
+    data = TEST_RESOURCES,
+)
+
+py_test(
+    name = "test_xacro",
+    srcs = ["test/test_xacro.py"],
+    data = [":test_data"],
+    main = "test/test_xacro.py",
+    deps = [
+        ":xacro_main",
+        "@rules_python//python/runfiles",
+    ],
+)

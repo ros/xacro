@@ -1,0 +1,64 @@
+load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
+load("@xacro//bazel:defs.bzl", "xacro_file")
+
+xacro_file(
+    name = "sample1",
+    src = "inputs/sample1.xml.xacro",
+)
+
+xacro_file(
+    name = "sample2",
+    src = "inputs/sample2.xml.xacro",
+    data = ["inputs/box.xml"],
+)
+
+xacro_file(
+    name = "complex_example",
+    src = "inputs/complex.xml.xacro",
+    out = "my_complex_model.xml",
+    arguments = {"special_argument": "foo"},
+    deps = [":sample1"],
+)
+
+xacro_file(
+    name = "conditional_default",
+    src = "inputs/conditional.xml.xacro",
+    out = "conditional_default.xml",
+)
+
+xacro_file(
+    name = "conditional_false",
+    src = "inputs/conditional.xml.xacro",
+    out = "conditional_false.xml",
+    arguments = {"myarg": "false"},
+)
+
+diff_test(
+    name = "sample1_test",
+    file1 = ":sample1",
+    file2 = "expected/sample1.xml",
+)
+
+diff_test(
+    name = "sample2_test",
+    file1 = ":sample2",
+    file2 = "expected/sample2.xml",
+)
+
+diff_test(
+    name = "complex_example_test",
+    file1 = ":complex_example",
+    file2 = "expected/my_complex_model.xml",
+)
+
+diff_test(
+    name = "conditional_default_test",
+    file1 = ":conditional_default",
+    file2 = "expected/conditional_default.xml",
+)
+
+diff_test(
+    name = "conditional_false_test",
+    file1 = ":conditional_false",
+    file2 = "expected/conditional_false.xml",
+)

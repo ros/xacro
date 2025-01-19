@@ -1,0 +1,21 @@
+name: Bazel CI
+
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  test:
+    uses: bazel-contrib/.github/.github/workflows/bazel.yaml@v7
+    with:
+      folders: |
+        [
+          ".",
+          "bazel/integration_test",
+        ]
+      # Explicitly exclude build/test configurations where bzlmod is disabled.
+      # Since xacro only supports bzlmod, these will always fail.
+      # Remove these exclusions when workspace support is dropped.
+      exclude: |
+        [
+          {"folder": ".", "bzlmodEnabled": false},
+          {"folder": "bazel/integration_test", "bzlmodEnabled": false},
+        ]

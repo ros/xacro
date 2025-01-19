@@ -55,6 +55,10 @@ substitution_args_context = {}
 filestack = None
 macrostack = None
 
+# Allow the user to override the root directory that relative
+# paths will be resolved to
+root_dir = os.curdir
+
 
 def init_stacks(file):
     global filestack
@@ -1018,7 +1022,7 @@ def parse(inp, filename=None):
     f = None
     if inp is None:
         try:
-            inp = f = open(filename)
+            inp = f = open(os.path.join(root_dir, filename))
         except IOError as e:
             # do not report currently processed file as "in file ..."
             filestack.pop()
@@ -1123,6 +1127,10 @@ _global_symbols = create_global_symbols()
 
 
 def _process(input_file_name, opts):
+    if 'root_dir' in opts and opts['root_dir']:
+        global root_dir
+        root_dir = opts['root_dir']
+
     try:
         # open and process file
         doc = process_file(input_file_name, **opts)
