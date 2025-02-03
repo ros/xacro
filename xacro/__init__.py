@@ -1040,12 +1040,13 @@ def parse(inp, filename=None):
             f.close()
 
 
-def process_doc(doc, mappings=None, **kwargs):
+def process_doc(doc, mappings=None, extra_find_pkgs={}, **kwargs):
     global verbosity
     verbosity = kwargs.get('verbosity', verbosity)
 
     # set substitution args
     substitution_args_context['arg'] = {} if mappings is None else mappings
+    substitution_args_context['find'] = extra_find_pkgs
 
     # if not yet defined: initialize filestack
     if not filestack:
@@ -1064,7 +1065,7 @@ def process_doc(doc, mappings=None, **kwargs):
 
     # reset substitution args
     substitution_args_context['arg'] = {}
-
+    substitution_args_context['find'] = {}
 
 def open_output(output_filename):
     if output_filename is None:

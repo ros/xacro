@@ -53,7 +53,6 @@ class ArgException(SubstitutionException):
     """Exception for missing $(arg) values."""
     pass
 
-
 def _eval_env(name):
     """
     Returns the environment variable value or throws exception.
@@ -152,7 +151,12 @@ def _find(resolved, a, args, context):
     if len(args) != 1:
         raise SubstitutionException(
             '$(find pkg) accepts exactly one argument [%s]' % a)
-    return resolved.replace('$(%s)' % a, _eval_find(args[0]))
+    pkg_name_str = args[0]
+    if "find" in context and pkg_name_str in context["find"]:
+        pkg_path_str = context["find"][pkg_name_str]
+    else:
+        pkg_path_str = _eval_find(args[0])
+    return resolved.replace('$(%s)' % a, pkg_path_str)
 
 
 def _eval_arg(name, args):
