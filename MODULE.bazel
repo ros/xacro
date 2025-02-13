@@ -1,7 +1,4 @@
-module(
-    name = "xacro",
-    version = "2.0.11",
-)
+module(name = "xacro")
 
 bazel_dep(name = "rules_license", version = "1.0.0")
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
