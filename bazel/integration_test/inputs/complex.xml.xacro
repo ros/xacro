@@ -2,6 +2,7 @@
 <root xmlns:xacro="http://www.ros.org/wiki/xacro">
   <!-- include a file from a bazel path -->
   <xacro:include filename="sample1.xml"/>
+  <xacro:include filename="deeply/nested/dependency.xml"/>
 
   <!-- populate an argument from command line -->
   <sphere name="$(arg special_argument)" radius="1"/>
