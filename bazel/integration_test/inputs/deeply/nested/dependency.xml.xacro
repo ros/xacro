@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<root xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <deeply><nested><tag/></nested></deeply>
+</root>

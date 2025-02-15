@@ -13,11 +13,16 @@ xacro_file(
 )
 
 xacro_file(
+    name = "deeply_nested",
+    src = "inputs/deeply/nested/dependency.xml.xacro",
+)
+
+xacro_file(
     name = "complex_example",
     src = "inputs/complex.xml.xacro",
     out = "my_complex_model.xml",
     arguments = {"special_argument": "foo"},
-    deps = [":sample1"],
+    deps = [":sample1", ":deeply_nested"],
 )
 
 xacro_file(

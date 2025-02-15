@@ -296,7 +296,9 @@ class Macro(object):
 
 def eval_extension(s):
     if s == '$(cwd)':
-        return os.getcwd()
+        # In the case that root_dir is '.' this will expand to the full
+        # current working directory, identical to os.getcwd()
+        return os.path.abspath(root_dir)
     try:
         from .substitution_args import resolve_args, ArgException
         return resolve_args(s, context=substitution_args_context)
