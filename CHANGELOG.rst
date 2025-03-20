@@ -4,7 +4,7 @@ Changelog for package xacro
 
 2.0.12 (2025-01-08)
 -------------------
-* Python 3.13 introduced new attr argument to _write_data (`#353 <https://github.com/ros/xacro/issues/353>`_)
+* Handle new argument 'attr' in xml.dom.minidom._write_data() of Python 3.13 (`#353 <https://github.com/ros/xacro/issues/353>`_)
 * pyproject.toml: Automatically determine version from git
 * Add function python.vars() (`#348 <https://github.com/ros/xacro/issues/348>`_)
 * Contributors: Robert Haschke
