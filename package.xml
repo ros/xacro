@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>xacro</name>
-  <version>2.0.12</version>
+  <version>2.0.13</version>
   <description>Xacro (XML Macros)
     Xacro is an XML macro language. With xacro, you can construct shorter and more readable XML files by using macros that expand to larger XML expressions.
   </description>

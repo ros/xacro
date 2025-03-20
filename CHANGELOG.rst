@@ -2,6 +2,12 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.0.13 (2025-03-20)
+-------------------
+* Pass AMENT_PREFIX_PATH to xacro (`#359 <https://github.com/ros/xacro/issues/359>`_)
+* Add Bazel build rules (`#350 <https://github.com/ros/xacro/issues/350>`_)
+* Contributors: Michael Carroll, Robert Haschke, Sean Fish
+
 2.0.12 (2025-01-08)
 -------------------
 * Handle new argument 'attr' in xml.dom.minidom._write_data() of Python 3.13 (`#353 <https://github.com/ros/xacro/issues/353>`_)
