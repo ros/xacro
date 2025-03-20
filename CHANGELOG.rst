@@ -2,6 +2,11 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.14.20 (2025-03-20)
+--------------------
+* Handle new argument 'attr' in xml.dom.minidom._write_data() of Python 3.13 (`#353 <https://github.com/ros/xacro/issues/353>`_)
+* Contributors: Robert Haschke
+
 1.14.19 (2024-12-20)
 --------------------
 * Add function python.vars() (`#348 <https://github.com/ros/xacro/issues/348>`_)
