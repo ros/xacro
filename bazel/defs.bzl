@@ -96,7 +96,7 @@ xacro_file = rule(
         "arguments": attr.string_dict(),
         "deps": attr.label_list(providers = [XacroInfo]),
         "_xacro": attr.label(
-            default = "@xacro//:xacro",
+            default = Label("//:xacro"),
             cfg = "host",
             executable = True,
         ),
