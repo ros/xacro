@@ -299,7 +299,6 @@ def resolve_args(arg_str, context=None, filename=None):
         If no context is provided, a new one will be created for each call. Values for the 'arg'
         context should be stored as a dictionary in the 'arg' key.
     @type  context: dict
-
     @return str: arg_str with substitution args resolved
     @rtype:  str
     @raise SubstitutionException: if there is an error resolving substitution args
