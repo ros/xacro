@@ -208,9 +208,9 @@ def create_global_symbols():
     # This is the list of symbols we have exposed for years now. Continue exposing them directly
     expose('list', 'dict', 'map', 'len', 'str', 'float', 'int', 'bool', 'True', 'False', 'min', 'max', 'round',
            source=__builtins__)
-    # These few were only recently added. The should move into python namespace, but (with a deprecation msg) stay global for now
+    # These few were only recently added. They should move into the python namespace, but (with a deprecation msg) stay global for now
     expose('sorted', 'range', source=__builtins__, ns='python', deprecate_msg=deprecate_msg)
-    # Expose all builtin symbols into the python namespace. Thus the stay accessible if the global symbol was overriden
+    # Expose all builtin symbols into the python namespace. Thus, they stay accessible if the global symbol is overridden
     expose('list', 'dict', 'map', 'len', 'str', 'float', 'int', 'bool', 'True', 'False', 'min', 'max', 'round',
            'abs', 'all', 'any', 'complex', 'divmod', 'enumerate', 'filter', 'frozenset', 'hash', 'isinstance', 'issubclass',
            'ord', 'repr', 'reversed', 'slice', 'set', 'sum', 'tuple', 'type', 'vars', 'zip', source=__builtins__, ns='python')
