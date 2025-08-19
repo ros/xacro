@@ -791,7 +791,7 @@ def handle_macro_call(node, macros, symbols):
 
     name = node.tagName[6:]  # drop 'xacro:' prefix
     try:
-        macros, symbols, m = resolve_macro(name, macros, symbols)
+        scoped_macros, scoped_symbols, m = resolve_macro(name, macros, symbols)
         body = m.body.cloneNode(deep=True)
 
     except KeyError:
@@ -800,8 +800,8 @@ def handle_macro_call(node, macros, symbols):
     macrostack.append(m)
 
     # Expand the macro
-    scoped_symbols = Table(symbols)  # new local name space for macro evaluation
-    scoped_macros = Table(macros)
+    scoped_symbols = Table(scoped_symbols)  # new local name space for macro evaluation
+    scoped_macros = Table(scoped_macros)
     params = m.params[:]  # deep copy macro's params list
     for name, value in node.attributes.items():
         if name not in params:
