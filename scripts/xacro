@@ -27,7 +27,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 # Author: Stuart Glaser
-# Maintainer: William Woodall <wwoodall@willowgarage.com>
 
 import xacro
 xacro.main()

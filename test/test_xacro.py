@@ -31,7 +31,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 # Authors: Stuart Glaser, William Woodall, Robert Haschke
-# Maintainer: Robert Haschke <rhaschke@techfak.uni-bielefeld.de>
 
 from __future__ import print_function
 
