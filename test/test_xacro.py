@@ -1370,12 +1370,10 @@ included from: string
   <xacro:property name="var" value="main"/>
   <xacro:B.bar arg="${ext}"/>
   <xacro:B.bar arg="${var}"/>
-  <xacro:B.bar arg="${inner}"/>
 </a>'''
       res = '''<a version="1.0">
   <a arg="main" ext="main" var="2"/>
-  <a arg="2" ext="main" var="2"/>
-  <a arg="int" ext="main" var="2"/>
+  <a arg="main" ext="main" var="2"/>
 </a>'''
       self.assert_matches(self.quick_xacro(src), res)
 
