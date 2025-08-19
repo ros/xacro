@@ -2,6 +2,13 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.15.0 (2025-08-19)
+-------------------
+* Resolve macro arguments within caller's scope (`#373 <https://github.com/ros/xacro/issues/373>`_)
+* Remove consecutive dashes in the input file name (`#372 <https://github.com/ros/xacro/issues/372>`_)
+* Expose bool() in global and python namespace (`#371 <https://github.com/ros/xacro/issues/371>`_)
+* Contributors: Jasper van Brakel, Robert Haschke
+
 1.14.20 (2025-03-20)
 --------------------
 * Handle new argument 'attr' in xml.dom.minidom._write_data() of Python 3.13 (`#353 <https://github.com/ros/xacro/issues/353>`_)
