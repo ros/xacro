@@ -1,0 +1,24 @@
+name: PyPI release
+
+on: push
+
+jobs:
+  default:
+    name: Build and release tagged pushes
+    if: startsWith(github.ref, 'refs/tags/')  # only publish to PyPI on tag pushes
+    runs-on: ubuntu-latest
+
+    environment:
+      name: pypi
+      url: https://pypi.org/p/xacro
+    permissions:
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
+
+    steps:
+    - uses: actions/checkout@v5
+    - name: Install pypa/build
+      run: python3 -m pip install build --user
+    - name: Build
+      run: python3 -m build
+    - name: Publish to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
