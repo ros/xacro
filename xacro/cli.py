@@ -28,7 +28,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 # Authors: Stuart Glaser, William Woodall, Robert Haschke
-# Maintainer: Morgan Quigley <morgan@osrfoundation.org>
 
 import textwrap
 from optparse import OptionParser, IndentedHelpFormatter

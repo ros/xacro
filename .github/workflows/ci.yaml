@@ -7,14 +7,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ros: [galactic, humble, rolling]
+        ros: [humble, jazzy, rolling]
 
     name: ${{ matrix.ros }}
     runs-on: ubuntu-latest
     env:
       ROS_DISTRO: ${{ matrix.ros }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: industrial_ci
         uses: ros-industrial/industrial_ci@master
