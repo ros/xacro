@@ -2,6 +2,14 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.1.0 (2025-08-19)
+------------------
+* Resolve macro arguments within caller's scope (`#373 <https://github.com/ros/xacro/issues/373>`_)
+* Remove consecutive dashes in the input file name (`#372 <https://github.com/ros/xacro/issues/372>`_)
+* Expose bool() in global and python namespace (`#371 <https://github.com/ros/xacro/issues/371>`_)
+* Remove extra line in doc string (`#362 <https://github.com/ros/xacro/issues/362>`_)
+* Contributors: Jasper van Brakel, Robert Haschke, Tully Foote
+
 2.0.13 (2025-03-20)
 -------------------
 * Pass AMENT_PREFIX_PATH to xacro (`#359 <https://github.com/ros/xacro/issues/359>`_)
