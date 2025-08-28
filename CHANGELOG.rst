@@ -2,6 +2,11 @@
 Changelog for package xacro
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.1.1 (2025-08-28)
+------------------
+* Handle str and pathlib.Path args for process_file()
+* Contributors: Noel Jimenez, Robert Haschke
+
 2.1.0 (2025-08-19)
 ------------------
 * Resolve macro arguments within caller's scope (`#373 <https://github.com/ros/xacro/issues/373>`_)
