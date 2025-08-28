@@ -36,6 +36,7 @@ from contextlib import contextmanager
 import itertools
 import math
 import os.path
+import pathlib
 import re
 import shutil
 import subprocess
@@ -1702,6 +1703,15 @@ ${u'🍔' * how_many}
   ${p}</a>'''
         self.assert_matches(self.quick_xacro(src), '<a>2nd</a>')
 
+    def test_process_file_types(self):
+        # Test that checks process_file method with different path types
+        # os.path
+        path = os.path.join(os.path.dirname(__file__), 'emoji.xacro')
+        self.assert_matches(xacro.process_file(path), '<robot>🍔</robot>')
+
+        # pathlib.Path
+        path = pathlib.Path(os.path.join(os.path.dirname(__file__), 'emoji.xacro'))
+        self.assert_matches(xacro.process_file(path), '<robot>🍔</robot>')
 
 if __name__ == '__main__':
     unittest.main()
