@@ -333,11 +333,11 @@ def _resolve_args(arg_str, context, commands):
     valid = ['find', 'env', 'optenv', 'dirname', 'arg']
     resolved = arg_str
     for a in _collect_args(arg_str):
-        splits = shlex.split(a)
-        if splits[0] not in valid:
+        splits = [s for s in a.split(' ') if s]
+        if splits[0].strip() not in valid:
             raise SubstitutionException('Unknown substitution command [%s]. '
                                         'Valid commands are %s' % (splits[0], valid))
-        command = splits[0]
+        command = splits[0].strip()
         args = splits[1:]
         if command in commands:
             resolved = commands[command](resolved, a, args, context)
