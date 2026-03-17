@@ -39,7 +39,6 @@ This file has been modified from ros_comm/tools/roslaunch/src/roslaunch/substitu
 
 import math
 import os
-import shlex
 import yaml
 
 from io import StringIO
@@ -336,7 +335,7 @@ def _resolve_args(arg_str, context, commands):
         splits = [s for s in a.split() if s]
         if splits[0] not in valid:
             raise SubstitutionException('Unknown substitution command [%s]. '
-                                        'Valid commands are %s' % (splits[0], valid))
+                                        'Valid commands are %s' % (a, valid))
         command = splits[0]
         args = splits[1:]
         if command in commands:
