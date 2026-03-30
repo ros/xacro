@@ -1106,6 +1106,20 @@ class TestXacro(TestXacroCommentsIgnored):
 <a xmlns:xacro="http://www.ros.org/wiki/xacro">
 <xacro:arg name="foo" default="bar"/>${xacro.arg('foo')}</a>'''), '<a>bar</a>')
 
+    def test_dynamic_arg_default(self):
+        self.assert_matches(self.quick_xacro('''
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+<xacro:property name="name" value="foo"/>
+<xacro:arg name="${name}_arg" default="none"/>
+$(arg ${name}_arg)</a>'''), '<a>none</a>')
+
+    def test_dynamic_arg_specified(self):
+        self.assert_matches(self.quick_xacro('''
+<a xmlns:xacro="http://www.ros.org/wiki/xacro">
+<xacro:property name="name" value="foo"/>
+<xacro:arg name="${name}_arg" default="none"/>
+$(arg ${name}_arg)</a>''', cli=['foo_arg:=test']), '<a>test</a>')
+
     def test_broken_include_error_reporting(self):
         self.assertRaises(xml.parsers.expat.ExpatError, self.quick_xacro,
         '''<a xmlns:xacro="http://www.ros.org/wiki/xacro">

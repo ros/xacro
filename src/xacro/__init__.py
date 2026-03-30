@@ -957,6 +957,7 @@ def eval_all(node, macros, symbols):
 
             elif node.tagName == 'xacro:arg':
                 name, default = check_attrs(node, ['name', 'default'], [])
+                name = unicode(eval_text(name, symbols))
                 if name not in substitution_args_context['arg']:
                     substitution_args_context['arg'][name] = unicode(eval_text(default, symbols))
 
