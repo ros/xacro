@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<macro_library xmlns:xacro="http://www.ros.org/wiki/xacro">
+	<xacro:macro name="loop" params="items **body:=^">
+		<xacro:if value="${items}">
+			<!-- pop first item from list -->
+			<xacro:property name="item" value="${items[0]}"/>
+			<xacro:insert_block name="body" />
+			<!-- recursively call myself -->
+			<xacro:loop items="${items[1:]}"/>
+		</xacro:if>
+	</xacro:macro>
+
+	<xacro:property name="items" value="${python.range(5)}" />
+
+	<xacro:loop items="${items}">
+		<body>
+			<item>item: ${item}</item>
+		</body>
+	</xacro:loop>
+</macro_library>
